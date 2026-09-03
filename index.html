@@ -151,7 +151,10 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .qty button{width:32px;height:38px;border:0;background:transparent;font-size:17px;cursor:pointer;
   color:var(--tinta);font-family:inherit}
 .qty button:hover{background:var(--crema)}
-.qty span{width:26px;text-align:center;font-weight:700;font-size:14px}
+.qty-campo{width:38px;text-align:center;font:inherit;font-weight:700;font-size:14px;
+  border:0;background:transparent;color:var(--tinta);padding:0;-moz-appearance:textfield}
+.qty-campo:focus{outline:2px solid var(--verde);outline-offset:-2px;border-radius:4px}
+.citem__qty .qty-campo{width:34px;font-size:13.5px}
 .add{flex:1;background:var(--fucsia);color:var(--btn-txt);border:0;border-radius:9px;padding:11px 8px;
   font:inherit;font-weight:700;font-size:14px;cursor:pointer;min-height:38px}
 .add:hover{filter:brightness(1.06)}
@@ -283,19 +286,30 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   padding:0 20px 10px;z-index:60;transform:translateY(115%);
   transition:transform .32s cubic-bezier(.4,0,.2,1);box-shadow:0 -6px 26px rgba(0,0,0,.18)}
 .barra-fija.visible{transform:none}
-.bf-timeline{max-width:1140px;margin:0 auto;padding:44px 8px 4px}
-/* Fila de etiquetas para celular: tres columnas iguales, la primera pegada a
-   la izquierda, la del medio centrada y la ultima a la derecha, para que
-   apunten a su tramo sin depender de donde cayo el punto. */
-.tl-etiquetas{display:none}
+.bf-timeline{max-width:1140px;margin:0 auto;padding:10px 8px 4px}
+/* LA ESCALERA DE BENEFICIOS.
+   Tres columnas iguales: la primera pegada a la izquierda, la del medio
+   centrada y la ultima a la derecha, apuntando cada una a su tramo. Los
+   puntos siguen sobre la barra, en su posicion exacta, marcando el progreso.
+
+   Van separadas del punto a proposito. Con 23,5 y 29,5px cada etiqueta mide
+   entre 200 y 340px, y los hitos pueden caer a 100px uno del otro: colgadas
+   del punto se pisaban en minorista y en distribuidor, y se salian por arriba
+   de la barra. Repartidas parejo entran a cualquier ancho. */
+.tl-etiquetas{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
+  padding:0 2px 12px;font-size:23.5px;line-height:1.15;color:var(--dorado)}
+.tl-etiquetas span{display:block}
+.tl-etiquetas span:nth-child(2){text-align:center}
+.tl-etiquetas span:last-child{text-align:right}
+.tl-etiquetas b{display:block;font-weight:700;font-size:29.5px;
+  font-family:Raleway,system-ui,sans-serif;letter-spacing:.01em;margin-bottom:2px}
+.tl-etiquetas .pendiente{font-size:.72em}
 @media(max-width:640px){
-  .tl-etiquetas{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
-    padding:0 2px 10px;font-size:12px;line-height:1.2;color:var(--dorado)}
-  .tl-etiquetas span{display:block}
-  .tl-etiquetas span:nth-child(2){text-align:center}
-  .tl-etiquetas span:last-child{text-align:right}
-  .tl-etiquetas b{display:block;font-weight:700;font-size:12px;
-    font-family:Raleway,system-ui,sans-serif}
+  /* Mismos doce pixeles de mas: el beneficio de 9,5 a 21,5 y el importe de
+     14,5 a 26,5. Con tres importes de ese cuerpo en 375px no sobra ni un
+     pixel, asi que el aire entre columnas se reduce al minimo. */
+  .tl-etiquetas{gap:5px;padding:0 0 10px;font-size:21.5px}
+  .tl-etiquetas b{font-size:26.5px;letter-spacing:-.02em}
 }
 .bf-row{max-width:1140px;margin:0 auto;display:flex;align-items:center;gap:14px}
 .bf-cant{background:var(--fucsia);color:var(--btn-txt);border-radius:999px;min-width:28px;height:28px;
@@ -312,19 +326,10 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .barra-fija .tl-punto{background:var(--tinta);border-color:rgba(255,255,255,.42);width:17px;height:17px;border-width:2.5px}
 .barra-fija .tl-hito.logrado .tl-punto{background:var(--verde-claro);border-color:var(--verde-claro);color:var(--tinta)}
 .barra-fija .tl-hito.proximo .tl-punto{border-color:var(--verde-claro);box-shadow:0 0 0 4px rgba(140,190,50,.26)}
-.barra-fija .tl-lbl{top:auto;bottom:18px;color:var(--dorado);font-size:12px}
-/* Importe y beneficio, los dos en dorado y los dos a 12px, en los tres
-   segmentos. El importe conserva la sans, que a este tamano se lee mejor que
-   la serif, y el peso, que es lo que lo separa del nombre del beneficio. */
-.barra-fija .tl-lbl b{color:var(--dorado);font-size:12px;
-  font-family:Raleway,system-ui,sans-serif;font-weight:700;
-  letter-spacing:.01em;line-height:1.2;margin-bottom:1px}
-.barra-fija .tl-hito.logrado .tl-lbl,
-.barra-fija .tl-hito.logrado .tl-lbl b{color:var(--dorado)}
-/* El ultimo hito esta en el 100%: su etiqueta va centrada sobre el punto y la
-   mitad quedaba fuera de pantalla. Se apoya contra el borde. Los demas no
-   hacen falta: ninguna escalera arranca en cero. */
-.barra-fija .tl-hito--fin .tl-lbl{left:auto;right:0;transform:none;text-align:right}
+/* Importe y beneficio, los dos en dorado y los dos DOCE PIXELES MAS GRANDES
+   que como estaban. Ver .tl-etiquetas, que es donde se dibujan ahora.
+   La etiqueta colgada del punto queda sin usar dentro de la barra. */
+.barra-fija .tl-lbl{display:none}
 
 /* resumen del traspaso al carrito */
 .resumen{list-style:none;margin:0 0 4px;padding:0}
@@ -353,9 +358,6 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   .bf-monto{font-size:16px;line-height:1.2}
   .bf-msg{font-size:11.5px;max-width:100%}
   .bf-ir{padding:11px 14px;font-size:13px}
-  /* Las etiquetas pegadas al punto se van: en celular no entran. Quedan los
-     puntos, que son los que marcan el progreso, y la fila de arriba. */
-  .barra-fija .tl-lbl{display:none}
   .bf-timeline{padding-top:8px}
   .barra-fija .tl-punto{width:14px;height:14px}
   .modal-top{flex-direction:column;align-items:stretch}
@@ -795,7 +797,7 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .citem__qty button{background:var(--crema);border:0;color:var(--tinta);width:28px;height:30px;
   font-size:15px;cursor:pointer;font-family:inherit;line-height:1}
 .citem__qty button:hover{background:#e7e4d8}
-.citem__qty span{min-width:26px;text-align:center;font-size:13.5px;font-weight:700}
+
 .citem__sub{font-size:14px;font-weight:700;white-space:nowrap;min-width:74px;text-align:right}
 .citem__quitar{background:none;border:0;color:#a09a8c;font-size:19px;line-height:1;cursor:pointer;
   padding:2px 4px;border-radius:6px;transition:.15s}
@@ -1350,7 +1352,9 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 
         <div class="ficha__compra">
           <div class="qty" id="mvQty">
-            <button type="button" data-d="-1">-</button><span>1</span>
+            <button type="button" data-d="-1">-</button>
+            <input class="qty-campo" type="text" inputmode="numeric" autocomplete="off"
+                   value="1" aria-label="Cantidad">
             <button type="button" data-d="1">+</button>
           </div>
           <button class="add" id="mv-add">Agregar al carrito</button>
@@ -2936,18 +2940,17 @@ function tarjeta(p, key){
         (rebaja ? '<span class="precio-viejo">' + ars(lista) + '</span>' +
                   '<span class="precio-seg">-' + rebaja + '%</span>' : '') + '</div>' +
       '<div class="acciones">' +
-        '<div class="qty"><button type="button" data-d="-1">-</button><span>1</span>' +
+        '<div class="qty"><button type="button" data-d="-1">-</button>' +
+        campoCantidad(1, 'Cantidad de ' + p.n) +
         '<button type="button" data-d="1">+</button></div>' +
         '<button class="add" type="button"' + (sinStock ? ' disabled' : '') + '>Agregar</button></div>' +
       '<button class="vermas" type="button">Ver detalles</button></div>';
-  const span = el.querySelector('.qty span');
-  el.querySelectorAll('.qty button').forEach(b => b.onclick = () =>
-    span.textContent = Math.max(1, +span.textContent + (+b.dataset.d)));
+  const cuenta = armarContador(el.querySelector('.qty'));
   const sel = el.querySelector('[data-variante]');
   if (sel) sel.onchange = () => { varElegida.set(p.n, +sel.value);
     el.querySelector('.precio').textContent = ars(precioDe(p)); };
   if (!sinStock) el.querySelector('.add').onclick =
-    e => agregar(p, key, +span.textContent, e.target);
+    e => agregar(p, key, cuenta.leer(), e.target);
   /* La foto y el nombre tambien abren la ficha: hay clientes que ignoran el
      boton y hacen clic en la imagen, que es lo que uno espera de una tarjeta
      de producto. Los controles de cantidad y el boton de agregar quedan
@@ -3074,18 +3077,17 @@ function tarjetaPack(p, key){
     '</div>' +
     '<div class="card-body">' +
       '<div class="acciones">' +
-        '<div class="qty"><button type="button" data-d="-1">-</button><span>1</span>' +
+        '<div class="qty"><button type="button" data-d="-1">-</button>' +
+        campoCantidad(1, 'Cantidad de ' + p.n) +
         '<button type="button" data-d="1">+</button></div>' +
         '<button class="add" type="button"' + (sinStock ? ' disabled' : '') + '>Agregar</button></div>' +
       '<button class="vermas" type="button">Ver detalles</button></div>';
-  const span = el.querySelector('.qty span');
-  el.querySelectorAll('.qty button').forEach(b => b.onclick = () =>
-    span.textContent = Math.max(1, +span.textContent + (+b.dataset.d)));
+  const cuenta = armarContador(el.querySelector('.qty'));
   const sel = el.querySelector('[data-variante]');
   if (sel) sel.onchange = () => { varElegida.set(p.n, +sel.value);
     el.querySelector('.precio').textContent = ars(precioDe(p)); };
   if (!sinStock) el.querySelector('.add').onclick =
-    e => agregar(p, key, +span.textContent, e.target);
+    e => agregar(p, key, cuenta.leer(), e.target);
   /* La foto y el nombre tambien abren la ficha: hay clientes que ignoran el
      boton y hacen clic en la imagen, que es lo que uno espera de una tarjeta
      de producto. Los controles de cantidad y el boton de agregar quedan
@@ -3177,6 +3179,56 @@ window.addEventListener('resize', actualizarFlechasCat);
 /* ---- 8 · agregar al carrito ---- */
 /* `seg` solo se pasa desde el selector de productos minoristas del cambio 3;
    el resto de la pagina agrega con el segmento que se esta mirando. */
+/* ══════════ CONTADORES ══════════
+   Cuatro en la pagina -- tarjeta, pack, ficha y carrito -- y un solo motor.
+   El numero se puede escribir: un mayorista que necesita 40 unidades no va a
+   apretar el mas cuarenta veces.
+
+   Mientras se escribe NO se corrige el valor. Si al borrar el "1" de "12" el
+   campo se autocompletara a 1, seria imposible escribir "25": el corte va
+   recien al salir del campo o al apretar Enter. */
+const TOPE_UNIDADES = 999;
+
+function armarContador(caja, alCambiar, opciones){
+  const o = opciones || {};
+  const campo = caja.querySelector('.qty-campo');
+  if (!campo) return null;
+
+  const acotar = v => Math.max(1, Math.min(TOPE_UNIDADES, Math.floor(+v) || 1));
+  const fijar = v => {
+    const n = Math.floor(+v);
+    // Bajar de uno saca el producto, donde eso tenga sentido.
+    if (n < 1 && o.alBajarDeUno) return o.alBajarDeUno();
+    campo.value = acotar(n);
+    if (alCambiar) alCambiar(+campo.value);
+  };
+
+  caja.querySelectorAll('[data-d]').forEach(b =>
+    b.onclick = () => fijar(+campo.value + (+b.dataset.d)));
+
+  campo.addEventListener('input', () => {
+    campo.value = campo.value.replace(/\D/g, '').slice(0, 3);
+    if (campo.value && alCambiar) alCambiar(+campo.value);
+  });
+  campo.addEventListener('blur', () => fijar(campo.value));
+  campo.addEventListener('keydown', e => {
+    if (e.key === 'Enter'){ e.preventDefault(); fijar(campo.value); campo.blur(); }
+    else if (e.key === 'ArrowUp'){ e.preventDefault(); fijar(+campo.value + 1); }
+    else if (e.key === 'ArrowDown'){ e.preventDefault(); fijar(+campo.value - 1); }
+  });
+  // Al entrar se selecciona todo: escribir reemplaza en vez de concatenar.
+  campo.addEventListener('focus', () => campo.select());
+
+  return {leer: () => acotar(campo.value), fijar};
+}
+
+/* El campo, igual en los cuatro. type=text con inputmode numerico y no
+   type=number: number trae flechitas propias que chocan con las nuestras y
+   en Firefox deja escribir "e" y "-". */
+const campoCantidad = (valor, etiqueta) =>
+  '<input class="qty-campo" type="text" inputmode="numeric" autocomplete="off" ' +
+  'value="' + valor + '" aria-label="' + etiqueta + '">';
+
 function agregar(p, key, cant, boton, seg){
   const donde = seg || segmento;
   carrito[key] = {prod:p, cant:(carrito[key]?.cant || 0) + cant,
@@ -3342,7 +3394,7 @@ function abrirVista(p, key){
   if (!envio.hidden) envio.textContent = 'Envío gratis en compras superiores a ' + ars(60000);
 
   // Cantidad: arranca en 1 en cada apertura.
-  const q = $('#mvQty').querySelector('span'); q.textContent = '1';
+  cuentaFicha.fijar(1);
   pintarResenas(p);
   pintarCombos(p);
   abrirModal('modal');
@@ -3358,18 +3410,16 @@ $('#mvVerDesc').onclick = e => {
   b.setAttribute('aria-expanded', String(!abierto));
 };
 
-$('#mvQty').addEventListener('click', e => {
-  const b = e.target.closest('[data-d]'); if (!b) return;
-  const q = $('#mvQty').querySelector('span');
-  q.textContent = Math.max(1, +q.textContent + (+b.dataset.d));
-});
+/* El contador de la ficha se arma una sola vez: el popup no se vuelve a
+   crear, solo se le cambia el contenido. */
+const cuentaFicha = armarContador($('#mvQty'));
 
 $('#modalCerrar').onclick = () => cerrarModal('modal');
 $('#modal').onclick = e => { if (e.target.id === 'modal') cerrarModal('modal'); };
 addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal('modal'); });
 $('#mv-add').onclick = () => {
   if (!vista) return;
-  const cant = +$('#mvQty').querySelector('span').textContent || 1;
+  const cant = cuentaFicha.leer();
   agregar(vista.p, vista.key, cant, $('#mv-add'));
   setTimeout(() => cerrarModal('modal'), 700);
 };
@@ -3390,9 +3440,8 @@ function pintarHitos(){
     /* El primero y el ultimo se marcan porque sus etiquetas van centradas
        sobre el punto y, en los extremos, la mitad queda fuera de pantalla.
        Esos dos se alinean contra su borde. */
-    h.className = 'tl-hito' + (i === TIERS.length - 1 ? ' tl-hito--fin' : '');
+    h.className = 'tl-hito';
     h.dataset.min = t.min;
-    h.dataset.i = i;
     h.style.left = (t.min / max * 100) + '%';
     h.innerHTML = '<div class="tl-punto">✓</div><div class="tl-lbl">' + etiqueta(t) + '</div>';
     pista.appendChild(h);
@@ -3537,7 +3586,6 @@ function sugerir(subtotal, falta, proximo){
 function pintarCarrito(entrando){
   const entradas = Object.entries(carrito);
   const lista = $('#checkoutLista');
-  let total = 0;
 
   if (!entradas.length){
     lista.innerHTML = '<li class="carrito__vacio">Tu carrito quedó vacío.</li>';
@@ -3548,7 +3596,6 @@ function pintarCarrito(entrando){
       // Una linea que entro con otros precios se marca: si no, el cliente ve
       // dos precios distintos para el mismo segmento y no entiende por que.
       const otroSeg = (i.seg || segmento) !== segmento;
-      total += sub;
       const li = document.createElement('li');
       li.className = 'citem';
       li.innerHTML =
@@ -3559,19 +3606,25 @@ function pintarCarrito(entrando){
         (otroSeg ? ' <span class="citem__seg">precio ' +
                    SEGMENTOS[i.seg].label.toLowerCase() + '</span>' : '') +
         '</span></span>' +
-        '<span class="citem__qty"><button type="button" data-q="-1" aria-label="Quitar uno">-</button>' +
-        '<span>' + i.cant + '</span>' +
-        '<button type="button" data-q="1" aria-label="Agregar uno">+</button></span>' +
+        '<span class="citem__qty"><button type="button" data-d="-1" aria-label="Quitar uno">-</button>' +
+        campoCantidad(i.cant, 'Cantidad de ' + i.prod.n) +
+        '<button type="button" data-d="1" aria-label="Agregar uno">+</button></span>' +
         '<b class="citem__sub">' + ars(sub) + '</b>' +
         '<button class="citem__quitar" type="button" aria-label="Sacar ' + i.prod.n +
         ' del carrito">\u00d7</button>';
 
-      li.querySelectorAll('[data-q]').forEach(b => b.onclick = () => {
-        const n = i.cant + Number(b.dataset.q);
+      armarContador(li.querySelector('.citem__qty'), n => {
+        carrito[clave].cant = n;
+        /* Esta fila se actualiza a mano en vez de repintar la lista entera:
+           repintarla destruiria el campo en el que se esta escribiendo y el
+           cursor se perderia en la primera tecla. */
+        li.querySelector('.citem__sub').textContent = ars(unit * n);
+        resumenCarrito();
+        recalcular();
+      }, {
         // Bajar de uno saca el producto: es lo que espera cualquiera que
         // aprieta el menos con un solo item.
-        if (n < 1) delete carrito[clave]; else carrito[clave].cant = n;
-        pintarCarrito(); recalcular();
+        alBajarDeUno: () => { delete carrito[clave]; pintarCarrito(); recalcular(); }
       });
       li.querySelector('.citem__quitar').onclick = () => {
         track('remove_from_cart', {item_name:i.prod.n});
@@ -3605,6 +3658,14 @@ function pintarCarrito(entrando){
     }
   }
 
+  resumenCarrito();
+}
+
+/* El pie del carrito: total, envio, beneficio y el bloqueo por minimo. Vive
+   aparte de la lista para poder actualizarlo mientras se escribe una cantidad
+   sin volver a dibujar las filas. */
+function resumenCarrito(){
+  const total = totalCarrito();
   $('#checkoutTotal').textContent = ars(total);
 
   /* El envio no se inventa: el costo lo calcula Tiendanube en el checkout con
@@ -3988,7 +4049,7 @@ $('#checkoutIr').onclick = e => {
 $('#mvRapida').onclick = e => {
   if (!vista) return;
   const b = e.currentTarget;
-  const cant = Math.max(1, +$('#mvQty').querySelector('span').textContent || 1);
+  const cant = cuentaFicha.leer();
   agregar(vista.p, vista.key, cant, null);
   track('quick_buy', {item_name: vista.p.n, quantity: cant, segment: segmento,
                       value: precioItem(carrito[vista.key]) * cant,
