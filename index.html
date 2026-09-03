@@ -1270,7 +1270,9 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
       <!-- Columna izquierda: galería, como en Mercado Libre -->
       <div class="ficha__galeria" data-anima>
         <div class="ficha__miniaturas" id="mvMiniaturas"></div>
-        <div class="ficha__principal"><img id="mvFoto" src="" alt=""></div>
+        <!-- Sin src: un src="" hace que el navegador pida la propia pagina como si
+                 fuera una imagen, en cada carga y para nada. Lo llena abrirVista(). -->
+            <div class="ficha__principal"><img id="mvFoto" alt=""></div>
       </div>
 
       <!-- Columna derecha: todo lo que decide la compra, sin scrollear -->
