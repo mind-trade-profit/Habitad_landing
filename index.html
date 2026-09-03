@@ -33,6 +33,9 @@
      fondo oscuro de la barra fija; el #14823C ahi se apaga. */
   --verde-claro:#8CBE32;
   --fucsia:#E01560; --fucsia-hondo:#B70F4D; --fucsia-suave:#FDEAF1;
+  /* Dorado de la escalera de beneficios. Sobre el fondo oscuro de la barra da
+     5,2:1, asi que se lee tambien en un telefono al sol. */
+  --dorado:#E3B23C;
   --tinta:#3F3D38; --tinta-suave:#6f6b62; --crema:#FBF5EC; --papel:#fff;
   --borde:#e6e4da; --btn-txt:#fff; --alerta:#b3261e; --ok:#2e7d52;
   --r:14px; --sombra:0 1px 2px rgba(63,61,56,.05),0 8px 24px rgba(63,61,56,.07);
@@ -63,22 +66,22 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .aviso b{color:var(--verde-claro)}
 
 /* ---- HERO ---- */
-/* Alto del banner. Medido antes: 704px en escritorio y 550px de minimo en
-   celular, con lo cual la eleccion de compra caia debajo del pliegue. Ahora
-   son 430px de tope, y arriba del pliegue entran el banner, la pregunta y el
-   comienzo de las categorias.
+/* El alto del banner NO se elige: sale de la propia pieza. `aspect-ratio` con
+   la proporcion exacta del archivo -- 1884x835 en escritorio, 1136x1385 en
+   celular -- hace que el alto se calcule solo a cualquier ancho, del monitor
+   grande al telefono, y que la imagen entre ENTERA y a la vez llene el ancho:
+   no hay recorte ni franjas de crema a los costados, porque la caja tiene la
+   misma proporcion que la foto.
 
-   En escritorio las piezas van CONTENIDAS, no recortadas: son 1884x835 y a
-   430px de alto un `cover` les cortaria un tercio, justo donde estan el
-   titular y el boton. Contenidas se ven enteras, y como el fondo de las
-   piezas es la misma crema que el de la seccion, la caja no se nota.
+   Antes estaba clavado con un clamp de 430px y las piezas de escritorio
+   entraban contenidas, achicadas y con crema a los lados. Esto es lo mismo
+   que hace el propio inicio de la tienda.
 
-   En celular no se puede: las piezas son verticales (1136x1385) y contenidas
-   quedarian del tamaño de una estampilla. Ahi van recortadas desde arriba,
-   que es donde estan el titular y la imagen principal, y lo que se pierde
-   abajo lo repone el boton de verdad que se agrega mas adelante. */
+   El unico tope es el de una pantalla ancha y baja: ahi 78vh evita que el
+   banner se coma todo el alto disponible, y recien ahi recorta un poco. */
 .hero{background:var(--crema);padding:0;text-align:center;
-  min-height:clamp(300px,30vw,430px)}
+  aspect-ratio:1884 / 835;
+  max-height:78vh}
 .hero h1{font-size:clamp(28px,4.6vw,46px);margin-bottom:14px}
 .hero p{max-width:620px;margin:0 auto 28px;font-size:clamp(15px,1.7vw,18px);color:var(--tinta-suave)}
 .cta{display:inline-block;background:var(--fucsia);color:var(--btn-txt);border:0;border-radius:999px;
@@ -281,6 +284,19 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   transition:transform .32s cubic-bezier(.4,0,.2,1);box-shadow:0 -6px 26px rgba(0,0,0,.18)}
 .barra-fija.visible{transform:none}
 .bf-timeline{max-width:1140px;margin:0 auto;padding:44px 8px 4px}
+/* Fila de etiquetas para celular: tres columnas iguales, la primera pegada a
+   la izquierda, la del medio centrada y la ultima a la derecha, para que
+   apunten a su tramo sin depender de donde cayo el punto. */
+.tl-etiquetas{display:none}
+@media(max-width:640px){
+  .tl-etiquetas{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+    padding:0 2px 10px;font-size:12px;line-height:1.2;color:var(--dorado)}
+  .tl-etiquetas span{display:block}
+  .tl-etiquetas span:nth-child(2){text-align:center}
+  .tl-etiquetas span:last-child{text-align:right}
+  .tl-etiquetas b{display:block;font-weight:700;font-size:12px;
+    font-family:Raleway,system-ui,sans-serif}
+}
 .bf-row{max-width:1140px;margin:0 auto;display:flex;align-items:center;gap:14px}
 .bf-cant{background:var(--fucsia);color:var(--btn-txt);border-radius:999px;min-width:28px;height:28px;
   display:grid;place-items:center;font-weight:700;font-size:13px;flex:0 0 auto}
@@ -296,13 +312,19 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .barra-fija .tl-punto{background:var(--tinta);border-color:rgba(255,255,255,.42);width:17px;height:17px;border-width:2.5px}
 .barra-fija .tl-hito.logrado .tl-punto{background:var(--verde-claro);border-color:var(--verde-claro);color:var(--tinta)}
 .barra-fija .tl-hito.proximo .tl-punto{border-color:var(--verde-claro);box-shadow:0 0 0 4px rgba(140,190,50,.26)}
-.barra-fija .tl-lbl{top:auto;bottom:18px;color:#c3bfb4;font-size:11.5px}
-/* Los importes son el dato que el cliente lee de reojo: +6px y en la
-   tipografia sans, que a este tamano se lee mejor que la serif. */
-.barra-fija .tl-lbl b{color:#fff;font-size:17.5px;
+.barra-fija .tl-lbl{top:auto;bottom:18px;color:var(--dorado);font-size:12px}
+/* Importe y beneficio, los dos en dorado y los dos a 12px, en los tres
+   segmentos. El importe conserva la sans, que a este tamano se lee mejor que
+   la serif, y el peso, que es lo que lo separa del nombre del beneficio. */
+.barra-fija .tl-lbl b{color:var(--dorado);font-size:12px;
   font-family:Raleway,system-ui,sans-serif;font-weight:700;
-  letter-spacing:.01em;line-height:1.15;margin-bottom:1px}
-.barra-fija .tl-hito.logrado .tl-lbl b{color:var(--verde-claro)}
+  letter-spacing:.01em;line-height:1.2;margin-bottom:1px}
+.barra-fija .tl-hito.logrado .tl-lbl,
+.barra-fija .tl-hito.logrado .tl-lbl b{color:var(--dorado)}
+/* El ultimo hito esta en el 100%: su etiqueta va centrada sobre el punto y la
+   mitad quedaba fuera de pantalla. Se apoya contra el borde. Los demas no
+   hacen falta: ninguna escalera arranca en cero. */
+.barra-fija .tl-hito--fin .tl-lbl{left:auto;right:0;transform:none;text-align:right}
 
 /* resumen del traspaso al carrito */
 .resumen{list-style:none;margin:0 0 4px;padding:0}
@@ -331,10 +353,10 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   .bf-monto{font-size:16px;line-height:1.2}
   .bf-msg{font-size:11.5px;max-width:100%}
   .bf-ir{padding:11px 14px;font-size:13px}
-  .barra-fija .tl-lbl{bottom:13px;font-size:9.5px}
-  /* En celular el importe manda: es lo que se mira de reojo. */
-  .barra-fija .tl-lbl b{font-size:14.5px}
-  .barra-fija .tl-lbl{font-size:9.5px;bottom:15px}
+  /* Las etiquetas pegadas al punto se van: en celular no entran. Quedan los
+     puntos, que son los que marcan el progreso, y la fila de arriba. */
+  .barra-fija .tl-lbl{display:none}
+  .bf-timeline{padding-top:8px}
   .barra-fija .tl-punto{width:14px;height:14px}
   .modal-top{flex-direction:column;align-items:stretch}
   .modal-top .foto{width:100%;height:150px}
@@ -354,7 +376,7 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .hero__fondos{position:absolute;inset:0;z-index:0}
 .hero__slide{position:absolute;inset:0;opacity:0;transition:opacity 1.1s ease}
 .hero__slide.activa{opacity:1}
-.hero__slide img{width:100%;height:100%;object-fit:contain;display:block}
+.hero__slide img{width:100%;height:100%;object-fit:cover;display:block}
 .hero__fondos{position:absolute;inset:0;z-index:0}
 .hero{display:block}
 /* Velo crema: mantiene el texto oscuro de la marca legible sobre la foto. */
@@ -386,10 +408,8 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   .hero__cta{padding:12px 22px;font-size:14px;max-width:calc(100% - 40px)}
 }
 @media(max-width:700px){
-  /* Verticales: contenidas quedarian ilegibles, asi que se recortan desde
-     arriba, que es donde vive el titular. */
-  .hero__slide img{object-fit:cover;object-position:center top}
-  .hero{min-height:clamp(320px,84vw,430px)}
+  /* Las piezas de celular son verticales: otra proporcion, mismo criterio. */
+  .hero{aspect-ratio:1136 / 1385; max-height:82vh}
 }
 
 /* ---- CHIPS PEGADOS ARRIBA DEL CATÁLOGO ----
@@ -892,6 +912,39 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .card .foto img{transition:transform .22s}
 
 
+/* Aviso de monto minimo sin cumplir */
+.carrito__bloqueo{margin:10px 0 0;padding:10px 12px;border-radius:9px;
+  background:#fff8e1;border:1px solid #e8d9a0;color:#6b5a1e;
+  font-size:13px;font-weight:600;line-height:1.45}
+
+/* Selector de productos minoristas (cambio 3) */
+.mino__campo{margin:4px 0 12px}
+.mino__lista{max-height:min(50vh,420px);overflow:auto;display:grid;gap:8px}
+.mino__item{display:grid;grid-template-columns:46px 1fr auto auto;gap:11px;align-items:center;
+  border:1px solid var(--borde);border-radius:11px;padding:8px 10px;background:var(--papel)}
+.mino__foto{width:46px;height:46px;border-radius:8px;object-fit:cover;background:var(--crema)}
+.mino__nom{font-size:13.5px;font-weight:600;line-height:1.3;display:-webkit-box;
+  -webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mino__precio{font-size:14px;font-weight:700;white-space:nowrap}
+.mino__add{background:var(--fucsia);color:#fff;border:0;border-radius:8px;padding:9px 13px;
+  font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.mino__add:hover{background:var(--fucsia-hondo)}
+.mino__add.ok{background:var(--verde)}
+.mino__nada{color:var(--tinta-suave);font-size:14px;text-align:center;padding:22px 0}
+@media(max-width:560px){
+  .mino__item{grid-template-columns:42px 1fr auto;grid-template-areas:'f n n' 'f p a';row-gap:6px}
+  .mino__foto{grid-area:f;width:42px;height:42px}
+  .mino__nom{grid-area:n}
+  .mino__precio{grid-area:p}
+  .mino__add{grid-area:a}
+}
+
+/* Productos que no viajan al segmento nuevo */
+.seg-aviso__caja{background:var(--crema);border-radius:10px;padding:11px 13px;margin:-8px 0 18px;
+  font-size:13px;color:var(--tinta-suave)}
+.seg-aviso__caja b{display:block;color:var(--tinta);margin-bottom:5px;font-size:13px}
+.seg-aviso__caja ul{margin:0;padding-left:17px;line-height:1.5}
+
 /* Confirmacion de cambio de segmento */
 .modal--chico .modal-caja{max-width:430px}
 .seg-aviso__txt{color:var(--tinta-suave);font-size:14.5px;margin:10px 0 20px}
@@ -1303,11 +1356,13 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
           <button class="add" id="mv-add">Agregar al carrito</button>
         </div>
 
-        <!-- Compra rapida: se lleva SOLO este producto al carrito de la
-             tienda. Por eso desaparece cuando la landing ya tiene un carrito
-             armado: ver abrirVista(). -->
+        <!-- Agrega este producto y abre el carrito, sin pasar por la tienda.
+             Antes se llevaba SOLO este producto y se iba derecho a /comprar/,
+             que con la landing cargada dejaba el resto afuera; por eso habia
+             que esconderlo. Ahora suma al carrito como cualquier otro boton,
+             asi que puede estar siempre. -->
         <button class="ficha__rapida" id="mvRapida" type="button">
-          Comprar solo este producto</button>
+          Comprar ahora</button>
 
         <div class="envio-caja">
           <h4>Información de envío</h4>
@@ -1376,6 +1431,9 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
      lleva el progreso hacia los beneficios adentro. -->
 <div class="barra-fija" id="barraFija">
   <div class="bf-timeline">
+    <!-- En celular las etiquetas salen de arriba de los puntos y se reparten
+         en tres columnas iguales acá. Lo llena pintarHitos(). -->
+    <div class="tl-etiquetas" id="tlEtiquetas" aria-hidden="true"></div>
     <div class="tl-pista" id="tl-pista"><i id="tl-fill"></i></div>
   </div>
   <div class="bf-row">
@@ -1394,12 +1452,35 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 <div class="modal modal--chico" id="modalSegmento">
   <div class="modal-caja" role="alertdialog" aria-labelledby="segAvisoTit">
     <div class="modal-cuerpo">
-      <h3 id="segAvisoTit">¿Cambiamos el tipo de compra?</h3>
+      <h3 id="segAvisoTit"></h3>
       <p class="seg-aviso__txt" id="segAvisoTxt"></p>
-      <div class="seg-aviso__botones">
-        <button type="button" class="carrito__seguir" id="segAvisoNo">Mantener mi carrito</button>
-        <button type="button" class="carrito__ir" id="segAvisoSi">Cambiar y vaciar carrito</button>
+      <!-- Los productos que no viajan al segmento nuevo, cuando los hay. -->
+      <div class="seg-aviso__caja" id="segAvisoCaja" hidden>
+        <b id="segAvisoCajaTit"></b>
+        <ul id="segAvisoLista"></ul>
       </div>
+      <div class="seg-aviso__botones">
+        <button type="button" class="carrito__seguir" id="segAvisoNo"></button>
+        <button type="button" class="carrito__ir" id="segAvisoSi"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cambio 3: el mayorista o el distribuidor suma productos que su lista no
+     publica, a precio de lista, SIN dejar de ser mayorista. -->
+<div class="modal" id="modalMinorista">
+  <div class="modal-caja modal-caja--carrito">
+    <button class="modal-cerrar" id="minoCerrar" aria-label="Cerrar">&times;</button>
+    <div class="modal-cuerpo">
+      <h3 id="minoTit">¿Qué producto minorista querés agregar?</h3>
+      <p class="seg-aviso__txt" id="minoSub"></p>
+      <label class="buscador__campo mino__campo">
+        <span class="buscador__lupa" aria-hidden="true">🔍</span>
+        <input type="search" id="minoBuscar" autocomplete="off"
+               placeholder="Buscar por nombre...">
+      </label>
+      <div class="mino__lista" id="minoLista"></div>
     </div>
   </div>
 </div>
@@ -1416,6 +1497,9 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
         <div class="carrito__fila"><span>Envío</span><b id="checkoutEnvio"></b></div>
       </div>
       <p class="carrito__beneficio" id="checkoutBeneficio"></p>
+      <!-- Mayorista y distribuidor tienen monto minimo. Por debajo, el boton
+           de finalizar queda apagado y acá se dice por qué. -->
+      <p class="carrito__bloqueo" id="checkoutBloqueo" hidden></p>
 
       <div class="carrito__botones" data-anima>
         <button class="carrito__seguir" id="checkoutSeguir" type="button">Seguir comprando</button>
@@ -1780,6 +1864,33 @@ const precioDe = p => {
 // Un producto existe en un segmento solo si la tienda lo publica para ese
 // segmento. Eso es lo que hace que la grilla cambie de verdad al elegir.
 const hayEn = (p, seg) => p.pr[seg] != null;
+
+/* Monto minimo de compra de cada segmento. Los dos primeros los confirma el
+   propio banner de la tienda ("MONTO MÍNIMO DE COMPRA $100.000") y su menu;
+   el de distribuidor lo definio el cliente. */
+const MINIMOS = {minorista: 0, mayorista: 100000, distribuidor: 250000};
+/* Ordenados por minimo creciente: sirve para saber si un cambio de segmento
+   sube o baja. */
+const ESCALA = ['minorista', 'mayorista', 'distribuidor'];
+
+/* El precio de una LINEA DEL CARRITO sale del segmento con el que entro, no
+   del que se esta mirando. Un mayorista puede tener cargado un producto que
+   la lista mayorista no publica y que entro a precio de lista: ese sigue
+   valiendo lo de lista aunque el resto del carrito sea mayorista.
+
+   La variante tambien queda fijada al agregar. Antes el precio de una linea
+   ya cargada cambiaba si despues se tocaba el desplegable de la tarjeta. */
+function precioEn(i, seg){
+  const p = i.prod;
+  if (p.vars){
+    const v = p.vars[i.vi ?? varElegida.get(p.n) ?? 0];
+    if (v && v.p) return v.p;
+  }
+  return p.pr[seg] ?? p.pr.minorista ?? 0;
+}
+const precioItem = i => precioEn(i, i.seg || segmento);
+const totalCarrito = () => Object.values(carrito)
+  .reduce((a, i) => a + precioItem(i) * i.cant, 0);
 const conStock = p => p.st[segmento] !== false;
 // Estrellas a partir de la calificacion REAL. Un producto sin resenas no
 // muestra una nota inventada: muestra una invitacion. Poner 4 estrellas por
@@ -1848,14 +1959,17 @@ const EVENTOS = {
 };
 
 /* Arma el items[] que espera GA4 a partir de una lista de {prod, cant}. */
-const itemsGA = lista => (lista || []).map(i => ({
-  item_name: i.prod.n,
-  item_id: String((i.prod.ids || {})[segmento] || (i.prod.ids || {}).minorista || ''),
-  item_category: (NECESIDADES.find(n => i.prod.necs.includes(n.id)) || {}).label || '',
-  item_variant: SEGMENTOS[segmento].label,
-  price: precioDe(i.prod),
-  quantity: i.cant
-}));
+const itemsGA = lista => (lista || []).map(i => {
+  const seg = i.seg || segmento;
+  return {
+    item_name: i.prod.n,
+    item_id: String((i.prod.ids || {})[seg] || (i.prod.ids || {}).minorista || ''),
+    item_category: (NECESIDADES.find(n => i.prod.necs.includes(n.id)) || {}).label || '',
+    item_variant: SEGMENTOS[seg].label,
+    price: precioEn(i, seg),
+    quantity: i.cant
+  };
+});
 
 const track = (event, data) => {
   const d = Object.assign({}, data || {});
@@ -2474,25 +2588,126 @@ function marcarSegmento(){
 
 /* Pedir el cambio no es hacerlo: si hay carrito armado se pregunta primero.
    Vaciarlo sin avisar es la forma mas cara de perder una compra. */
-let segPedido = null;
-function pedirSegmento(id){
-  if (id === segmento){ marcarSegmento(); irAlCatalogo(); return; }
-  const cargado = Object.keys(carrito).length;
-  if (!cargado){ aplicarSegmento(id); irAlCatalogo(); return; }
+/* ══════════ CAMBIAR DE TIPO DE COMPRA ══════════
+   Con el carrito vacio, cambiar de segmento es apretar un boton y nada mas.
+   Con el carrito cargado hay dos caminos, y son distintos a proposito:
 
-  segPedido = id;
-  const unidades = Object.values(carrito).reduce((a, i) => a + i.cant, 0);
-  $('#segAvisoTxt').innerHTML =
-    'Tenés <b>' + unidades + ' producto' + (unidades > 1 ? 's' : '') + '</b> cargado' +
-    (unidades > 1 ? 's' : '') + ' a precio <b>' + SEGMENTOS[segmento].label.toLowerCase() +
-    '</b>. Al pasar a <b>' + SEGMENTOS[id].label.toLowerCase() +
-    '</b> se vacía el carrito, porque los precios y los mínimos son distintos.';
-  track('segment_change_prompt', {from: segmento, to: id, units: unidades});
+   SUBIR (a mayorista o a distribuidor) exige el minimo de compra del segmento
+   al que se va, medido con los precios de ESE segmento -- que es lo que la
+   tienda va a cobrar. Si no llega, se dice cuanto falta y no se cambia nada.
+   Si llega, el carrito NO se vacia: se convierte, los productos pasan a los
+   precios nuevos y de ahi en mas se compra libremente.
+
+   Nada de esto pasa solo. Un minorista que se pasa de $100.000 sigue siendo
+   minorista: el cambio de segmento es una decision suya, no del carrito.
+
+   BAJAR a la lista minorista no cambia el segmento. Un mayorista que quiere
+   un producto que su lista no publica no tiene por que renunciar a sus
+   precios en todo lo demas: se le abre un selector y lo suma a precio de
+   lista, con el resto del carrito intacto. Eso si, tambien tiene que estar
+   cumpliendo su propio minimo. */
+let segPedido = null;
+
+const faltaPara = (seg, total) => Math.max(0, MINIMOS[seg] - total);
+
+function pintarAviso(o){
+  $('#segAvisoTit').textContent = o.titulo;
+  $('#segAvisoTxt').innerHTML = o.texto;
+  const caja = $('#segAvisoCaja');
+  caja.hidden = !(o.lista && o.lista.length);
+  if (!caja.hidden){
+    $('#segAvisoCajaTit').textContent = o.listaTit;
+    $('#segAvisoLista').innerHTML = o.lista
+      .map(n => '<li>' + n + '</li>').join('');
+  }
+  const no = $('#segAvisoNo'), si = $('#segAvisoSi');
+  no.textContent = o.no;
+  si.hidden = !o.si;
+  if (o.si) si.textContent = o.si;
   abrirModal('modalSegmento');
 }
 
+function pedirSegmento(id){
+  if (id === segmento){ marcarSegmento(); irAlCatalogo(); return; }
+  if (!Object.keys(carrito).length){ aplicarSegmento(id); irAlCatalogo(); return; }
+  segPedido = id;
+  if (ESCALA.indexOf(id) > ESCALA.indexOf(segmento) || id !== 'minorista')
+    return pedirAscenso(id);
+  return pedirMinorista();
+}
+
+/* Subir: se mide el carrito con los precios del destino. */
+function pedirAscenso(destino){
+  const items = Object.values(carrito);
+  const viajan = items.filter(i => hayEn(i.prod, destino));
+  const quedan = items.filter(i => !hayEn(i.prod, destino));
+  const ahora = totalCarrito();
+  const despues = viajan.reduce((a, i) => a + precioEn(i, destino) * i.cant, 0);
+  const falta = faltaPara(destino, despues);
+  const nombre = SEGMENTOS[destino].label.toLowerCase();
+
+  if (falta){
+    track('segment_min_bloqueado', {to: destino, total: despues, missing: falta});
+    /* El caso en que NADA de lo cargado existe en la lista de destino merece
+       su propia frase: decirle "tenés $0" a alguien que ve un carrito lleno
+       es la clase de mensaje que hace cerrar la pestaña. */
+    const cuenta = viajan.length
+      ? 'Lo que tenés cargado son <b>' + ars(despues) + '</b> a precio ' + nombre +
+        ' (' + ars(ahora) + ' a precio ' + SEGMENTOS[segmento].label.toLowerCase() + ').' +
+        ' Te faltan <b>' + ars(falta) + '</b>.'
+      : 'Ninguno de los productos que tenés cargados está publicado en la lista ' +
+        nombre + ', así que todavía no suman para ese mínimo.';
+    return pintarAviso({
+      titulo: 'Todavía no llegás al mínimo ' + nombre,
+      texto: 'Para poder pasar a <b>' + nombre + '</b> tenés que cumplir un monto ' +
+        'mínimo de <b>' + ars(MINIMOS[destino]) + '</b>.<br><br>' + cuenta + '<br><br>' +
+        'Seguí sumando y volvé a tocar ' + SEGMENTOS[destino].label.toUpperCase() +
+        ': ahí tu carrito pasa solo a los precios nuevos.',
+      no: 'Seguir comprando'
+    });
+  }
+
+  track('segment_change_prompt', {from: segmento, to: destino,
+                                  total: ahora, total_destino: despues});
+  pintarAviso({
+    titulo: '¿Pasamos tu carrito a precio ' + nombre + '?',
+    texto: 'Llegaste al mínimo de <b>' + ars(MINIMOS[destino]) + '</b>. ' +
+      'Tus <b>' + viajan.reduce((a, i) => a + i.cant, 0) + ' producto' +
+      (viajan.reduce((a, i) => a + i.cant, 0) > 1 ? 's' : '') + '</b> pasan a precio ' +
+      nombre + ': <b>' + ars(ahora) + '</b> → <b>' + ars(despues) + '</b>.',
+    listaTit: quedan.length === 1
+      ? 'Este producto sale del carrito, porque la lista ' + nombre + ' no lo publica:'
+      : 'Estos ' + quedan.length + ' productos salen del carrito, porque la lista ' +
+        nombre + ' no los publica:',
+    lista: quedan.map(i => i.prod.n),
+    no: 'Mantener como está',
+    si: 'Pasar a ' + nombre
+  });
+}
+
+/* Bajar a la lista minorista: no se cambia de segmento, se suma. */
+function pedirMinorista(){
+  const total = totalCarrito();
+  const falta = faltaPara(segmento, total);
+  const nombre = SEGMENTOS[segmento].label.toLowerCase();
+  segPedido = null;
+  marcarSegmento();
+
+  if (falta){
+    track('minorista_bloqueado', {segment: segmento, total, missing: falta});
+    return pintarAviso({
+      titulo: 'Todavía no llegás al mínimo ' + nombre,
+      texto: 'Para poder seleccionar productos de la lista minorista tenés que ' +
+        'cumplir el mínimo ' + nombre + ' de <b>' + ars(MINIMOS[segmento]) + '</b>.' +
+        '<br><br>Tenés <b>' + ars(total) + '</b>. Te faltan <b>' + ars(falta) + '</b>.',
+      no: 'Seguir comprando'
+    });
+  }
+  abrirSelectorMinorista();
+}
+
 $('#segAvisoNo').onclick = () => {
-  track('segment_change_cancel', {from: segmento, to: segPedido});
+  if (segPedido) track('segment_change_cancel', {from: segmento, to: segPedido});
   segPedido = null;
   marcarSegmento();                      // la marca vuelve al segmento vigente
   cerrarModal('modalSegmento');
@@ -2501,11 +2716,88 @@ $('#segAvisoSi').onclick = () => {
   const id = segPedido; segPedido = null;
   cerrarModal('modalSegmento');
   if (!id) return;
-  aplicarSegmento(id);
+  convertirCarrito(id);
+  aplicarSegmento(id, true);             // true: el carrito ya viene convertido
   irAlCatalogo();
 };
 $('#modalSegmento').onclick = e => {
   if (e.target.id === 'modalSegmento') $('#segAvisoNo').onclick();
+};
+
+/* Los que no existen en el destino se van; el resto queda con los precios
+   nuevos. No hay tercera opcion: dejarlos con el precio viejo seria cobrar
+   dos listas en la misma compra sin que el cliente lo haya pedido. */
+function convertirCarrito(destino){
+  Object.entries(carrito).forEach(([k, i]) => {
+    if (!hayEn(i.prod, destino)) delete carrito[k];
+    else i.seg = destino;
+  });
+}
+
+/* ══════════ SELECTOR DE PRODUCTOS MINORISTAS ══════════
+   Solo lo que la lista del segmento vigente NO publica: si el producto existe
+   en mayorista, agregarlo a precio de lista seria cobrarle de mas. */
+function productosSoloMinoristas(){
+  return PRODUCTOS.filter(p => hayEn(p, 'minorista') && !hayEn(p, segmento) &&
+                               p.st.minorista !== false);
+}
+
+/* Igual que la del buscador, que es local de su bloque: minusculas, sin
+   acentos y sin puntuacion, para que "aloe" encuentre "Áloe". */
+const claveMino = t => (t || '').toLowerCase().normalize('NFD')
+  .replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]/g, ' ')
+  .replace(/\s+/g, ' ').trim();
+
+function pintarSelectorMinorista(texto){
+  const caja = $('#minoLista');
+  const q = claveMino(texto || '');
+  const palabras = q.split(' ').filter(w => w.length > 1);
+  const lista = productosSoloMinoristas()
+    .filter(p => !palabras.length || palabras.every(w => claveMino(p.n).includes(w)))
+    .slice(0, 40);
+
+  if (!lista.length){
+    caja.innerHTML = '<p class="mino__nada">' + (texto
+      ? 'Nada con <b>' + texto.replace(/[<>&]/g, '') + '</b> fuera de la lista ' +
+        SEGMENTOS[segmento].label.toLowerCase() + '.'
+      : 'Todo el catálogo está publicado en tu lista.') + '</p>';
+    return;
+  }
+  caja.innerHTML = '';
+  lista.forEach(p => {
+    const fila = document.createElement('div');
+    fila.className = 'mino__item';
+    fila.innerHTML =
+      (p.img ? '<img class="mino__foto" src="' + p.img + '" alt="" loading="lazy">'
+             : '<span class="mino__foto"></span>') +
+      '<span class="mino__nom">' + p.n + '</span>' +
+      '<span class="mino__precio">' + ars(p.pr.minorista) + '</span>' +
+      '<button type="button" class="mino__add">+ Agregar</button>';
+    fila.querySelector('.mino__add').onclick = e => {
+      // Clave propia: si el mismo producto entrara despues por el catalogo a
+      // precio mayorista, serian dos lineas distintas y esta bien que lo sean.
+      agregar(p, 'minorista-' + p.n, 1, e.currentTarget, 'minorista');
+      track('add_minorista_desde_mayorista', {item_name: p.n, segment: segmento});
+    };
+    caja.appendChild(fila);
+  });
+}
+
+function abrirSelectorMinorista(){
+  $('#minoSub').innerHTML = 'Estos no están publicados en la lista <b>' +
+    SEGMENTOS[segmento].label.toLowerCase() + '</b>, así que van a precio de lista. ' +
+    'El resto de tu carrito no se toca y seguís comprando como ' +
+    SEGMENTOS[segmento].label.toLowerCase() + '.';
+  $('#minoBuscar').value = '';
+  pintarSelectorMinorista('');
+  track('abre_selector_minorista', {segment: segmento});
+  abrirModal('modalMinorista');
+}
+
+$('#minoBuscar').addEventListener('input', e => pintarSelectorMinorista(e.target.value));
+$('#minoCerrar').onclick = () => cerrarModal('modalMinorista');
+$('#modalMinorista').onclick = e => {
+  if (e.target.id === 'modalMinorista') cerrarModal('modalMinorista');
 };
 
 $('#segN1').addEventListener('click', e => {
@@ -2559,7 +2851,6 @@ function aplicarSegmento(id, conservarCarrito){
     ? 'Gratis superando $60.000' : 'A cargo del comprador';
 
   pintar(); pintarPacks(); recalcular();
-  revisarCompraRapida();
 }
 
 /* Aviso corto arriba del catalogo. Se usa tanto al vaciar el carrito como al
@@ -2884,24 +3175,20 @@ if (pistaCat) pistaCat.addEventListener('scroll', actualizarFlechasCat, {passive
 window.addEventListener('resize', actualizarFlechasCat);
 
 /* ---- 8 · agregar al carrito ---- */
-function revisarCompraRapida(){
-  const b = $('#mvRapida');
-  if (b) b.hidden = Object.keys(carrito).length > 0;
-}
-
-function agregar(p, key, cant, boton){
-  carrito[key] = {prod:p, cant:(carrito[key]?.cant || 0) + cant};
-  track('add_to_cart', {item_name:p.n, value:precioDe(p)*cant, segment:segmento,
-                        items: itemsGA([{prod:p, cant}])});
+/* `seg` solo se pasa desde el selector de productos minoristas del cambio 3;
+   el resto de la pagina agrega con el segmento que se esta mirando. */
+function agregar(p, key, cant, boton, seg){
+  const donde = seg || segmento;
+  carrito[key] = {prod:p, cant:(carrito[key]?.cant || 0) + cant,
+                  seg: donde, vi: varElegida.get(p.n) ?? 0};
+  track('add_to_cart', {item_name:p.n, value:precioEn(carrito[key], donde)*cant,
+                        segment:donde, items: itemsGA([carrito[key]])});
   if (boton){
     const t = boton.textContent;
     boton.textContent = '✓ Agregado'; boton.classList.add('ok');
     setTimeout(() => { boton.textContent = t; boton.classList.remove('ok'); }, 1400);
   }
   recalcular();
-  // Se puede agregar con la ficha abierta (los combos de adentro lo hacen):
-  // apenas hay carrito, la compra rapida deja de tener sentido.
-  revisarCompraRapida();
 }
 
 /* ---- 7 · vista rápida ---- */
@@ -3054,12 +3341,6 @@ function abrirVista(p, key){
   envio.hidden = segmento !== 'minorista';
   if (!envio.hidden) envio.textContent = 'Envío gratis en compras superiores a ' + ars(60000);
 
-  /* "Comprar solo este producto" se lleva ESE producto y nada mas: si el
-     cliente ya venia armando una compra aca, apretarlo le dejaria el resto
-     afuera sin que se entere. Con carrito cargado la salida es una sola, la
-     de la barra de abajo. */
-  revisarCompraRapida();
-
   // Cantidad: arranca en 1 en cada apertura.
   const q = $('#mvQty').querySelector('span'); q.textContent = '1';
   pintarResenas(p);
@@ -3097,19 +3378,28 @@ $('#mv-add').onclick = () => {
 // (los packs se pintan como cualquier otra necesidad del catalogo)
 
 /* ---- 9 y 10 · timeline de varios hitos ---- */
+const etiqueta = t => '<b>' + ars(t.min) + '</b>' + t.nombre +
+  (t.pendiente ? ' <span class="pendiente">a confirmar</span>' : '');
+
 function pintarHitos(){
   const pista = $('#tl-pista');
   pista.querySelectorAll('.tl-hito').forEach(h => h.remove());
   const max = TIERS[TIERS.length-1].min;
-  TIERS.forEach(t => {
+  TIERS.forEach((t, i) => {
     const h = document.createElement('div');
-    h.className = 'tl-hito'; h.dataset.min = t.min;
+    /* El primero y el ultimo se marcan porque sus etiquetas van centradas
+       sobre el punto y, en los extremos, la mitad queda fuera de pantalla.
+       Esos dos se alinean contra su borde. */
+    h.className = 'tl-hito' + (i === TIERS.length - 1 ? ' tl-hito--fin' : '');
+    h.dataset.min = t.min;
+    h.dataset.i = i;
     h.style.left = (t.min / max * 100) + '%';
-    h.innerHTML = '<div class="tl-punto">✓</div><div class="tl-lbl"><b>' + ars(t.min) + '</b>' +
-                  t.nombre + (t.pendiente ? ' <span class="pendiente">a confirmar</span>' : '') +
-                  '</div>';
+    h.innerHTML = '<div class="tl-punto">✓</div><div class="tl-lbl">' + etiqueta(t) + '</div>';
     pista.appendChild(h);
   });
+  // La misma escalera, en fila, para celular.
+  const fila = $('#tlEtiquetas');
+  if (fila) fila.innerHTML = TIERS.map(t => '<span>' + etiqueta(t) + '</span>').join('');
 }
 pintarHitos();
 
@@ -3135,7 +3425,7 @@ function mensajeProgreso(subtotal, falta, proximo, pct){
    equivale al minimo del segmento de destino y dejaba al cliente por debajo
    del minimo apenas lo cruzaba. */
 function recalcular(){
-  const subtotal = Object.values(carrito).reduce((a,i) => a + precioDe(i.prod) * i.cant, 0);
+  const subtotal = totalCarrito();
   const unidades = Object.values(carrito).reduce((a,i) => a + i.cant, 0);
   const lineas = Object.keys(carrito).length;
 
@@ -3254,7 +3544,10 @@ function pintarCarrito(entrando){
   } else {
     lista.innerHTML = '';
     entradas.forEach(([clave, i]) => {
-      const unit = precioDe(i.prod), sub = unit * i.cant;
+      const unit = precioItem(i), sub = unit * i.cant;
+      // Una linea que entro con otros precios se marca: si no, el cliente ve
+      // dos precios distintos para el mismo segmento y no entiende por que.
+      const otroSeg = (i.seg || segmento) !== segmento;
       total += sub;
       const li = document.createElement('li');
       li.className = 'citem';
@@ -3262,7 +3555,10 @@ function pintarCarrito(entrando){
         (i.prod.img ? '<img class="citem__foto" src="' + i.prod.img + '" alt="" loading="lazy">'
                     : '<span class="citem__foto"></span>') +
         '<span class="citem__txt"><span class="citem__nom">' + i.prod.n + '</span>' +
-        '<span class="citem__unit">' + ars(unit) + ' c/u</span></span>' +
+        '<span class="citem__unit">' + ars(unit) + ' c/u' +
+        (otroSeg ? ' <span class="citem__seg">precio ' +
+                   SEGMENTOS[i.seg].label.toLowerCase() + '</span>' : '') +
+        '</span></span>' +
         '<span class="citem__qty"><button type="button" data-q="-1" aria-label="Quitar uno">-</button>' +
         '<span>' + i.cant + '</span>' +
         '<button type="button" data-q="1" aria-label="Agregar uno">+</button></span>' +
@@ -3275,13 +3571,11 @@ function pintarCarrito(entrando){
         // Bajar de uno saca el producto: es lo que espera cualquiera que
         // aprieta el menos con un solo item.
         if (n < 1) delete carrito[clave]; else carrito[clave].cant = n;
-        pintarCarrito(); recalcular(); revisarCompraRapida();
+        pintarCarrito(); recalcular();
       });
       li.querySelector('.citem__quitar').onclick = () => {
         track('remove_from_cart', {item_name:i.prod.n});
-        const borrar = () => {
-          delete carrito[clave]; pintarCarrito(); recalcular(); revisarCompraRapida();
-        };
+        const borrar = () => { delete carrito[clave]; pintarCarrito(); recalcular(); };
         // La fila se va antes de desaparecer del objeto: si se borra de una,
         // la lista pega un salto y no se entiende cual se saco.
         if (!ANIM.activo) return borrar();
@@ -3329,16 +3623,26 @@ function pintarCarrito(entrando){
     : (logrados.length ? '\u2713 Ten\u00e9s ' + enumerar(logrados.map(t => t.nombre.toLowerCase()))
        : (proximo ? 'Te faltan ' + ars(proximo.min - total) + ' para ' +
           proximo.nombre.toLowerCase() : ''));
-  $('#checkoutIr').disabled = !total;
+
+  /* Mayorista y distribuidor no pueden comprar por debajo de su minimo: la
+     tienda no se lo va a aceptar. Dejar el boton habilitado lo mandaba a un
+     checkout que lo iba a rechazar, que es la peor forma de enterarse. */
+  const falta = faltaPara(segmento, total);
+  const bloqueo = $('#checkoutBloqueo');
+  bloqueo.hidden = !total || !falta;
+  if (!bloqueo.hidden){
+    bloqueo.textContent = 'Para poder realizar la compra tenés que cumplir el mínimo ' +
+      SEGMENTOS[segmento].label.toLowerCase() + ' de ' + ars(MINIMOS[segmento]) +
+      '. Te faltan ' + ars(falta) + '.';
+  }
+  $('#checkoutIr').disabled = !total || !!falta;
 }
 
 $('#bfIr').onclick = () => {
   if (!Object.keys(carrito).length) return;
   pintarCarrito(true);
   abrirModal('modalCheckout');
-  track('view_cart', {value:Object.values(carrito)
-    .reduce((a,i) => a + precioDe(i.prod) * i.cant, 0),
-    items: itemsGA(Object.values(carrito))});
+  track('view_cart', {value: totalCarrito(), items: itemsGA(Object.values(carrito))});
 };
 $('#checkoutSeguir').onclick = () => cerrarModal('modalCheckout');
 $('#checkoutCerrar').onclick = () => cerrarModal('modalCheckout');
@@ -3518,22 +3822,26 @@ const CARRITO_TIENDA = '/comprar/';
 /* Que id mandarle a la tienda. Si el producto tiene variantes vale la de la
    variante elegida; si no, la publicacion del segmento que se esta mirando,
    que es la que tiene el precio correcto. */
-function idParaLaTienda(p){
+function idParaLaTienda(p, seg, vi){
+  const donde = seg || segmento;
   if (p.vars){
-    const v = p.vars[varElegida.get(p.n) ?? 0];
+    const v = p.vars[vi ?? varElegida.get(p.n) ?? 0];
     if (v && v.id) return v.id;
   }
-  return p.ids[segmento] || p.ids.minorista;
+  /* La publicacion del segmento con el que se cargo la linea, que es la que
+     tiene el precio que el cliente vio. Mandar la de otro segmento le
+     cambiaria el precio en el carrito de la tienda. */
+  return p.ids[donde] || p.ids.minorista;
 }
 
 /* Un formulario suelto por producto, igual al que usa la ficha de la tienda:
    method post, action /comprar/ y el id en add_to_cart. */
-function formularioParaLaTienda(p, cant){
+function formularioParaLaTienda(p, cant, seg, vi){
   const f = document.createElement('form');
   f.className = 'js-product-form';
   f.method = 'post';
   f.action = CARRITO_TIENDA;
-  [['add_to_cart', idParaLaTienda(p)], ['quantity', cant]].forEach(([n, v]) => {
+  [['add_to_cart', idParaLaTienda(p, seg, vi)], ['quantity', cant]].forEach(([n, v]) => {
     const i = document.createElement('input');
     i.type = 'hidden'; i.name = n; i.value = v;
     f.appendChild(i);
@@ -3551,7 +3859,7 @@ async function mandarALaTienda(items, boton, textoOriginal){
 
   const enLaTienda = typeof LS !== 'undefined' && typeof LS.addToCartEnhanced === 'function';
   boton.disabled = true;
-  boton.textContent = 'Cargando tu compra...';
+  boton.textContent = 'Redirigiendo...';
 
   if (!enLaTienda){
     // En el prototipo no existe LS: se muestra que haria y no se navega.
@@ -3568,7 +3876,7 @@ async function mandarALaTienda(items, boton, textoOriginal){
   const sinPanel = () => {};   // reemplaza la apertura de la gaveta
   let fallaron = 0;
   for (const it of items){
-    const f = formularioParaLaTienda(it.prod, it.cant);
+    const f = formularioParaLaTienda(it.prod, it.cant, it.seg, it.vi);
     try {
       await LS.addToCartEnhanced(f, '', '', '', true, sinPanel);
     } catch (err) {
@@ -3645,7 +3953,7 @@ window.pruebaDeCarrito = function(){
     }
     const filas = items.map(i => ({
       producto: i.prod.n,
-      id_que_se_manda: idParaLaTienda(i.prod),
+      id_que_se_manda: idParaLaTienda(i.prod, seg),
       cantidad: i.cant,
       precio_landing: precioDe(i.prod),
       variante: i.prod.vars
@@ -3668,22 +3976,30 @@ window.pruebaDeCarrito = function(){
 
 $('#checkoutIr').onclick = e => {
   const items = Object.values(carrito);
-  track('begin_checkout', {value: items.reduce((a, i) => a + precioDe(i.prod) * i.cant, 0),
+  track('begin_checkout', {value: items.reduce((a, i) => a + precioItem(i) * i.cant, 0),
                            segment: segmento, items: itemsGA(items)});
   mandarALaTienda(items, e.currentTarget, 'Finalizar compra');
 };
 
-/* Compra rapida: se lleva SOLO el producto que se esta mirando, con la
-   cantidad y la variante elegidas, y va derecho al carrito de la tienda. No
-   toca el carrito de la landing a proposito: quien la usa no esta armando una
-   compra, quiere ese producto y nada mas. */
+/* "Comprar ahora": suma el producto y abre el carrito. Antes se salteaba el
+   carrito de la landing y se iba derecho a /comprar/ con ese producto solo,
+   asi que el boton no llevaba a ningun lado visible y encima podia dejar
+   afuera lo que el cliente ya tenia cargado. */
 $('#mvRapida').onclick = e => {
   if (!vista) return;
+  const b = e.currentTarget;
   const cant = Math.max(1, +$('#mvQty').querySelector('span').textContent || 1);
+  agregar(vista.p, vista.key, cant, null);
   track('quick_buy', {item_name: vista.p.n, quantity: cant, segment: segmento,
-                      value: precioDe(vista.p) * cant,
-                      items: itemsGA([{prod: vista.p, cant}])});
-  mandarALaTienda([{prod: vista.p, cant}], e.currentTarget, 'Compra rápida');
+                      value: precioItem(carrito[vista.key]) * cant,
+                      items: itemsGA([carrito[vista.key]])});
+  b.disabled = true;
+  b.textContent = 'Redirigiendo...';
+  cerrarModal('modal');
+  pintarCarrito(true);
+  abrirModal('modalCheckout');
+  // El boton vuelve a su estado para la proxima ficha que se abra.
+  setTimeout(() => { b.disabled = false; b.textContent = 'Comprar ahora'; }, 900);
 };
 
 
