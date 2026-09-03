@@ -15,19 +15,36 @@
      HERO > QUE NECESITAS CUIDAR > MINORISTA|MAYORISTA > CATALOGO >
      TIMELINE > RECOMENDACIONES > CROSS-SELL > PACKS > BENEFICIOS >
      TESTIMONIOS > INSTITUCIONAL > CTA FINAL
-   Paleta de config/defaults.txt del theme real: #4FA19E, #C6D51E, #3F3D38.
    =========================================================================== */
+/* ══ PALETA OFICIAL ══════════════════════════════════════════════════════
+   Los dos colores de marca. Cambiando estas dos lineas cambia toda la pagina.
+
+     --verde   #14823C   del isologo de la tienda
+     --fucsia  #E01560   del banner de Club Habitad+ (ahi mide #FA2065; va un
+                         punto mas oscuro para que el texto blanco encima
+                         llegue al minimo de contraste: 4,74:1 contra 4,13:1)
+
+   El turquesa y el lima que traia el theme de la tienda quedaron afuera.
+   Reparto: FUCSIA lo que hay que apretar, VERDE estado y progreso -- el mismo
+   reparto que usa el banner del Club. */
 :root{
-  --teal:#4FA19E; --teal-suave:#e7f2f1; --lima:#C6D51E; --lima-suave:#f4f7d9;
-  --tinta:#3F3D38; --tinta-suave:#6f6b62; --crema:#FAFBE9; --papel:#fff;
-  --borde:#e6e4da; --btn-txt:#333; --alerta:#b3261e; --ok:#2e7d52;
+  --verde:#14823C; --verde-hondo:#0E5F2B; --verde-suave:#E9F3EB;
+  /* Verde claro: el de la hoja del isologo. Es el unico que se lee sobre el
+     fondo oscuro de la barra fija; el #14823C ahi se apaga. */
+  --verde-claro:#8CBE32;
+  --fucsia:#E01560; --fucsia-hondo:#B70F4D; --fucsia-suave:#FDEAF1;
+  --tinta:#3F3D38; --tinta-suave:#6f6b62; --crema:#FBF5EC; --papel:#fff;
+  --borde:#e6e4da; --btn-txt:#fff; --alerta:#b3261e; --ok:#2e7d52;
   --r:14px; --sombra:0 1px 2px rgba(63,61,56,.05),0 8px 24px rgba(63,61,56,.07);
   --sombra-alta:0 18px 50px rgba(63,61,56,.18);
 }
 *,*::before,*::after{box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:16px}
+/* Sin esto, saltar a una seccion la dejaba debajo de la barra de categorias.
+   Se mide sola: ver la funcion que pone --barra-cat. */
+html{scroll-padding-top:calc(var(--barra-cat, 0px) + 12px)}
 body{margin:0;font-family:Raleway,system-ui,-apple-system,"Segoe UI",sans-serif;
-  color:var(--tinta);background:var(--papel);line-height:1.55;padding-bottom:96px}
+  color:var(--tinta);background:var(--papel);line-height:1.55;padding-bottom:0}
 h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
 .bloque{padding:56px 0}
@@ -43,16 +60,28 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .rev.armado.visto{opacity:1;transform:none}
 
 .aviso{background:var(--tinta);color:#fff;font-size:13px;padding:10px 20px;text-align:center}
-.aviso b{color:var(--lima)}
+.aviso b{color:var(--verde-claro)}
 
 /* ---- HERO ---- */
-/* Alto del banner: +350px sobre el original para que se lea lo que dicen las
-   piezas de la tienda, que traen texto grande. */
+/* Alto del banner. Medido antes: 704px en escritorio y 550px de minimo en
+   celular, con lo cual la eleccion de compra caia debajo del pliegue. Ahora
+   son 430px de tope, y arriba del pliegue entran el banner, la pregunta y el
+   comienzo de las categorias.
+
+   En escritorio las piezas van CONTENIDAS, no recortadas: son 1884x835 y a
+   430px de alto un `cover` les cortaria un tercio, justo donde estan el
+   titular y el boton. Contenidas se ven enteras, y como el fondo de las
+   piezas es la misma crema que el de la seccion, la caja no se nota.
+
+   En celular no se puede: las piezas son verticales (1136x1385) y contenidas
+   quedarian del tamaño de una estampilla. Ahi van recortadas desde arriba,
+   que es donde estan el titular y la imagen principal, y lo que se pierde
+   abajo lo repone el boton de verdad que se agrega mas adelante. */
 .hero{background:var(--crema);padding:0;text-align:center;
-  min-height:clamp(550px,calc(26vw + 350px),730px)}
+  min-height:clamp(300px,30vw,430px)}
 .hero h1{font-size:clamp(28px,4.6vw,46px);margin-bottom:14px}
 .hero p{max-width:620px;margin:0 auto 28px;font-size:clamp(15px,1.7vw,18px);color:var(--tinta-suave)}
-.cta{display:inline-block;background:var(--lima);color:var(--btn-txt);border:0;border-radius:999px;
+.cta{display:inline-block;background:var(--fucsia);color:var(--btn-txt);border:0;border-radius:999px;
   padding:15px 34px;font:inherit;font-weight:700;font-size:16px;text-decoration:none;cursor:pointer;
   transition:transform .15s,box-shadow .15s}
 .cta:hover{transform:translateY(-2px);box-shadow:var(--sombra)}
@@ -66,31 +95,29 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .chip{flex:0 0 auto;background:var(--papel);border:1.5px solid var(--borde);
   border-radius:999px;padding:11px 20px;font:inherit;font-weight:600;font-size:14.5px;color:var(--tinta);
   cursor:pointer;white-space:nowrap;transition:.16s;min-height:44px}
-.chip:hover{border-color:var(--teal);color:var(--teal)}
-.chip[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#fff}
+.chip:hover{border-color:var(--verde);color:var(--verde)}
+.chip[aria-pressed="true"]{background:var(--verde);border-color:var(--verde);color:#fff}
 .chip .n{opacity:.65;font-weight:500;margin-left:6px;font-size:13px}
-.chip--packs{border-style:dashed;border-color:var(--lima);color:#7d871a}
+.chip--packs{border-style:dashed;border-color:var(--fucsia);color:var(--fucsia-hondo)}
 /* Una categoria sin productos en este segmento se ve apagada. Sigue clickeable
    porque al entrar se explica por que esta vacia, que es informacion util. */
-.chip--vacia{opacity:.42}
-.chip--vacia:hover{border-color:var(--borde);color:var(--tinta)}
-.chip--packs[aria-pressed="true"]{background:var(--lima);border-color:var(--lima);color:var(--btn-txt)}
+.chip--packs[aria-pressed="true"]{background:var(--fucsia);border-color:var(--fucsia);color:var(--btn-txt)}
 
 /* ---- SELECTOR DE CLIENTE, progresivo ---- */
 .seg-nivel{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
 .seg-btn{background:var(--papel);border:2px solid var(--borde);border-radius:var(--r);
   padding:20px 30px;min-width:220px;cursor:pointer;font:inherit;text-align:center;transition:.18s}
-.seg-btn:hover{border-color:var(--teal)}
+.seg-btn:hover{border-color:var(--verde)}
 .seg-btn b{display:block;font-size:17px;font-weight:700;margin-bottom:3px}
 .seg-btn span{font-size:13.5px;color:var(--tinta-suave)}
-.seg-btn[aria-pressed="true"]{border-color:var(--teal);background:var(--teal-suave)}
+.seg-btn[aria-pressed="true"]{border-color:var(--verde);background:var(--verde-suave)}
 .seg-nivel2{margin-top:16px;display:none}
 .seg-nivel2.on{display:block;animation:baja .35s ease}
 @keyframes baja{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
-.seg-activo{margin-top:18px;text-align:center;font-size:14px;background:var(--teal-suave);
+.seg-activo{margin-top:18px;text-align:center;font-size:14px;background:var(--verde-suave);
   border-radius:10px;padding:12px 18px;display:none}
 .seg-activo.on{display:block}
-.seg-activo b{color:var(--teal)}
+.seg-activo b{color:var(--verde)}
 
 /* ---- TARJETA DE PRODUCTO ---- */
 .grilla{display:grid;gap:20px;grid-template-columns:repeat(auto-fill,minmax(226px,1fr))}
@@ -101,12 +128,12 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   color:#c3ccae;font-size:40px;overflow:hidden}
 /* Envases y proporciones originales: contain, nunca cover. */
 .foto img{width:100%;height:100%;object-fit:contain;display:block}
-.tag{position:absolute;top:10px;left:10px;background:var(--teal);color:#fff;font-size:11.5px;
+.tag{position:absolute;top:10px;left:10px;background:var(--verde);color:#fff;font-size:11.5px;
   font-weight:700;padding:4px 9px;border-radius:6px}
 .tag--bug{background:var(--alerta);top:auto;bottom:10px}
 .card-body{padding:14px;display:flex;flex-direction:column;gap:7px;flex:1}
 .card h3{font-size:15px;font-family:Raleway,sans-serif;font-weight:700;line-height:1.32}
-.pres{font-size:12.5px;color:var(--teal);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.pres{font-size:12.5px;color:var(--verde);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
 .desc{font-size:13px;color:var(--tinta-suave);margin:0;display:-webkit-box;-webkit-line-clamp:2;
   -webkit-box-orient:vertical;overflow:hidden}
 .caracs{list-style:none;margin:0;padding:0;font-size:12.5px;color:var(--tinta-suave)}
@@ -115,24 +142,24 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .precios{display:flex;align-items:baseline;gap:8px;margin-top:auto;flex-wrap:wrap}
 .precio{font-size:19px;font-weight:700}
 .precio-viejo{font-size:13.5px;color:var(--tinta-suave);text-decoration:line-through}
-.precio-seg{font-size:11.5px;background:var(--teal);color:#fff;padding:2px 7px;border-radius:5px;font-weight:700}
+.precio-seg{font-size:11.5px;background:var(--verde);color:#fff;padding:2px 7px;border-radius:5px;font-weight:700}
 .acciones{display:flex;gap:8px;align-items:center}
 .qty{display:flex;align-items:center;border:1.5px solid var(--borde);border-radius:9px;overflow:hidden}
 .qty button{width:32px;height:38px;border:0;background:transparent;font-size:17px;cursor:pointer;
   color:var(--tinta);font-family:inherit}
 .qty button:hover{background:var(--crema)}
 .qty span{width:26px;text-align:center;font-weight:700;font-size:14px}
-.add{flex:1;background:var(--lima);color:var(--btn-txt);border:0;border-radius:9px;padding:11px 8px;
+.add{flex:1;background:var(--fucsia);color:var(--btn-txt);border:0;border-radius:9px;padding:11px 8px;
   font:inherit;font-weight:700;font-size:14px;cursor:pointer;min-height:38px}
 .add:hover{filter:brightness(1.06)}
-.add.ok{background:var(--teal);color:#fff}
+.add.ok{background:var(--verde);color:#fff}
 /* Antes era un enlace subrayado de 13px que casi no se veia. Ahora es un
    boton con borde: mismo lugar, mucho mas claro que se puede tocar. */
-.vermas{background:var(--papel);border:1.5px solid var(--teal);color:var(--teal);
+.vermas{background:var(--papel);border:1.5px solid var(--verde);color:var(--verde);
   font:inherit;font-size:16px;font-weight:700;cursor:pointer;text-decoration:none;
   padding:9px 14px;border-radius:9px;align-self:stretch;text-align:center;
   transition:background .16s,color .16s}
-.vermas:hover{background:var(--teal);color:#fff}
+.vermas:hover{background:var(--verde);color:#fff}
 .vertodo{text-align:center;margin-top:26px}
 .vacio{grid-column:1/-1;text-align:center;padding:52px 24px;border:2px dashed var(--borde);
   border-radius:var(--r);color:var(--tinta-suave);background:#fcfcf7}
@@ -140,21 +167,21 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 
 /* ---- TIMELINE DE VARIOS HITOS ---- */
 .timeline{background:var(--papel);border:1.5px solid var(--borde);border-radius:var(--r);padding:24px}
-.bf-msg.festejo{color:var(--lima);font-weight:700;animation:late .5s ease}
+.bf-msg.festejo{color:var(--verde-claro);font-weight:700;animation:late .5s ease}
 @keyframes late{0%{transform:scale(.94)}55%{transform:scale(1.05)}100%{transform:scale(1)}}
 .tl-sub{margin:0 0 20px;font-size:14px;color:var(--tinta-suave);text-align:center}
 .tl-pista{position:relative;height:10px;background:#eceadd;border-radius:99px;margin:34px 0 0}
-.tl-pista i{position:absolute;inset:0 auto 0 0;background:var(--teal);border-radius:99px;width:0;
+.tl-pista i{position:absolute;inset:0 auto 0 0;background:var(--verde);border-radius:99px;width:0;
   transition:width .5s cubic-bezier(.4,0,.2,1)}
 .tl-hito{position:absolute;top:50%;transform:translate(-50%,-50%);text-align:center}
 .tl-punto{width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid #d8d5c6;
   transition:.35s;display:grid;place-items:center;font-size:10px;color:#fff}
-.tl-hito.logrado .tl-punto{background:var(--teal);border-color:var(--teal)}
-.tl-hito.proximo .tl-punto{border-color:var(--teal);box-shadow:0 0 0 5px rgba(79,161,158,.16)}
+.tl-hito.logrado .tl-punto{background:var(--verde);border-color:var(--verde)}
+.tl-hito.proximo .tl-punto{border-color:var(--verde);box-shadow:0 0 0 5px rgba(20,130,60,.16)}
 .tl-lbl{position:absolute;top:26px;left:50%;transform:translateX(-50%);white-space:nowrap;
   font-size:11.5px;color:var(--tinta-suave);line-height:1.3}
 .tl-lbl b{display:block;color:var(--tinta);font-size:12.5px}
-.tl-hito.logrado .tl-lbl b{color:var(--teal)}
+.tl-hito.logrado .tl-lbl b{color:var(--verde)}
 .tl-pie{margin-top:58px;font-size:12.5px;color:var(--tinta-suave);text-align:center}
 
 /* ---- SUGERENCIAS ---- */
@@ -207,7 +234,7 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .pack-precio s{font-size:12px;color:var(--tinta-suave)}
 .card--pack .acciones{margin-top:11px}
 .card--pack .vermas{margin-top:8px;border-color:#d8d4c4;color:var(--tinta-suave)}
-.card--pack .vermas:hover{border-color:var(--teal);color:var(--teal)}
+.card--pack .vermas:hover{border-color:var(--verde);color:var(--verde)}
 
 /* ---- BENEFICIOS ---- */
 .benes{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
@@ -245,7 +272,7 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .modal-cerrar{position:sticky;top:0;float:right;background:none;border:0;font-size:26px;cursor:pointer;
   color:var(--tinta-suave);padding:10px 16px;line-height:1;z-index:2}
 .modal-cuerpo{padding:22px}
-.nota{background:var(--crema);border-left:3px solid var(--teal);padding:11px 14px;font-size:12.5px;
+.nota{background:var(--crema);border-left:3px solid var(--verde);padding:11px 14px;font-size:12.5px;
   color:var(--tinta-suave);border-radius:0 8px 8px 0;margin-bottom:16px}
 
 /* ---- BARRA FIJA: timeline + carrito en un solo elemento ---- */
@@ -255,27 +282,27 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .barra-fija.visible{transform:none}
 .bf-timeline{max-width:1140px;margin:0 auto;padding:44px 8px 4px}
 .bf-row{max-width:1140px;margin:0 auto;display:flex;align-items:center;gap:14px}
-.bf-cant{background:var(--lima);color:var(--btn-txt);border-radius:999px;min-width:28px;height:28px;
+.bf-cant{background:var(--fucsia);color:var(--btn-txt);border-radius:999px;min-width:28px;height:28px;
   display:grid;place-items:center;font-weight:700;font-size:13px;flex:0 0 auto}
 .bf-info{flex:1;min-width:0;display:flex;align-items:baseline;gap:12px}
 .bf-monto{font-weight:700;font-size:18px;flex:0 0 auto}
 .bf-msg{font-size:13.5px;color:#d9d6cd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bf-ir{background:var(--lima);color:var(--btn-txt);border:0;border-radius:9px;padding:12px 22px;
+.bf-ir{background:var(--fucsia);color:var(--btn-txt);border:0;border-radius:9px;padding:12px 22px;
   font:inherit;font-weight:700;cursor:pointer;white-space:nowrap;flex:0 0 auto}
 .bf-ir:hover{filter:brightness(1.06)}
 /* el timeline dentro de la barra oscura invierte los colores de la pista */
 .barra-fija .tl-pista{background:rgba(255,255,255,.18);margin:0;height:8px}
-.barra-fija .tl-pista i{background:var(--lima)}
+.barra-fija .tl-pista i{background:var(--verde-claro)}
 .barra-fija .tl-punto{background:var(--tinta);border-color:rgba(255,255,255,.42);width:17px;height:17px;border-width:2.5px}
-.barra-fija .tl-hito.logrado .tl-punto{background:var(--lima);border-color:var(--lima);color:var(--tinta)}
-.barra-fija .tl-hito.proximo .tl-punto{border-color:var(--lima);box-shadow:0 0 0 4px rgba(198,213,30,.22)}
+.barra-fija .tl-hito.logrado .tl-punto{background:var(--verde-claro);border-color:var(--verde-claro);color:var(--tinta)}
+.barra-fija .tl-hito.proximo .tl-punto{border-color:var(--verde-claro);box-shadow:0 0 0 4px rgba(140,190,50,.26)}
 .barra-fija .tl-lbl{top:auto;bottom:18px;color:#c3bfb4;font-size:11.5px}
 /* Los importes son el dato que el cliente lee de reojo: +6px y en la
    tipografia sans, que a este tamano se lee mejor que la serif. */
 .barra-fija .tl-lbl b{color:#fff;font-size:17.5px;
   font-family:Raleway,system-ui,sans-serif;font-weight:700;
   letter-spacing:.01em;line-height:1.15;margin-bottom:1px}
-.barra-fija .tl-hito.logrado .tl-lbl b{color:var(--lima)}
+.barra-fija .tl-hito.logrado .tl-lbl b{color:var(--verde-claro)}
 
 /* resumen del traspaso al carrito */
 .resumen{list-style:none;margin:0 0 4px;padding:0}
@@ -285,13 +312,12 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .resumen li b{flex:0 0 auto}
 .resumen-total{display:flex;justify-content:space-between;padding:12px 0 4px;font-size:16px}
 .resumen-total b{font-size:20px}
-.resumen-nota{margin:0;font-size:13px;color:var(--teal);font-weight:700}
+.resumen-nota{margin:0;font-size:13px;color:var(--verde);font-weight:700}
 
 /* El boton de WhatsApp lo agrega la tienda: no se duplica aca. */
 
 @media(max-width:640px){
   .grilla{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:13px}
-  .hero{padding:46px 0 52px}
   .bloque{padding:42px 0}
   .seg-btn{min-width:0;flex:1;padding:16px 14px}
   .tl-lbl{font-size:10px}
@@ -328,19 +354,43 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .hero__fondos{position:absolute;inset:0;z-index:0}
 .hero__slide{position:absolute;inset:0;opacity:0;transition:opacity 1.1s ease}
 .hero__slide.activa{opacity:1}
-.hero__slide img{width:100%;height:100%;object-fit:cover;display:block}
+.hero__slide img{width:100%;height:100%;object-fit:contain;display:block}
 .hero__fondos{position:absolute;inset:0;z-index:0}
 .hero{display:block}
 /* Velo crema: mantiene el texto oscuro de la marca legible sobre la foto. */
 .hero__velo{position:absolute;inset:0;z-index:1;
-  background:linear-gradient(180deg,rgba(250,251,233,0) 0%,rgba(250,251,233,.10) 68%,rgba(250,251,233,.92) 100%)}
+  background:linear-gradient(180deg,rgba(251,245,236,0) 0%,rgba(251,245,236,.10) 68%,rgba(251,245,236,.92) 100%)}
 .hero__contenido{position:relative;z-index:2}
 .hero h1{text-shadow:0 1px 0 rgba(255,255,255,.55)}
-.hero__puntos{position:absolute;left:0;right:0;bottom:14px;z-index:2;
+.hero__puntos{position:absolute;left:0;right:0;bottom:14px;z-index:4;
   display:flex;gap:7px;justify-content:center}
 .hero__punto{width:8px;height:8px;border-radius:50%;border:0;padding:0;cursor:pointer;
   background:rgba(63,61,56,.28);transition:.2s}
 .hero__punto[aria-current="true"]{background:var(--tinta);width:22px;border-radius:99px}
+
+/* La pieza entera es un enlace. Sin nada dibujado encima: la unica señal es
+   el puntero, porque la pieza ya trae su propia llamada. */
+.hero__enlace{position:absolute;inset:0;z-index:2;display:block}
+.hero__enlace[hidden]{display:none}
+.hero__enlace span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+
+/* El boton de verdad, montado sobre el borde de abajo del banner. */
+.hero-cta-caja{position:relative;z-index:3;text-align:center;
+  background:var(--crema);margin-top:-24px;padding-bottom:6px}
+.hero__cta{background:var(--fucsia);color:#fff;padding:13px 30px;font-size:15.5px;
+  box-shadow:0 6px 20px rgba(224,21,96,.32)}
+.hero__cta:hover{background:var(--fucsia-hondo)}
+.hero-cta-caja:has(.hero__cta[hidden]){display:none}
+@media(max-width:700px){
+  .hero-cta-caja{margin-top:-22px}
+  .hero__cta{padding:12px 22px;font-size:14px;max-width:calc(100% - 40px)}
+}
+@media(max-width:700px){
+  /* Verticales: contenidas quedarian ilegibles, asi que se recortan desde
+     arriba, que es donde vive el titular. */
+  .hero__slide img{object-fit:cover;object-position:center top}
+  .hero{min-height:clamp(320px,84vw,430px)}
+}
 
 /* ---- CHIPS PEGADOS ARRIBA DEL CATÁLOGO ----
    Antes vivían en una sección aparte y había que volver a subir para cambiar
@@ -349,7 +399,17 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   padding-top:8px;box-shadow:0 6px 14px -12px rgba(63,61,56,.5)}
 .chips{margin:0}
 .chips-mas{display:none;margin:0 auto 8px;background:none;border:0;font:inherit;
-  font-size:12.5px;font-weight:700;color:var(--teal);cursor:pointer;padding:4px 10px}
+  font-size:12.5px;font-weight:700;color:var(--verde);cursor:pointer;padding:4px 10px}
+/* Pegada arriba, la barra se achica. Suelta mide 174px en un celular -- un
+   quinto de la pantalla ocupado de forma permanente mientras se recorre la
+   grilla. Pegada deja una fila de categorias y el buscador, que es lo que
+   hace falta tener siempre a mano. */
+.chips-barra.pegada{box-shadow:0 8px 18px -12px rgba(63,61,56,.55)}
+@media(max-width:640px){
+  .chips-barra.pegada .chips{max-height:44px}
+  .chips-barra.pegada.abierta .chips{max-height:none}
+  .chips-barra.pegada .buscador{margin-bottom:2px}
+}
 @media(max-width:640px){
   .chips-barra{padding-top:6px}
   /* Mas chicos para que entren mas por fila. */
@@ -365,7 +425,7 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 }
 .variante-sel{width:100%;padding:8px 9px;border:1.5px solid var(--borde);border-radius:9px;
   background:var(--papel);font:inherit;font-size:13px;color:var(--tinta);cursor:pointer}
-.variante-sel:focus{border-color:var(--teal);outline:none}
+.variante-sel:focus{border-color:var(--verde);outline:none}
 
 /* ══ CATÁLOGO EN BANNER · 4 columnas × 2 filas ══
    grid-auto-flow:column con dos filas hace que las tarjetas se acomoden de
@@ -391,7 +451,7 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   background:var(--papel);border:1.5px solid var(--borde);color:var(--tinta);
   display:grid;place-items:center;cursor:pointer;box-shadow:var(--sombra);
   transition:border-color .16s,opacity .16s}
-.cat-flecha:hover:not(:disabled){border-color:var(--teal);color:var(--teal)}
+.cat-flecha:hover:not(:disabled){border-color:var(--verde);color:var(--verde)}
 .cat-flecha:disabled{opacity:.3;cursor:default}
 .cat-flecha svg{width:22px;height:22px}
 .cat-pista{text-align:center;font-size:13px;color:var(--tinta-suave);margin:2px 0 0}
@@ -431,13 +491,13 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .ficha__mini{width:62px;height:62px;border:1.5px solid var(--borde);border-radius:9px;
   overflow:hidden;background:var(--crema);cursor:pointer;padding:0}
 .ficha__mini img{width:100%;height:100%;object-fit:contain;display:block}
-.ficha__mini[aria-current="true"]{border-color:var(--teal);box-shadow:0 0 0 2px rgba(79,161,158,.2)}
+.ficha__mini[aria-current="true"]{border-color:var(--verde);box-shadow:0 0 0 2px rgba(20,130,60,.2)}
 .ficha__principal{background:var(--crema);border-radius:var(--r);aspect-ratio:1;
   display:grid;place-items:center;overflow:hidden;min-height:0;width:100%}
 .ficha__principal img{width:100%;height:100%;object-fit:contain}
 
 .ficha__cintas{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
-.ficha__cinta{background:var(--teal-suave);color:#1d6b68;font-size:12px;font-weight:700;
+.ficha__cinta{background:var(--verde-suave);color:var(--verde-hondo);font-size:12px;font-weight:700;
   padding:4px 10px;border-radius:6px}
 .ficha__vendidos{margin:0 0 4px;font-size:13px;color:var(--tinta-suave)}
 .ficha__titulo{font-size:20px;line-height:1.25;margin:0 0 6px}
@@ -463,6 +523,9 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .ficha__descripcion{padding:6px 26px 26px}
 .ficha__descripcion h4{margin:0 0 8px;font-family:Lora,Georgia,serif;font-size:17px}
 .ficha__descripcion p{margin:0 0 16px;font-size:14.5px;line-height:1.6;color:var(--tinta-suave)}
+.ficha__vermas-desc{background:none;border:0;padding:0;margin:-10px 0 16px;font:inherit;
+  font-size:13.5px;font-weight:700;color:var(--verde);cursor:pointer;text-decoration:underline}
+.ficha__vermas-desc:hover{color:var(--verde-hondo)}
 .ficha__ficha-tecnica{margin:0 0 14px;display:grid;gap:0}
 .ficha__ficha-tecnica > div{display:grid;grid-template-columns:130px 1fr;gap:12px;
   font-size:14px;padding:9px 0;border-bottom:1px dashed var(--borde)}
@@ -520,7 +583,7 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .sellos--ficha .sello b{font-size:13px}
 .sellos--ficha .sello span{font-size:11.5px;line-height:1.35}
 .sello__ico{display:grid;place-items:center;width:56px;height:56px;margin:0 auto 10px;
-  border-radius:50%;border:2px solid var(--teal);font-size:24px;color:var(--teal)}
+  border-radius:50%;border:2px solid var(--verde);font-size:24px;color:var(--verde)}
 .sello b{display:block;font-size:15px;margin-bottom:3px}
 .sello span{font-size:13px;color:var(--tinta-suave)}
 
@@ -531,7 +594,7 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   position:relative;list-style:none}
 .faq summary::-webkit-details-marker{display:none}
 .faq summary::after{content:'+';position:absolute;right:6px;top:11px;font-size:24px;
-  color:var(--lima);font-weight:700}
+  color:var(--fucsia);font-weight:700}
 .faq details[open] summary::after{content:'−'}
 .faq p{margin:0 0 16px;font-size:14.5px;line-height:1.6;color:var(--tinta-suave)}
 
@@ -564,7 +627,7 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .muro::-webkit-scrollbar{display:none}
 .muro__item{scroll-snap-align:start;background:var(--papel);border:1px solid var(--borde);
   border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column}
-.muro__item--foto{border-color:var(--teal)}
+.muro__item--foto{border-color:var(--verde)}
 .muro__astros{color:#e0a92b;font-size:14px;letter-spacing:1px}
 .muro__titulo{font-weight:700;font-size:14.5px;margin:6px 0 4px}
 .muro__texto{margin:0 0 10px;font-size:14px;line-height:1.55;color:var(--tinta-suave);
@@ -575,8 +638,8 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   display:block;margin-bottom:10px}
 .muro__pie{margin-top:auto;display:flex;gap:8px;align-items:center;
   border-top:1px dashed var(--borde);padding-top:9px}
-.muro__inicial{width:30px;height:30px;border-radius:50%;background:var(--teal-suave);
-  color:var(--teal);display:grid;place-items:center;font-weight:700;font-size:13px;flex:0 0 auto}
+.muro__inicial{width:30px;height:30px;border-radius:50%;background:var(--verde-suave);
+  color:var(--verde);display:grid;place-items:center;font-weight:700;font-size:13px;flex:0 0 auto}
 .muro__quien{min-width:0}
 .muro__autor{font-weight:700;font-size:13.5px;display:block}
 .muro__producto{font-size:12px;color:var(--tinta-suave);display:block;overflow:hidden;
@@ -616,7 +679,7 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .hist__retrato figcaption b{display:block;font-size:14.5px}
 .hist__retrato figcaption span{font-size:12.5px;color:var(--tinta-suave)}
 .hist__ojo{text-transform:uppercase;letter-spacing:.11em;font-size:11.5px;font-weight:700;
-  color:var(--teal);margin:0 0 4px}
+  color:var(--verde);margin:0 0 4px}
 .hist__bloque{padding-top:20px;margin-top:20px;border-top:1px solid var(--borde)}
 .hist__pilares{display:grid;gap:13px;grid-template-columns:repeat(auto-fit,minmax(238px,1fr))}
 .hist__pilares div{background:var(--crema);border-radius:11px;padding:14px}
@@ -625,7 +688,7 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .hist__firma{margin-top:14px}
 .hist__firma b{display:block;font-family:Lora,serif;font-size:17px;color:var(--tinta)}
 .hist__firma span{font-size:13.5px}
-.hist__aviso{margin-top:22px;background:var(--crema);border-left:3px solid var(--teal);
+.hist__aviso{margin-top:22px;background:var(--crema);border-left:3px solid var(--verde);
   border-radius:0 10px 10px 0;padding:14px 16px}
 .hist__aviso b{display:block;font-size:13.5px;margin-bottom:5px}
 .hist__aviso p{margin:0;font-size:12.5px;line-height:1.55}
@@ -634,14 +697,14 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .hist__cifras{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
   margin:14px 0 18px}
 .hist__cifra{background:var(--crema);border-radius:11px;padding:14px;text-align:center}
-.hist__cifra b{display:block;font-family:Lora,serif;font-size:27px;color:var(--teal);line-height:1.1}
+.hist__cifra b{display:block;font-family:Lora,serif;font-size:27px;color:var(--verde);line-height:1.1}
 .hist__cifra span{display:block;font-size:12.5px;color:var(--tinta-suave);margin-top:3px}
 .hist__grafico{margin:0;background:var(--crema);border-radius:12px;padding:16px}
 .hist__grafico figcaption{font-size:14px;font-weight:700;margin-bottom:12px}
 .hist__barras{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:10px;
   align-items:end;height:150px}
 .hist__barra{display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:5px}
-.hist__barra i{display:block;background:var(--teal);border-radius:5px 5px 0 0;min-height:3px;
+.hist__barra i{display:block;background:var(--verde);border-radius:5px 5px 0 0;min-height:3px;
   transition:height .5s cubic-bezier(.4,0,.2,1)}
 .hist__barra em{font-style:normal;font-size:12px;font-weight:700;text-align:center}
 .hist__barra small{font-size:11px;color:var(--tinta-suave);text-align:center}
@@ -658,7 +721,7 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .aviso-seg.on{display:block}
 
 /* ══ Ficha: envio, compra rapida y sello ══ */
-.ficha__envio{margin:10px 0 0;background:var(--teal-suave);color:#1f6b68;border-radius:9px;
+.ficha__envio{margin:10px 0 0;background:var(--verde-suave);color:var(--verde-hondo);border-radius:9px;
   padding:9px 12px;font-size:13.5px;font-weight:600;display:flex;gap:8px;align-items:center}
 .ficha__envio::before{content:'\1f69a';font-size:15px}
 .ficha__rapida{width:100%;margin-top:9px;background:var(--papel);color:var(--tinta);
@@ -722,8 +785,8 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .carrito__fila{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;
   font-size:14px;color:var(--tinta-suave)}
 .carrito__fila b{font-size:19px;color:var(--tinta)}
-.carrito__fila:last-child b{font-size:14px;font-weight:600;color:var(--teal)}
-.carrito__beneficio{margin:6px 0 0;font-size:13px;color:var(--teal);font-weight:700}
+.carrito__fila:last-child b{font-size:14px;font-weight:600;color:var(--verde)}
+.carrito__beneficio{margin:6px 0 0;font-size:13px;color:var(--verde);font-weight:700}
 .carrito__vacio{text-align:center;color:var(--tinta-suave);padding:26px 0;font-size:14px}
 
 .carrito__botones{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
@@ -731,8 +794,8 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   font-weight:700;font-family:inherit;cursor:pointer;transition:.16s}
 .carrito__seguir{background:none;border:1.5px solid var(--borde);color:var(--tinta)}
 .carrito__seguir:hover{border-color:var(--tinta)}
-.carrito__ir{background:var(--teal);border:0;color:#fff}
-.carrito__ir:hover{background:#3f8b88}
+.carrito__ir{background:var(--fucsia);border:0;color:#fff}
+.carrito__ir:hover{background:var(--fucsia-hondo)}
 .carrito__ir:disabled{opacity:.55;cursor:default}
 .carrito__nota{margin:14px 0 0;font-size:11.5px;line-height:1.5;color:var(--tinta-suave)}
 @media(max-width:560px){
@@ -753,11 +816,11 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .envio-fila b{font-weight:600;color:var(--tinta)}
 .envio-val{margin-left:auto;text-align:right;color:var(--tinta-suave);font-size:13px}
 .envio-gratis{margin:11px 0 0;padding-top:11px;border-top:1px dashed var(--borde);
-  font-size:14px;font-weight:700;color:var(--teal)}
+  font-size:14px;font-weight:700;color:var(--verde)}
 .distintivos{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px;
   text-align:center}
 .distintivo-ico{width:46px;height:46px;margin:0 auto 7px;border-radius:50%;
-  border:1.5px solid var(--teal);color:var(--teal);display:grid;place-items:center;
+  border:1.5px solid var(--verde);color:var(--verde);display:grid;place-items:center;
   font-size:19px}
 .distintivos div span:last-child{font-size:11.5px;line-height:1.35;color:var(--tinta-suave);
   display:block}
@@ -791,7 +854,7 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .buscador__campo{display:flex;align-items:center;gap:9px;background:var(--papel);
   border:1.5px solid var(--borde);border-radius:999px;padding:0 8px 0 15px;
   transition:border-color .16s}
-.buscador__campo:focus-within{border-color:var(--teal)}
+.buscador__campo:focus-within{border-color:var(--verde)}
 .buscador__lupa{font-size:14px;opacity:.55;flex:0 0 auto}
 .buscador__campo input{flex:1;min-width:0;border:0;background:none;font:inherit;
   font-size:14.5px;color:var(--tinta);padding:11px 0;outline:none}
@@ -821,6 +884,25 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   .buscador__lista{left:12px;right:12px}
   .buscador__campo input{font-size:16px;padding:9px 0}
 }
+
+/* Lo que abre la ficha se comporta como tal: puntero y un leve realce. */
+.abre-ficha{cursor:pointer}
+.card h3.abre-ficha:hover{color:var(--verde)}
+.card .foto.abre-ficha:hover img{transform:scale(1.03)}
+.card .foto img{transition:transform .22s}
+
+
+/* Confirmacion de cambio de segmento */
+.modal--chico .modal-caja{max-width:430px}
+.seg-aviso__txt{color:var(--tinta-suave);font-size:14.5px;margin:10px 0 20px}
+.seg-aviso__txt b{color:var(--tinta)}
+.seg-aviso__botones{display:grid;gap:9px}
+@media(min-width:460px){.seg-aviso__botones{grid-template-columns:1fr 1fr}}
+
+/* El selector de compra, ya embebido en la seccion del catalogo. */
+.seg-caja{padding-top:26px;padding-bottom:4px}
+.tit--chico{font-size:clamp(19px,2.2vw,25px)}
+.seg-caja .sub{margin-bottom:18px}
 </style>
 </head>
 <body>
@@ -836,36 +918,21 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
        es sumar un archivo a prototipo/img/ y una línea a ese arreglo. -->
   <div class="hero__fondos" id="heroFondos" aria-hidden="true"></div>
   <div class="hero__velo" aria-hidden="true"></div>
+  <!-- Enlace que cubre la pieza entera. Las piezas traen su llamada dibujada
+       ("CONOCÉ EL CLUB") y nadie podia apretarla, porque es parte de la
+       imagen; con esto, apretarla funciona. -->
+  <a class="hero__enlace" id="heroEnlace" href="#necesidades"><span></span></a>
   <!-- Sin texto encima: los banners ya traen su propio mensaje y titular
        y precio, y superponerles otro título los volvía ilegibles. El H1 de la
        página pasa a ser el del catálogo. -->
 </header>
 
-<!-- ══ 5 · MINORISTA | MAYORISTA ══ -->
-<section class="bloque rev" id="segmento">
-  <div class="wrap">
-    <h2 class="tit">¿Comprás para vos o para revender?</h2>
-    <p class="sub">Si revendés tenés precios diferenciados en todo el catálogo.</p>
-
-    <div class="seg-nivel" id="segN1">
-      <button class="seg-btn" type="button" data-seg="minorista" aria-pressed="false">
-        <b>MINORISTA</b><span>Precio de lista, sin mínimo</span></button>
-      <button class="seg-btn" type="button" data-abre="mayorista" aria-pressed="false">
-        <b>MAYORISTA</b><span>Para revender</span></button>
-    </div>
-
-    <div class="seg-nivel2" id="segN2">
-      <div class="seg-nivel">
-        <button class="seg-btn" type="button" data-seg="mayorista" aria-pressed="false">
-          <b>MAYORISTA 20%</b><span>Mínimo $100.000 · <span class="pendiente">confirmar</span></span></button>
-        <button class="seg-btn" type="button" data-seg="distribuidor" aria-pressed="false">
-          <b>DISTRIBUIDOR 30%</b><span>Mínimo $250.000</span></button>
-      </div>
-    </div>
-
-    <div class="seg-activo" id="segActivo"></div>
-  </div>
-</section>
+<!-- Y el boton de verdad, a caballo entre el banner y lo que sigue: asi no le
+     tapa a la pieza su propia llamada. Las dos secciones son crema, con lo
+     cual el corte no se ve. Cambia con cada banner; se define en FONDOS. -->
+<div class="hero-cta-caja">
+  <a class="cta hero__cta" id="heroCta" href="#necesidades"></a>
+</div>
 
 <!-- ══ 4 + 6 · NECESIDADES Y CATÁLOGO, JUNTOS ══
      Los chips viven acá y no en una sección aparte: el cliente cambia de
@@ -897,6 +964,35 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
     <!-- Solo aparece en celular, y solo si las categorias no entran en las
          dos filas que se muestran de entrada. -->
     <button class="chips-mas" id="chipsMas" type="button" hidden></button>
+  </div>
+
+
+  <!-- ══ 5 · MINORISTA | MAYORISTA ══
+       Va DESPUES de las categorias y ANTES de la grilla, que es el orden que
+       pidio el cliente: primero se entiende que hay, despues se elige con que
+       precios verlo. Y va dentro de esta seccion, no como seccion aparte,
+       para que la barra de categorias siga pegada arriba sobre la grilla. -->
+  <div class="wrap seg-caja" id="segmento">
+    <h2 class="tit tit--chico">¿Comprás para vos o para revender?</h2>
+    <p class="sub">Si revendés tenés precios diferenciados en todo el catálogo.</p>
+
+    <div class="seg-nivel" id="segN1">
+      <button class="seg-btn" type="button" data-seg="minorista" aria-pressed="false">
+        <b>MINORISTA</b><span>Precio de lista, sin mínimo</span></button>
+      <button class="seg-btn" type="button" data-abre="mayorista" aria-pressed="false">
+        <b>MAYORISTA</b><span>Para revender</span></button>
+    </div>
+
+    <div class="seg-nivel2" id="segN2">
+      <div class="seg-nivel">
+        <button class="seg-btn" type="button" data-seg="mayorista" aria-pressed="false">
+          <b>MAYORISTA 20%</b><span>Mínimo $100.000</span></button>
+        <button class="seg-btn" type="button" data-seg="distribuidor" aria-pressed="false">
+          <b>DISTRIBUIDOR 30%</b><span>Mínimo $250.000</span></button>
+      </div>
+    </div>
+
+    <div class="seg-activo" id="segActivo"></div>
   </div>
 
   <div class="wrap">
@@ -1205,11 +1301,11 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
           <button class="add" id="mv-add">Agregar al carrito</button>
         </div>
 
-        <!-- Compra rapida: por ahora es solo el boton, sin funcion, a pedido.
-             ANTES DE PUBLICAR hay que conectarlo o sacarlo: un boton que no
-             hace nada en el paso de compra es peor que no tenerlo. -->
+        <!-- Compra rapida: se lleva SOLO este producto al carrito de la
+             tienda. Por eso desaparece cuando la landing ya tiene un carrito
+             armado: ver abrirVista(). -->
         <button class="ficha__rapida" id="mvRapida" type="button">
-          Compra rápida</button>
+          Comprar solo este producto</button>
 
         <div class="envio-caja">
           <h4>Información de envío</h4>
@@ -1217,7 +1313,6 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
             <b>Envío</b><span class="envio-val" id="mvEnvioPlazo"></span></div>
           <div class="envio-fila"><span class="envio-ico">⏱</span>
             <b>Despacho</b><span class="envio-val" id="mvEnvioDespacho"></span></div>
-          <p class="envio-gratis" id="mvEnvio" hidden></p>
         </div>
 
         <!-- Los distintivos de la marca, en el mismo bloque de confianza. -->
@@ -1232,6 +1327,8 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
     <div class="ficha__descripcion" data-anima>
       <h4>Descripción</h4>
       <p id="mv-carac"></p>
+      <button type="button" class="ficha__vermas-desc" id="mvVerDesc"
+              aria-controls="mv-carac" aria-expanded="false" hidden></button>
       <dl class="ficha__ficha-tecnica">
         <div><dt>Ideal para</dt><dd id="mv-ideal"></dd></div>
         <div><dt>Presentación</dt><dd id="mv-pres"></dd></div>
@@ -1290,6 +1387,21 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 </div>
 
 <!-- ══ TRASPASO AL CARRITO DE TIENDANUBE ══ -->
+<!-- Cambiar de tipo de compra vacia el carrito, porque los precios, los
+     minimos y hasta que productos existen son otros. Nunca en silencio. -->
+<div class="modal modal--chico" id="modalSegmento">
+  <div class="modal-caja" role="alertdialog" aria-labelledby="segAvisoTit">
+    <div class="modal-cuerpo">
+      <h3 id="segAvisoTit">¿Cambiamos el tipo de compra?</h3>
+      <p class="seg-aviso__txt" id="segAvisoTxt"></p>
+      <div class="seg-aviso__botones">
+        <button type="button" class="carrito__seguir" id="segAvisoNo">Mantener mi carrito</button>
+        <button type="button" class="carrito__ir" id="segAvisoSi">Cambiar y vaciar carrito</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="modalCheckout">
   <div class="modal-caja modal-caja--carrito">
     <button class="modal-cerrar" id="checkoutCerrar" aria-label="Cerrar">&times;</button>
@@ -1340,8 +1452,14 @@ const TIERS_POR_SEGMENTO = {
   minorista: [
     {min:30000,  nombre:'2 cuotas sin interés',   real:true},
     {min:60000,  nombre:'Envío gratis',           real:true},
-    {min:90000,  nombre:'6% en transferencia',    real:true}
+    /* A CONFIRMAR. Hoy la tienda da 5% por transferencia en todo el catalogo
+       y sin minimo, asi que este hito promete algo distinto de lo que el
+       checkout va a cobrar. Se marca hasta que el cliente lo defina. */
+    {min:90000,  nombre:'6% en transferencia',    real:true, pendiente:true}
   ],
+  /* Los dos regalos los entrega un CUPON de la tienda, no la landing: aca
+     solo se anuncian. Se probo agregarlos solos al carrito y se descarto,
+     porque del otro lado no existe el precio 0 y el cliente los pagaria. */
   mayorista: [
     {min:100000, nombre:'Mínimo mayorista',       real:true},
     {min:200000, nombre:'2 perfumes de regalo',   real:true},
@@ -1373,6 +1491,16 @@ const NECESIDADES = [
   {id:'femenino',label:'Cuidado femenino',n:8},  {id:'corporal',label:'Cuidado diario',n:14},
   {id:'aromas',label:'Aromas y ambiente',n:43},  {id:'packs',label:'Packs y combos',n:27,destacado:true}
 ];
+
+/* Descuento por pagar con transferencia. VERIFICADO contra la tienda: tres
+   productos al azar dan exactamente el 95% del precio publicado ($132.000 ->
+   $87.780 sobre el precio con 30% off; $18.900 -> $17.955; $9.750 ->
+   $9.262,50), o sea 5%, y sin monto minimo.
+
+   El brief pide "6% desde $90.000" y lo deja a confirmar. Hasta que la tienda
+   lo cambie, la landing muestra 5%: de las dos opciones, prometer 6% y cobrar
+   5% en el checkout es la unica que rompe la compra en el ultimo paso. */
+const TRANSFERENCIA = 5;
 
 /* CATALOGO REAL - 145 productos de habitadnatural.com.
    Cada uno con los precios de las publicaciones que la tienda tiene para
@@ -1529,6 +1657,110 @@ const PRODUCTOS = [
 /* 13 · PACKS con lo que incluyen, explícito */
 // Los packs ya no son una lista aparte: son la necesidad 'packs'.
 
+/* ══════════ SANEO DE LOS TEXTOS DEL CATALOGO ══════════
+   Los nombres y las descripciones llegan de la tienda tal cual y traen de
+   todo: mayusculas sostenidas, restos de codigo ("X 30 Mlm", "x 1"), guiones
+   sueltos al final y -- lo serio -- promesas de resultado y nombres de
+   enfermedad, que ANMAT no permite en un cosmetico ni en un suplemento.
+
+   Se limpia ACA, al cargar, y no en el archivo del catalogo, porque ese
+   catalogo se regenera desde la tienda cada pocas horas: cualquier arreglo
+   escrito a mano se perderia en la proxima sincronizacion. Esto es la red.
+   Lo definitivo es corregir las fichas en la tienda; el informe que sale de
+   tools/auditar_catalogo.py dice cuales y por que.
+
+   Lo que NO hace: renombrar. "Crema para Psoriasis con Aloe Vera" sin la
+   palabra psoriasis no quiere decir nada, y elegir como se llama un producto
+   es una decision comercial. Esos nombres van listados en el informe para
+   que los cambie una persona. */
+
+/* La lista, en un solo lugar. tools/auditar_catalogo.py la LEE de aca, asi
+   que no hay dos copias que se puedan desincronizar. Se busca sin acentos y
+   en minuscula, con limites de palabra donde hace falta: sin ellos "curcuma"
+   contaba como "cura" y las "gotas" del gotero como la enfermedad. */
+const PROHIBIDO_LISTA = [
+  /* Promesas de resultado y de accion farmacologica */
+  'viagra natural', 'afrodisiac', 'cur[ao]\\b', 'curar\\b', 'curativ',
+  'elimina', 'combate', 'trata\\b', 'tratamiento', 'previene', 'controla el',
+  'desinflama', 'antiinflamator', 'antibiotic', 'antibacterian', 'antivira',
+  'antimicotic', 'antifungic', 'antiseptic', 'analgesic', 'sedante',
+  'diuretic', 'expectorante', 'laxante', 'cicatriza', 'regenera el',
+  'restaurar tejido', 'efectividad', 'garantiza', 'resultados', 'adelgaza',
+  'quema grasa', 'milagro', 'terapeutic', 'medicinal', 'remedio',
+  'alivia', 'alivio', 'disminuye', 'reduce el', 'reduce la',
+  'beneficios para la salud', 'propiedades medicinales', 'uso medicinal',
+  /* Patologias */
+  '\\bgota\\b', 'artritis', 'artrosis', 'p?soriasis', 'ecc?zema', 'eccema',
+  'bronquitis', 'arterioesclerosis', 'arteriosclerosis', 'aterosclerosis',
+  'cistitis', 'diabetes', 'hipertension', '\\bcancer\\b', '\\btumor',
+  '\\basma\\b', 'colitis', 'gastritis', '\\bulcera', 'hemorroide', 'varices',
+  'acido urico', 'colesterol', 'menopausia', 'prostat', 'candidiasis',
+  'reuma', 'lumbago', 'ciatica', 'migraña', 'insomnio', 'depresion',
+  'patologias cronicas', 'dolores cronicos', 'celulitis', '\\bacne\\b',
+  'parasito'
+];
+const PROHIBIDO = new RegExp(PROHIBIDO_LISTA.join('|'), 'i');
+
+const CIERRE_LEGAL = 'Información orientativa. Este producto no reemplaza ' +
+  'tratamientos ni indicaciones profesionales. Ante cualquier duda, consulte ' +
+  'con un profesional de la salud.';
+
+const plano = t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+/* Palabras que se quedan como estan al deshacer las mayusculas sostenidas:
+   unidades, siglas y numeros romanos que en minuscula perderian sentido. */
+const INTOCABLES = new Set(['ml','cc','gr','g','kg','cm','mm','led','cbd','thc',
+  'x','xl','uv','pH','ok','tv','usb','2','3','4','5','7','12','24','30','x2','x3']);
+
+function tituloLimpio(n){
+  let t = (n || '').replace(/\s+/g, ' ').trim();
+  t = t.replace(/\bMlm\b/gi, 'ml');            // "X 30 Mlm" -> "x 30 ml"
+  t = t.replace(/\bHabitrad\b/gi, 'Hábitad');
+  t = t.replace(/\bCRIÓGENICO\b/gi, 'Criogénico');
+  t = t.replace(/\s*[-–—/+·,;]+\s*$/, '');      // guion o barra sueltos al final
+  t = t.replace(/\s+x\s*1$/i, '');             // "x 1" no dice nada
+  // Parentesis abierto y nunca cerrado: se cierra al final.
+  const abre = (t.match(/\(/g) || []).length, cierra = (t.match(/\)/g) || []).length;
+  if (abre > cierra) t = t + ')'.repeat(abre - cierra);
+
+  // Mayusculas sostenidas: se pasan a capital por palabra.
+  const letras = t.replace(/[^A-Za-zÁÉÍÓÚÑÜáéíóúñü]/g, '');
+  const gritadas = letras.length > 6 &&
+    letras === letras.toUpperCase();
+  if (gritadas){
+    t = t.split(' ').map(w => {
+      if (INTOCABLES.has(plano(w))) return plano(w);
+      if (!/[A-Za-zÁÉÍÓÚÑÜ]/.test(w)) return w;
+      return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    }).join(' ');
+  }
+  return t.replace(/\s+/g, ' ').trim();
+}
+
+function descripcionLimpia(d){
+  let t = (d || '').replace(/\r/g, '').replace(/[ \t]+/g, ' ')
+                   .replace(/\n{2,}/g, '\n').trim();
+  if (!t) return '';
+  /* Se corta por oracion y se tira la oracion entera que tenga algo prohibido.
+     Sacar la palabra sola dejaba frases sin sentido ("ayuda con la") y, peor,
+     seguia afirmando lo mismo con otra forma. */
+  const oraciones = t.split(/(?<=[.;!?])\s+|\n+/)
+    .map(o => o.trim())
+    .filter(o => o && !PROHIBIDO.test(plano(o)));
+  t = oraciones.join(' ').replace(/\s+/g, ' ').trim();
+  if (!t) return CIERRE_LEGAL;
+  if (!/[.!?]$/.test(t)) t += '.';
+  return t + ' ' + CIERRE_LEGAL;
+}
+
+/* Se aplica una sola vez, antes de que nada dibuje: asi el nombre limpio es
+   el que ven las tarjetas, la ficha, el buscador, el carrito y los eventos,
+   sin tener que acordarse de limpiarlo en cada lugar. */
+PRODUCTOS.forEach(p => {
+  p.n = tituloLimpio(p.n);
+  p.d = descripcionLimpia(p.d);
+});
+
 const ars = n => '$' + Math.round(n).toLocaleString('es-AR');
 const $ = s => document.querySelector(s);
 const limpio = n => n.split(/\/\//)[0].trim();
@@ -1568,22 +1800,137 @@ const esPack = need => need === 'packs';
 const cuantos = (need, seg) =>
   PRODUCTOS.filter(p => p.necs.includes(need) && (esPack(need) || hayEn(p, seg))).length;
 
-/* 26 · Analytics. Los eventos propios van al dataLayer; los nativos de la
-   integracion GA4 de Tiendanube no se duplican. */
-const track = (event, data) => {
-  window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push(Object.assign({event}, data || {}));
+/* ══════════ MEDICION ══════════
+   Un solo lugar por donde pasan todos los eventos de la landing, y de ahi
+   salen a tres destinos: el dataLayer (para Tag Manager), GA4 y el pixel de
+   Meta. Los sitios que llaman a track() no saben nada de esto y no tienen que
+   saberlo.
+
+   LA COMPRA NO SE MIDE ACA. La landing termina en /comprar/ y de ahi en
+   adelante manda Tiendanube, que ya dispara su propio `purchase` en la pagina
+   de gracias con el numero de orden y el total real. Si esta landing tambien
+   lo disparara, cada venta contaria dos veces y el embudo entero quedaria
+   inservible. Por eso hay un freno explicito mas abajo.
+
+   DENTRO DE LA TIENDA NO SE CARGA NADA. Si la landing corre en el theme,
+   Tiendanube ya tiene puestos gtag y fbq con sus ids; ahi solo se usan los
+   que ya estan. Los ids de abajo son para cuando la landing corre suelta
+   (por ejemplo el preview publico). Vacios, no se carga ninguna etiqueta. */
+const MEDICION = {
+  ga4:   '',      // 'G-XXXXXXXXXX'  · dejar vacio si la tienda ya lo carga
+  meta:  '',      // '1234567890'    · idem
+  moneda: 'ARS',
+  /* Poner en true para ver cada evento en la consola con lo que se manda.
+     Sirve para revisar contra el DebugView de GA4 y el Events Manager. */
+  debug: false
 };
+
+/* Que es cada evento nuestro en GA4 y en Meta. Los que no tienen equivalente
+   estandar van como evento propio con su mismo nombre, que es lo que hay que
+   hacer: inventarle un nombre estandar a algo que no lo es ensucia los
+   informes que ya vienen armados. */
+const EVENTOS = {
+  select_customer_type: {ga4: 'select_customer_type'},
+  select_category:      {ga4: 'select_content',   meta: null},
+  search:               {ga4: 'search',           meta: 'Search'},
+  search_result_open:   {ga4: 'select_item'},
+  view_item:            {ga4: 'view_item',        meta: 'ViewContent'},
+  add_to_cart:          {ga4: 'add_to_cart',      meta: 'AddToCart'},
+  cross_sell_add:       {ga4: 'add_to_cart',      meta: 'AddToCart'},
+  remove_from_cart:     {ga4: 'remove_from_cart'},
+  view_cart:            {ga4: 'view_cart'},
+  begin_checkout:       {ga4: 'begin_checkout',   meta: 'InitiateCheckout'},
+  quick_buy:            {ga4: 'begin_checkout',   meta: 'InitiateCheckout'},
+  add_to_cart_error:    {ga4: 'add_to_cart_error'},
+  hero_cta:             {ga4: 'select_promotion'}
+};
+
+/* Arma el items[] que espera GA4 a partir de una lista de {prod, cant}. */
+const itemsGA = lista => (lista || []).map(i => ({
+  item_name: i.prod.n,
+  item_id: String((i.prod.ids || {})[segmento] || (i.prod.ids || {}).minorista || ''),
+  item_category: (NECESIDADES.find(n => i.prod.necs.includes(n.id)) || {}).label || '',
+  item_variant: SEGMENTOS[segmento].label,
+  price: precioDe(i.prod),
+  quantity: i.cant
+}));
+
+const track = (event, data) => {
+  const d = Object.assign({}, data || {});
+
+  /* El freno. Si algun dia alguien agrega un purchase aca, que se entere. */
+  if (event === 'purchase' || event === 'Purchase'){
+    console.warn('La compra la mide Tiendanube en la pagina de gracias. ' +
+                 'Medirla tambien aca la contaria dos veces.');
+    return;
+  }
+
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push(Object.assign({event}, d));
+
+  const mapa = EVENTOS[event] || {ga4: event};
+  const conPlata = d.value != null
+    ? Object.assign({currency: MEDICION.moneda}, d) : d;
+
+  if (typeof gtag === 'function' && mapa.ga4){
+    gtag('event', mapa.ga4, Object.assign({evento_landing: event}, conPlata));
+  }
+  if (typeof fbq === 'function' && mapa.meta){
+    fbq('track', mapa.meta, {
+      content_name: d.item_name || d.need_name || d.query || event,
+      content_type: 'product',
+      value: d.value || 0,
+      currency: MEDICION.moneda
+    });
+  }
+  if (MEDICION.debug){
+    console.log('[medicion]', event, '->',
+                'GA4:' + (mapa.ga4 || '-'), 'Meta:' + (mapa.meta || '-'), conPlata);
+  }
+};
+
+/* Las etiquetas, SOLO si la landing corre suelta y hay id configurado. */
+(function cargarEtiquetas(){
+  if (MEDICION.ga4 && typeof gtag !== 'function'){
+    const g = document.createElement('script');
+    g.async = true;
+    g.src = 'https://www.googletagmanager.com/gtag/js?id=' + MEDICION.ga4;
+    document.head.appendChild(g);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function(){ window.dataLayer.push(arguments); };
+    gtag('js', new Date());
+    gtag('config', MEDICION.ga4);
+  }
+  if (MEDICION.meta && typeof fbq !== 'function'){
+    /* Cargador oficial del pixel, reducido a lo que hace falta. */
+    const n = window.fbq = function(){
+      n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+    };
+    if (!window._fbq) window._fbq = n;
+    n.push = n; n.loaded = true; n.version = '2.0'; n.queue = [];
+    const t = document.createElement('script');
+    t.async = true; t.src = 'https://connect.facebook.net/en_US/fbevents.js';
+    document.head.appendChild(t);
+    fbq('init', MEDICION.meta);
+    fbq('track', 'PageView');
+  }
+})();
 
 
 /* ---- Carrusel de fondo del hero ----
    Los cuatro banners del inicio de la tienda. Para agregar o sacar uno,
    se toca solo este arreglo y el archivo en prototipo/img/. */
+/* `cta` es la llamada de cada pieza. `ir` es una accion de esta pagina;
+   `href` es una direccion de la tienda. Una pieza sin `cta` no muestra boton. */
 const FONDOS = [
-  {escritorio:'img/slide1.webp', celular:'img/slide5.webp'},
-  {escritorio:'img/slide2.webp', celular:'img/slide6.webp'},
-  {escritorio:'img/slide3.webp', celular:'img/slide7.webp'},
-  {escritorio:'img/slide4.webp', celular:'img/slide8.webp'}
+  {escritorio:'img/slide1.webp', celular:'img/slide5.webp',
+   cta:{txt:'Ver el catálogo', ir:'catalogo'}},
+  {escritorio:'img/slide2.webp', celular:'img/slide6.webp',
+   cta:{txt:'Conocé Club Habitad+', href:'https://habitadnatural.com/club-habitad/'}},
+  {escritorio:'img/slide3.webp', celular:'img/slide7.webp',
+   cta:{txt:'Ver las reseñas', ir:'resenas'}},
+  {escritorio:'img/slide4.webp', celular:'img/slide8.webp',
+   cta:{txt:'Ver precios mayoristas', ir:'mayorista'}}
 ];
 
 (function heroCarrusel(){
@@ -1631,14 +1978,49 @@ const FONDOS = [
   const slides = [...caja.children];
   let actual = 0, reloj = null;
 
+  /* El boton acompaña al banner que se esta viendo. Es uno solo y cambia,
+     en vez de uno por pieza: asi no hay cuatro botones apilados esperando. */
+  const boton = $('#heroCta'), enlace = $('#heroEnlace');
+  function ponerCta(i){
+    const c = FONDOS[i] && FONDOS[i].cta;
+    [boton, enlace].forEach(el => {
+      if (!el) return;
+      el.hidden = !c;
+      if (!c) return;
+      el.href = c.href || '#necesidades';
+      el.target = c.href ? '_blank' : '';
+      el.rel = c.href ? 'noopener' : '';
+      el.dataset.ir = c.ir || '';
+    });
+    if (!c) return;
+    boton.textContent = c.txt;
+    // El enlace que cubre la pieza no muestra texto, pero tiene que decir a
+    // donde va: es lo unico que un lector de pantalla puede anunciar.
+    enlace.querySelector('span').textContent = c.txt;
+  }
+  const seguirCta = el => e => {
+    const ir = el.dataset.ir;
+    if (!ir) return;                     // direccion de la tienda: se sigue
+    e.preventDefault();
+    track('hero_cta', {slide: actual, action: ir, desde: el.id});
+    if (ir === 'catalogo') return irAlCatalogo();
+    if (ir === 'mayorista') return pedirSegmento('mayorista');
+    const destino = document.getElementById(ir);
+    if (destino) destino.scrollIntoView({behavior: 'smooth', block: 'start'});
+  };
+  if (boton) boton.onclick = seguirCta(boton);
+  if (enlace) enlace.onclick = seguirCta(enlace);
+
   function mostrar(i, manual){
     slides[actual].classList.remove('activa');
     puntos.children[actual].setAttribute('aria-current', 'false');
     actual = (i + slides.length) % slides.length;
     slides[actual].classList.add('activa');
     puntos.children[actual].setAttribute('aria-current', 'true');
+    ponerCta(actual);
     if (manual) arrancar();
   }
+  ponerCta(0);
 
   function arrancar(){
     clearInterval(reloj);
@@ -1676,7 +2058,7 @@ const PREGUNTAS = [
   'resolvemos dentro de las 48 horas de recibido.'],
  ['¿Qué medios de pago aceptan?',
   'Tarjetas de crédito y débito de cualquier banco, transferencia bancaria, efectivo ' +
-  'en puntos de pago y Mercado Pago. Pagando por transferencia hay un 5% adicional ' +
+  'en puntos de pago y Mercado Pago. Pagando por transferencia hay un ' + TRANSFERENCIA + '% adicional ' +
   'de descuento.']
 ];
 
@@ -1981,17 +2363,30 @@ function pintarChips(){
     .map(n => Object.assign({}, n, {cant: cuantos(n.id, segmento)}))
     .sort((a, b) => (b.cant - a.cant) || a.label.localeCompare(b.label, 'es'));
   caja.innerHTML = '';
-  conCantidad.forEach(n => {
+  /* Una categoria sin productos en este segmento no se muestra. Antes se
+     mostraba apagada, y en distribuidor eso dejaba "Aromas y ambiente: 0" en
+     pantalla: una categoria que existe pero no se puede comprar. */
+  conCantidad.filter(n => n.cant > 0).forEach(n => {
     const b = document.createElement('button');
-    b.className = 'chip' + (n.destacado ? ' chip--packs' : '') + (n.cant ? '' : ' chip--vacia');
+    b.className = 'chip' + (n.destacado ? ' chip--packs' : '');
     b.type = 'button'; b.dataset.need = n.id;
     b.setAttribute('aria-pressed', n.id === activa);
-    if (!n.cant) b.title = 'Sin productos con precio ' +
-      SEGMENTOS[segmento].label.toLowerCase() + ' en esta necesidad';
     b.innerHTML = n.label + '<span class="n">' + n.cant + '</span>';
     b.onclick = () => filtrar(n.id);
     caja.appendChild(b);
   });
+  /* Si la categoria abierta se quedo sin productos al cambiar de segmento,
+     hay que mover al cliente a una que tenga: si no, queda mirando una grilla
+     vacia sin ningun chip marcado. */
+  const viva = conCantidad.find(n => n.cant > 0 && n.id === activa);
+  if (!viva){
+    const primera = conCantidad.find(n => n.cant > 0);
+    if (primera){
+      activa = primera.id;
+      caja.querySelectorAll('.chip').forEach(b =>
+        b.setAttribute('aria-pressed', b.dataset.need === activa));
+    }
+  }
   ajustarBotonChips();
 }
 /* El boton solo tiene sentido si de verdad hay categorias tapadas. */
@@ -2025,13 +2420,19 @@ pintarChips();
    Si el cambio vacio el carrito, se espera un momento antes de bajar para que
    alcance a leer el aviso: si no, se lo llevaria por delante sin verlo. */
 function irAlCatalogo(){
-  const destino = $('#chipsBarra');
+  /* Se salta a la grilla, no a la barra de categorias: desde que el selector
+     de compra quedo debajo de las categorias, saltar a la barra empujaba la
+     pagina para ARRIBA justo despues de elegir el segmento. Se le descuenta
+     el alto de la barra pegada, que si no tapa la primera fila. */
+  const destino = $('.carrusel-cat') || $('#chipsBarra');
   if (!destino) return;
   const aviso = $('#avisoSeg');
   const demora = aviso && aviso.classList.contains('on') ? 1200 : 120;
   const suave = !matchMedia('(prefers-reduced-motion: reduce)').matches;
   setTimeout(() => {
-    const y = destino.getBoundingClientRect().top + window.scrollY;
+    const barra = $('#chipsBarra');
+    const tapa = barra ? barra.offsetHeight + 8 : 0;
+    const y = Math.max(0, destino.getBoundingClientRect().top + window.scrollY - tapa);
     const antes = window.scrollY;
     window.scrollTo({top: y, behavior: suave ? 'smooth' : 'instant'});
     /* Red: el desplazamiento suave no avanza si los frames estan congelados
@@ -2056,27 +2457,67 @@ function irAlCatalogo(){
   }, demora);
 }
 
+/* Los botones se marcan SIEMPRE desde `segmento`, nunca desde el clic: si el
+   cliente cancela el cambio, la marca tiene que volver sola a donde estaba. */
+function marcarSegmento(){
+  document.querySelectorAll('#segN1 .seg-btn, #segN2 .seg-btn').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.seg === segmento));
+  });
+  // El boton MAYORISTA del primer nivel solo abre el segundo: queda marcado
+  // mientras se este en cualquiera de los dos precios de reventa.
+  const abre = document.querySelector('#segN1 [data-abre]');
+  if (abre) abre.setAttribute('aria-pressed', String(segmento !== 'minorista'));
+  $('#segN2').classList.toggle('on', segmento !== 'minorista');
+}
+
+/* Pedir el cambio no es hacerlo: si hay carrito armado se pregunta primero.
+   Vaciarlo sin avisar es la forma mas cara de perder una compra. */
+let segPedido = null;
+function pedirSegmento(id){
+  if (id === segmento){ marcarSegmento(); irAlCatalogo(); return; }
+  const cargado = Object.keys(carrito).length;
+  if (!cargado){ aplicarSegmento(id); irAlCatalogo(); return; }
+
+  segPedido = id;
+  const unidades = Object.values(carrito).reduce((a, i) => a + i.cant, 0);
+  $('#segAvisoTxt').innerHTML =
+    'Tenés <b>' + unidades + ' producto' + (unidades > 1 ? 's' : '') + '</b> cargado' +
+    (unidades > 1 ? 's' : '') + ' a precio <b>' + SEGMENTOS[segmento].label.toLowerCase() +
+    '</b>. Al pasar a <b>' + SEGMENTOS[id].label.toLowerCase() +
+    '</b> se vacía el carrito, porque los precios y los mínimos son distintos.';
+  track('segment_change_prompt', {from: segmento, to: id, units: unidades});
+  abrirModal('modalSegmento');
+}
+
+$('#segAvisoNo').onclick = () => {
+  track('segment_change_cancel', {from: segmento, to: segPedido});
+  segPedido = null;
+  marcarSegmento();                      // la marca vuelve al segmento vigente
+  cerrarModal('modalSegmento');
+};
+$('#segAvisoSi').onclick = () => {
+  const id = segPedido; segPedido = null;
+  cerrarModal('modalSegmento');
+  if (!id) return;
+  aplicarSegmento(id);
+  irAlCatalogo();
+};
+$('#modalSegmento').onclick = e => {
+  if (e.target.id === 'modalSegmento') $('#segAvisoNo').onclick();
+};
+
 $('#segN1').addEventListener('click', e => {
   const b = e.target.closest('.seg-btn'); if (!b) return;
-  document.querySelectorAll('#segN1 .seg-btn').forEach(x => x.setAttribute('aria-pressed','false'));
-  b.setAttribute('aria-pressed','true');
   if (b.dataset.abre === 'mayorista'){
     $('#segN2').classList.add('on');              // recién acá aparecen 20% y 30%
+    b.setAttribute('aria-pressed','true');
     return;
   }
-  $('#segN2').classList.remove('on');
-  document.querySelectorAll('#segN2 .seg-btn').forEach(x => x.setAttribute('aria-pressed','false'));
-  aplicarSegmento('minorista');
-  irAlCatalogo();
+  pedirSegmento('minorista');
 });
 $('#segN2').addEventListener('click', e => {
   const b = e.target.closest('.seg-btn'); if (!b) return;
-  document.querySelectorAll('#segN2 .seg-btn').forEach(x => x.setAttribute('aria-pressed','false'));
-  b.setAttribute('aria-pressed','true');
-  aplicarSegmento(b.dataset.seg);
-  // El boton "MAYORISTA" del primer nivel NO baja: todavia falta elegir 20 o
-  // 30. Bajan estos dos, que son los que cierran la eleccion.
-  irAlCatalogo();
+  pedirSegmento(b.dataset.seg);
 });
 
 /* Cambiar de segmento a mano arranca una compra nueva: los precios, los
@@ -2089,8 +2530,10 @@ function aplicarSegmento(id, conservarCarrito){
     Object.keys(carrito).forEach(k => delete carrito[k]);
     avisoCarrito('Vaciamos el carrito porque cambiaste a precios ' +
       SEGMENTOS[id].label.toLowerCase() + '. Cargá de nuevo desde este catálogo.');
+    track('cart_cleared_by_segment', {from: segmento, to: id, lines: habia});
   }
   segmento = id;
+  marcarSegmento();
   const s = SEGMENTOS[id];
   const caja = $('#segActivo');
   caja.classList.add('on');
@@ -2114,6 +2557,7 @@ function aplicarSegmento(id, conservarCarrito){
     ? 'Gratis superando $60.000' : 'A cargo del comprador';
 
   pintar(); pintarPacks(); recalcular();
+  revisarCompraRapida();
 }
 
 /* Aviso corto arriba del catalogo. Se usa tanto al vaciar el carrito como al
@@ -2134,6 +2578,38 @@ function avisoCarrito(texto){
   clearTimeout(avisoTimer);
   avisoTimer = setTimeout(() => aviso.classList.remove('on'), 7000);
 }
+
+/* La barra de categorias avisa cuando queda pegada arriba, para achicarse.
+   Con un centinela de un pixel arriba de ella: mientras se ve, la barra esta
+   suelta; cuando sale de pantalla, esta pegada. Sin escuchar el scroll. */
+(function barraPegada(){
+  const barra = $('#chipsBarra');
+  if (!barra || !('IntersectionObserver' in window)) return;
+  const testigo = document.createElement('div');
+  testigo.setAttribute('aria-hidden', 'true');
+  testigo.style.cssText = 'height:1px;margin-bottom:-1px';
+  barra.parentNode.insertBefore(testigo, barra);
+  new IntersectionObserver(
+    ([e]) => barra.classList.toggle('pegada', !e.isIntersecting),
+    {threshold: 0}
+  ).observe(testigo);
+
+  const medir = () => document.documentElement.style
+    .setProperty('--barra-cat', barra.offsetHeight + 'px');
+  medir();
+  addEventListener('resize', medir);
+  if ('ResizeObserver' in window) new ResizeObserver(medir).observe(barra);
+})();
+
+/* El pie de la pagina se aparta exactamente lo que mide la barra de compra.
+   Estaba clavado en 96px y la barra mide 99 en celular, asi que el ultimo
+   renglon quedaba debajo. Y con el carrito vacio no hace falta apartar nada. */
+function apartarPie(){
+  const bf = $('#barraFija');
+  const alto = bf && bf.classList.contains('visible') ? bf.offsetHeight + 14 : 0;
+  document.body.style.paddingBottom = alto + 'px';
+}
+addEventListener('resize', apartarPie);
 
 /* ---- 6 · catálogo ---- */
 const carrito = {};
@@ -2179,7 +2655,15 @@ function tarjeta(p, key){
     el.querySelector('.precio').textContent = ars(precioDe(p)); };
   if (!sinStock) el.querySelector('.add').onclick =
     e => agregar(p, key, +span.textContent, e.target);
+  /* La foto y el nombre tambien abren la ficha: hay clientes que ignoran el
+     boton y hacen clic en la imagen, que es lo que uno espera de una tarjeta
+     de producto. Los controles de cantidad y el boton de agregar quedan
+     afuera a proposito, para que un clic ahi no abra nada. */
   el.querySelector('.vermas').onclick = () => abrirVista(p, key);
+  el.querySelectorAll('.foto, h3').forEach(z => {
+    z.classList.add('abre-ficha');
+    z.onclick = () => abrirVista(p, key);
+  });
   return el;
 }
 
@@ -2309,7 +2793,15 @@ function tarjetaPack(p, key){
     el.querySelector('.precio').textContent = ars(precioDe(p)); };
   if (!sinStock) el.querySelector('.add').onclick =
     e => agregar(p, key, +span.textContent, e.target);
+  /* La foto y el nombre tambien abren la ficha: hay clientes que ignoran el
+     boton y hacen clic en la imagen, que es lo que uno espera de una tarjeta
+     de producto. Los controles de cantidad y el boton de agregar quedan
+     afuera a proposito, para que un clic ahi no abra nada. */
   el.querySelector('.vermas').onclick = () => abrirVista(p, key);
+  el.querySelectorAll('.foto, h3').forEach(z => {
+    z.classList.add('abre-ficha');
+    z.onclick = () => abrirVista(p, key);
+  });
   return el;
 }
 
@@ -2390,15 +2882,24 @@ if (pistaCat) pistaCat.addEventListener('scroll', actualizarFlechasCat, {passive
 window.addEventListener('resize', actualizarFlechasCat);
 
 /* ---- 8 · agregar al carrito ---- */
+function revisarCompraRapida(){
+  const b = $('#mvRapida');
+  if (b) b.hidden = Object.keys(carrito).length > 0;
+}
+
 function agregar(p, key, cant, boton){
   carrito[key] = {prod:p, cant:(carrito[key]?.cant || 0) + cant};
-  track('add_to_cart', {item_name:p.n, value:precioDe(p)*cant, segment:segmento});
+  track('add_to_cart', {item_name:p.n, value:precioDe(p)*cant, segment:segmento,
+                        items: itemsGA([{prod:p, cant}])});
   if (boton){
     const t = boton.textContent;
     boton.textContent = '✓ Agregado'; boton.classList.add('ok');
     setTimeout(() => { boton.textContent = t; boton.classList.remove('ok'); }, 1400);
   }
   recalcular();
+  // Se puede agregar con la ficha abierta (los combos de adentro lo hacen):
+  // apenas hay carrito, la compra rapida deja de tener sentido.
+  revisarCompraRapida();
 }
 
 /* ---- 7 · vista rápida ---- */
@@ -2511,10 +3012,28 @@ function abrirVista(p, key){
   $('#mvLista').textContent = rebaja ? ars(lista) : '';
   $('#mv-precio').textContent = ars(pr);
   $('#mvOff').textContent = rebaja ? rebaja + '% OFF' : '';
-  // 5% extra por transferencia: es la promocion que ya corre en la tienda.
-  $('#mvTransferencia').textContent = ars(pr * 0.95) + ' con Transferencia o Depósito Bancario';
+  $('#mvTransferencia').textContent =
+    ars(pr * (1 - TRANSFERENCIA / 100)) + ' con Transferencia o Depósito Bancario';
 
-  $('#mv-carac').textContent = p.d || 'Sin descripción cargada para este producto.';
+  /* Descripciones de hasta 2.600 caracteres: un muro de texto que nadie lee y
+     que empuja el boton de compra fuera de pantalla. Se muestra el arranque y
+     el resto se despliega. */
+  const carac = $('#mv-carac');
+  const texto = p.d || 'Sin descripción cargada para este producto.';
+  const abrir = $('#mvVerDesc');
+  const TOPE = 480;
+  if (texto.length > TOPE){
+    const corte = texto.lastIndexOf(' ', TOPE);
+    carac.dataset.corto = texto.slice(0, corte > 200 ? corte : TOPE) + '…';
+    carac.dataset.largo = texto;
+    carac.textContent = carac.dataset.corto;
+    abrir.hidden = false;
+    abrir.textContent = 'Ver descripción completa';
+    abrir.setAttribute('aria-expanded', 'false');
+  } else {
+    carac.textContent = texto;
+    abrir.hidden = true;
+  }
   $('#mv-ideal').textContent = p.necs.map(x => (NECESIDADES.find(n => n.id === x) || {}).label).join(' · ');
   $('#mv-pres').textContent = p.vars ? p.vars.length + ' variantes disponibles' : '\u2014';
   $('#mv-uso').textContent = 'Según indicaciones del producto.';
@@ -2533,13 +3052,28 @@ function abrirVista(p, key){
   envio.hidden = segmento !== 'minorista';
   if (!envio.hidden) envio.textContent = 'Envío gratis en compras superiores a ' + ars(60000);
 
+  /* "Comprar solo este producto" se lleva ESE producto y nada mas: si el
+     cliente ya venia armando una compra aca, apretarlo le dejaria el resto
+     afuera sin que se entere. Con carrito cargado la salida es una sola, la
+     de la barra de abajo. */
+  revisarCompraRapida();
+
   // Cantidad: arranca en 1 en cada apertura.
   const q = $('#mvQty').querySelector('span'); q.textContent = '1';
   pintarResenas(p);
   pintarCombos(p);
   abrirModal('modal');
-  track('view_item', {item_name:p.n});
+  track('view_item', {item_name:p.n, value:precioDe(p),
+                      items: itemsGA([{prod:p, cant:1}])});
 }
+
+$('#mvVerDesc').onclick = e => {
+  const carac = $('#mv-carac'), b = e.currentTarget;
+  const abierto = b.getAttribute('aria-expanded') === 'true';
+  carac.textContent = abierto ? carac.dataset.corto : carac.dataset.largo;
+  b.textContent = abierto ? 'Ver descripción completa' : 'Ver menos';
+  b.setAttribute('aria-expanded', String(!abierto));
+};
 
 $('#mvQty').addEventListener('click', e => {
   const b = e.target.closest('[data-d]'); if (!b) return;
@@ -2570,7 +3104,8 @@ function pintarHitos(){
     h.className = 'tl-hito'; h.dataset.min = t.min;
     h.style.left = (t.min / max * 100) + '%';
     h.innerHTML = '<div class="tl-punto">✓</div><div class="tl-lbl"><b>' + ars(t.min) + '</b>' +
-                  t.nombre + (t.real ? '' : ' *') + '</div>';
+                  t.nombre + (t.pendiente ? ' <span class="pendiente">a confirmar</span>' : '') +
+                  '</div>';
     pista.appendChild(h);
   });
 }
@@ -2599,8 +3134,6 @@ function mensajeProgreso(subtotal, falta, proximo, pct){
    del minimo apenas lo cruzaba. */
 function recalcular(){
   const subtotal = Object.values(carrito).reduce((a,i) => a + precioDe(i.prod) * i.cant, 0);
-
-
   const unidades = Object.values(carrito).reduce((a,i) => a + i.cant, 0);
   const lineas = Object.keys(carrito).length;
 
@@ -2628,6 +3161,7 @@ function recalcular(){
   $('#bfMonto').textContent = ars(subtotal);
   // La barra aparece recien cuando el carrito tiene algo.
   $('#barraFija').classList.toggle('visible', subtotal > 0);
+  apartarPie();
 
   // Celebrar el desbloqueo ANTES de empujar al proximo objetivo: si se salta
   // directo al siguiente, el cliente nunca se entera de que gano algo.
@@ -2643,6 +3177,15 @@ function recalcular(){
     festejoTimer = setTimeout(() => mensajeProgreso(subtotal, falta, proximo, pct), 2600);
   } else if (subtotal > 0){
     mensajeProgreso(subtotal, falta, proximo, pct);
+  } else {
+    /* Carrito en cero: la barra vuelve a foja cero de una. Si no, quedaba
+       colgado el mensaje del segmento anterior ("te faltan $95.000 para
+       minimo mayorista") sobre un carrito que ya no existe, y encima el
+       festejo podia dispararse 2,6 s despues con datos viejos. */
+    clearTimeout(festejoTimer);
+    const msg = $('#bfMsg');
+    msg.classList.remove('festejo');
+    msg.textContent = 'Seguí sumando';
   }
 
   document.querySelectorAll('.pack').forEach(el => {
@@ -2662,7 +3205,8 @@ function fila(p, origen){
     '<button type="button">+ Agregar</button>';
   d.querySelector('button').onclick = e => {
     agregar(p, origen + '-' + p.n, 1, e.target);
-    track('cross_sell_add', {product_id:p.n, source:origen});
+    track('cross_sell_add', {item_name:p.n, source:origen, value:precioDe(p),
+                             items: itemsGA([{prod:p, cant:1}])});
   };
   return d;
 }
@@ -2729,11 +3273,13 @@ function pintarCarrito(entrando){
         // Bajar de uno saca el producto: es lo que espera cualquiera que
         // aprieta el menos con un solo item.
         if (n < 1) delete carrito[clave]; else carrito[clave].cant = n;
-        pintarCarrito(); recalcular();
+        pintarCarrito(); recalcular(); revisarCompraRapida();
       });
       li.querySelector('.citem__quitar').onclick = () => {
         track('remove_from_cart', {item_name:i.prod.n});
-        const borrar = () => { delete carrito[clave]; pintarCarrito(); recalcular(); };
+        const borrar = () => {
+          delete carrito[clave]; pintarCarrito(); recalcular(); revisarCompraRapida();
+        };
         // La fila se va antes de desaparecer del objeto: si se borra de una,
         // la lista pega un salto y no se entiende cual se saco.
         if (!ANIM.activo) return borrar();
@@ -2789,7 +3335,8 @@ $('#bfIr').onclick = () => {
   pintarCarrito(true);
   abrirModal('modalCheckout');
   track('view_cart', {value:Object.values(carrito)
-    .reduce((a,i) => a + precioDe(i.prod) * i.cant, 0), items:Object.keys(carrito).length});
+    .reduce((a,i) => a + precioDe(i.prod) * i.cant, 0),
+    items: itemsGA(Object.values(carrito))});
 };
 $('#checkoutSeguir').onclick = () => cerrarModal('modalCheckout');
 $('#checkoutCerrar').onclick = () => cerrarModal('modalCheckout');
@@ -2831,8 +3378,23 @@ $('#modalCheckout').onclick = e => { if (e.target.id === 'modalCheckout') cerrar
       .map(x => x.p);
   }
 
+  /* La busqueda se mide cuando el cliente para de escribir, no en cada
+     tecla: si no, "aceite" son seis eventos y el informe queda ilegible. */
+  let relojBusqueda = null;
+  function medirBusqueda(texto){
+    clearTimeout(relojBusqueda);
+    if (!texto.trim()) return;
+    relojBusqueda = setTimeout(() => {
+      // search_term es el nombre que espera GA4 en su evento `search`;
+      // query queda para el dataLayer, que es como se venia llamando.
+      track('search', {search_term: texto.trim(), query: texto.trim(),
+                       results: resultados.length});
+    }, 900);
+  }
+
   function pintar(texto){
     resultados = buscar(texto);
+    medirBusqueda(texto);
     marcado = -1;
     limpiar.hidden = !texto;
     if (!texto.trim()){
@@ -3017,14 +3579,95 @@ async function mandarALaTienda(items, boton, textoOriginal){
   /* Se va a /comprar/ incluso si alguno fallo: ahi el cliente ve exactamente
      que entro y que no, en vez de quedarse en una landing que le dice que algo
      salio mal sin poder hacer nada. */
-  if (fallaron) track('add_to_cart_error', {fallaron});
+  if (fallaron) track('add_to_cart_error', {fallaron, intentados: items.length,
+                                            segment: segmento});
   location.href = CARRITO_TIENDA;
 }
+
+/* ══════════ PRUEBA DEL PASE A LA TIENDA ══════════
+   Los nueve casos que hay que verificar antes de publicar. Se escribe en la
+   consola del navegador, con la landing corriendo DENTRO de la tienda:
+
+       pruebaDeCarrito()
+
+   No compra ni navega: arma el formulario de cada caso igual que lo haria el
+   boton de finalizar y muestra que id, que cantidad y que precio saldrian.
+   Con eso se contrasta contra lo que aparece del otro lado.
+
+   Lo que no puede hacer sola es apretar el boton: eso es una persona, con la
+   tienda abierta al lado. Los nueve casos y como leerlos estan en
+   NOTAS-PARA-LA-TIENDA.md. */
+window.pruebaDeCarrito = function(){
+  /* Con stock primero: si el ejemplo sale sin stock, la prueba no dice nada
+     sobre el caso normal. El caso "sin stock" lo pide aparte, a proposito. */
+  const hay = (seg, filtro) => PRODUCTOS.filter(p =>
+    p.pr[seg] != null && p.st[seg] !== false && (!filtro || filtro(p)));
+  const uno = (seg, filtro) => hay(seg, filtro)[0];
+
+  const casos = [
+    ['un producto',            'minorista', p => [{prod: uno('minorista'), cant: 1}]],
+    ['dos productos distintos','minorista', p => hay('minorista').slice(0, 2)
+                                                  .map(x => ({prod: x, cant: 1}))],
+    ['varias unidades',        'minorista', p => [{prod: uno('minorista'), cant: 4}]],
+    ['con variantes',          'minorista', p => {
+      const v = uno('minorista', x => x.vars && x.vars.length);
+      return v ? [{prod: v, cant: 1}] : [];
+    }],
+    ['sin stock',              'minorista', p => {
+      const v = PRODUCTOS.find(x => x.pr.minorista != null && x.st.minorista === false);
+      return v ? [{prod: v, cant: 1}] : [];
+    }],
+    ['compra minorista',       'minorista', p => hay('minorista').slice(0, 3)
+                                                  .map(x => ({prod: x, cant: 1}))],
+    ['compra mayorista 20%',   'mayorista', p => hay('mayorista').slice(0, 3)
+                                                  .map(x => ({prod: x, cant: 2}))],
+    ['compra distribuidor 30%','distribuidor', p => hay('distribuidor').slice(0, 3)
+                                                  .map(x => ({prod: x, cant: 3}))],
+    ['cinco o mas articulos',  'minorista', p => hay('minorista').slice(0, 6)
+                                                  .map(x => ({prod: x, cant: 1}))]
+  ];
+
+  const guardado = segmento;
+  console.log('%cPRUEBA DEL PASE A LA TIENDA', 'font-weight:bold;font-size:14px');
+  console.log('LS.addToCartEnhanced ' +
+    (typeof LS !== 'undefined' && typeof LS.addToCartEnhanced === 'function'
+      ? 'ESTA disponible: la landing corre dentro de la tienda.'
+      : 'NO esta: esto es el prototipo suelto, los ids se muestran igual.'));
+
+  casos.forEach(([nombre, seg, armar]) => {
+    segmento = seg;
+    const items = armar() || [];
+    if (!items.length){
+      console.warn(nombre + ' (' + seg + '): no hay ningun producto que sirva de ejemplo');
+      return;
+    }
+    const filas = items.map(i => ({
+      producto: i.prod.n,
+      id_que_se_manda: idParaLaTienda(i.prod),
+      cantidad: i.cant,
+      precio_landing: precioDe(i.prod),
+      variante: i.prod.vars
+        ? (i.prod.vars[varElegida.get(i.prod.n) ?? 0] || {}).n || '(la primera)'
+        : '—',
+      stock: i.prod.st[seg] === false ? 'SIN STOCK' : 'ok'
+    }));
+    const total = items.reduce((a, i) => a + precioDe(i.prod) * i.cant, 0);
+    console.groupCollapsed(nombre + ' · ' + seg + ' · ' + ars(total));
+    console.table(filas);
+    console.groupEnd();
+  });
+
+  segmento = guardado;
+  pintar(); pintarPacks(); recalcular();
+  console.log('Listo. Ahora hay que repetir cada caso a mano y comparar con ' +
+              'lo que muestra /comprar/: mismos productos, mismas cantidades, ' +
+              'mismos precios.');
+};
 
 $('#checkoutIr').onclick = e => {
   const items = Object.values(carrito);
   track('begin_checkout', {value: items.reduce((a, i) => a + precioDe(i.prod) * i.cant, 0),
-                           items: items.length});
+                           segment: segmento, items: itemsGA(items)});
   mandarALaTienda(items, e.currentTarget, 'Finalizar compra');
 };
 
@@ -3035,7 +3678,9 @@ $('#checkoutIr').onclick = e => {
 $('#mvRapida').onclick = e => {
   if (!vista) return;
   const cant = Math.max(1, +$('#mvQty').querySelector('span').textContent || 1);
-  track('quick_buy', {item_name: vista.p.n, quantity: cant});
+  track('quick_buy', {item_name: vista.p.n, quantity: cant, segment: segmento,
+                      value: precioDe(vista.p) * cant,
+                      items: itemsGA([{prod: vista.p, cant}])});
   mandarALaTienda([{prod: vista.p, cant}], e.currentTarget, 'Compra rápida');
 };
 
