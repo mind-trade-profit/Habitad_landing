@@ -158,7 +158,11 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .citem__qty .qty-campo{width:34px;font-size:13.5px}
 .add{flex:1;background:var(--fucsia);color:var(--btn-txt);border:0;border-radius:9px;padding:11px 8px;
   font:inherit;font-weight:700;font-size:14px;cursor:pointer;min-height:38px}
-.add:hover{filter:brightness(1.06)}
+.add:hover:not(:disabled){filter:brightness(1.06)}
+/* Sin stock: apagado y sin cursor de mano. Antes quedaba igual que uno que
+   funciona y el cliente lo apretaba sin entender por que no pasaba nada. */
+.add:disabled{background:var(--borde);color:var(--tinta-suave);cursor:not-allowed;
+  box-shadow:none;font-weight:600}
 .add.ok{background:var(--verde);color:#fff}
 /* Antes era un enlace subrayado de 13px que casi no se veia. Ahora es un
    boton con borde: mismo lugar, mucho mas claro que se puede tocar. */
@@ -537,6 +541,8 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 
 .ficha__compra{display:flex;gap:10px;align-items:center;margin-bottom:18px}
 .ficha__compra .add{flex:1;padding:14px;font-size:15px}
+.ficha__compra .add:disabled{background:var(--borde);color:var(--tinta-suave);
+  cursor:not-allowed}
 .ficha__garantias{list-style:none;margin:0;padding:0;display:grid;gap:9px;
   border-top:1px solid var(--borde);padding-top:14px}
 .ficha__garantias li{font-size:13px;color:var(--tinta-suave);line-height:1.45}
@@ -2858,7 +2864,7 @@ function aplicarSegmento(id, conservarCarrito){
   pintar(); pintarPacks(); recalcular();
   // Si la ficha esta abierta al cambiar de segmento, el boton se actualiza.
   const rapida = $('#mvRapida');
-  if (rapida) rapida.hidden = segmento !== 'minorista';
+  if (rapida && vista) rapida.hidden = segmento !== 'minorista' || !conStock(vista.p);
 }
 
 /* Aviso corto arriba del catalogo. Se usa tanto al vaciar el carrito como al
@@ -2947,7 +2953,8 @@ function tarjeta(p, key){
         '<div class="qty"><button type="button" data-d="-1">-</button>' +
         campoCantidad(1, 'Cantidad de ' + p.n) +
         '<button type="button" data-d="1">+</button></div>' +
-        '<button class="add" type="button"' + (sinStock ? ' disabled' : '') + '>Agregar</button></div>' +
+        '<button class="add" type="button"' + (sinStock ? ' disabled' : '') + '>' +
+        (sinStock ? 'Sin stock' : 'Agregar') + '</button></div>' +
       '<button class="vermas" type="button">Ver detalles</button></div>';
   const cuenta = armarContador(el.querySelector('.qty'));
   const sel = el.querySelector('[data-variante]');
@@ -3084,7 +3091,8 @@ function tarjetaPack(p, key){
         '<div class="qty"><button type="button" data-d="-1">-</button>' +
         campoCantidad(1, 'Cantidad de ' + p.n) +
         '<button type="button" data-d="1">+</button></div>' +
-        '<button class="add" type="button"' + (sinStock ? ' disabled' : '') + '>Agregar</button></div>' +
+        '<button class="add" type="button"' + (sinStock ? ' disabled' : '') + '>' +
+        (sinStock ? 'Sin stock' : 'Agregar') + '</button></div>' +
       '<button class="vermas" type="button">Ver detalles</button></div>';
   const cuenta = armarContador(el.querySelector('.qty'));
   const sel = el.querySelector('[data-variante]');
@@ -3397,10 +3405,20 @@ function abrirVista(p, key){
   envio.hidden = segmento !== 'minorista';
   if (!envio.hidden) envio.textContent = 'Envío gratis en compras superiores a ' + ars(60000);
 
+  /* Sin stock no se compra. La ficha no lo estaba apagando: se podia cargar
+     al carrito y recien fallaba del otro lado, en el carrito de Tiendanube,
+     que es el peor lugar para enterarse. */
+  const hayStock = conStock(p);
+  const agregarBtn = $('#mv-add');
+  agregarBtn.disabled = !hayStock;
+  agregarBtn.textContent = hayStock ? 'Agregar al carrito' : 'Sin stock';
+  $('#mvQty').hidden = !hayStock;
+
   /* "Comprar ahora" lleva ESTE producto al carrito y va a finalizar. Con un
      minimo de $100.000 o $250.000 encima, un producto suelto nunca alcanza:
-     el boton llevaria a un carrito bloqueado. Es solo para minorista. */
-  $('#mvRapida').hidden = segmento !== 'minorista';
+     el boton llevaria a un carrito bloqueado. Es solo para minorista, y
+     tampoco tiene sentido sin stock. */
+  $('#mvRapida').hidden = segmento !== 'minorista' || !hayStock;
 
   // Cantidad: arranca en 1 en cada apertura.
   cuentaFicha.fijar(1);
