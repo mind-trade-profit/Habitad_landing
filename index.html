@@ -297,24 +297,27 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
    centrada y la ultima a la derecha, apuntando cada una a su tramo. Los
    puntos siguen sobre la barra, en su posicion exacta, marcando el progreso.
 
-   Van separadas del punto a proposito. Con 23,5 y 29,5px cada etiqueta mide
-   entre 200 y 340px, y los hitos pueden caer a 100px uno del otro: colgadas
-   del punto se pisaban en minorista y en distribuidor, y se salian por arriba
-   de la barra. Repartidas parejo entran a cualquier ancho. */
+   Van separadas del punto a proposito: cada etiqueta mide varios cientos de
+   pixeles y los hitos pueden caer a 100px uno del otro, asi que colgadas del
+   punto se pisaban en minorista y en distribuidor y se salian por arriba de
+   la barra. Repartidas parejo entran a cualquier ancho y a cualquier cuerpo.
+
+   Tamaños: beneficio 17,5px e importe 23,5px. Salieron de sumarle 12px a los
+   originales (11,5 y 17,5) y despues bajarle 6. */
 .tl-etiquetas{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
-  padding:0 2px 12px;font-size:23.5px;line-height:1.15;color:var(--dorado)}
+  padding:0 2px 12px;font-size:17.5px;line-height:1.15;color:var(--dorado)}
 .tl-etiquetas span{display:block}
 .tl-etiquetas span:nth-child(2){text-align:center}
 .tl-etiquetas span:last-child{text-align:right}
-.tl-etiquetas b{display:block;font-weight:700;font-size:29.5px;
+.tl-etiquetas b{display:block;font-weight:700;font-size:23.5px;
   font-family:Raleway,system-ui,sans-serif;letter-spacing:.01em;margin-bottom:2px}
 .tl-etiquetas .pendiente{font-size:.72em}
 @media(max-width:640px){
-  /* Mismos doce pixeles de mas: el beneficio de 9,5 a 21,5 y el importe de
-     14,5 a 26,5. Con tres importes de ese cuerpo en 375px no sobra ni un
-     pixel, asi que el aire entre columnas se reduce al minimo. */
-  .tl-etiquetas{gap:5px;padding:0 0 10px;font-size:21.5px}
-  .tl-etiquetas b{font-size:26.5px;letter-spacing:-.02em}
+  /* En celular, seis menos igual: beneficio 15,5 e importe 20,5. Con el
+     cuerpo anterior tres importes en 375px no dejaban ni un pixel de aire
+     entre columnas; con este ya entran holgados. */
+  .tl-etiquetas{gap:6px;padding:0 0 10px;font-size:15.5px}
+  .tl-etiquetas b{font-size:20.5px;letter-spacing:-.01em}
 }
 .bf-row{max-width:1140px;margin:0 auto;display:flex;align-items:center;gap:14px}
 .bf-cant{background:var(--fucsia);color:var(--btn-txt);border-radius:999px;min-width:28px;height:28px;
