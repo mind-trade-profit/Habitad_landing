@@ -2921,6 +2921,70 @@ addEventListener('resize', apartarPie);
 /* ---- 6 · catálogo ---- */
 const carrito = {};
 
+/* ══ El renglon de la tarjeta ══
+   La descripcion completa vive en la ficha y no se toca. Para las dos lineas
+   de la tarjeta se busca la primera frase que diga algo nuevo, salteando dos
+   cosas que traen casi todas las fichas de la tienda:
+
+     1. el arranque que repite el nombre del producto ("Aceite De Almendras
+        Por 30 ml" debajo de "Aceite de Almendras para Nutricion..."), y
+     2. los encabezados en mayusculas sostenidas ("ACEITE DE CULTIVO ORGANICO
+        LAVANDAS Conocido por sus...").
+
+   Debajo del titulo, las dos se leen como un segundo titulo mal escrito. */
+const soloLetras = t => plano(t).replace(/[^a-z0-9 ]/g, ' ')
+  .replace(/\s+/g, ' ').trim();
+
+/* Saltea las palabras del arranque que no tienen ni una minuscula: son el
+   encabezado en mayusculas, no la frase. */
+function sinGritos(t){
+  const w = t.split(/\s+/);
+  let i = 0;
+  while (i < w.length && !/[a-záéíóúüñ]/.test(w[i])) i++;
+  // Si TODA la linea esta en mayusculas no queda nada: se devuelve entera,
+  // que es mejor que un renglon vacio.
+  return i < w.length ? w.slice(i).join(' ') : t;
+}
+
+function resumenTarjeta(p){
+  /* Palabras propias del titulo, de cuatro letras para arriba: "de", "para" y
+     "con" estan en todos lados y no dicen si una linea repite al producto. */
+  const delTitulo = new Set(soloLetras(p.n).split(' ').filter(w => w.length > 3));
+  /* La leyenda legal va pegada al final de la ultima linea, no en una propia:
+     hay que sacarla de cada renglon antes de mirarlo, porque si no, en un
+     producto de descripcion corta el renglon de la tarjeta seria la leyenda. */
+  const lineas = (p.d || '').split('\n')
+    .map(t => t.replace(CIERRE_LEGAL, '').trim()).filter(Boolean);
+
+  for (const linea of lineas){
+    const frase = sinGritos(linea);
+    const q = soloLetras(frase);
+    if (q.length < 18) continue;                 // "Contiene :", "Modo de uso"
+
+    /* Renglon entero en mayusculas: es un encabezado del editor, no una
+       frase. Comparar solo los primeros caracteres no alcanzaba -- "ACEITE DE
+       CULTIVO ORGANICO LAVANDAS" no empieza igual que "Aceite de Lavanda
+       para el Bienestar" y se colaba igual. */
+    const letras = frase.replace(/[^A-Za-zÁÉÍÓÚÜÑ]/g, '');
+    if (letras.length > 6 && letras === letras.toUpperCase()) continue;
+
+    /* Y el renglon que vuelve a nombrar el producto con otras palabras
+       ("Aceite Organico de Jarilla x 30cc" debajo de "Aceite de Jarilla
+       Organico para Masajes"): corto y con la mitad de las palabras del
+       titulo. Se pide que sea corto para no tirar una frase larga que
+       ademas nombra el producto, que si aporta. */
+    const propias = q.split(' ').filter(w => w.length > 3);
+    const repetidas = propias.filter(w => delTitulo.has(w)).length;
+    if (q.length < 52 && propias.length && repetidas / propias.length >= 0.5) continue;
+
+    return frase;
+  }
+
+  // Nada paso el filtro: la primera linea con texto, al menos sin gritar.
+  const suelta = lineas.find(t => t.length > 18);
+  return suelta ? sinGritos(suelta) : '';
+}
+
 function tarjeta(p, key){
   const pr = precioDe(p), lista = p.pr.minorista;
   const rebaja = (segmento !== 'minorista' && lista && pr && lista > pr)
@@ -2941,7 +3005,7 @@ function tarjeta(p, key){
       '<h3>' + p.n + '</h3>' +
       // Hueco donde la app deja las estrellas. Vacio no ocupa lugar.
       estrellasDe(p) +
-      '<p class="desc">' + (p.d || '') + '</p>' +
+      '<p class="desc">' + resumenTarjeta(p) + '</p>' +
       (p.vars ? '<div class="pres">' + (p.opcion || 'Variante') + '</div>' +
         '<select class="variante-sel" data-variante>' + p.vars.map((v, i) =>
           '<option value="' + i + '"' + (v.s ? '' : ' disabled') + '>' + v.n +
