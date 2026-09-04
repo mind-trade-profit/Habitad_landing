@@ -2666,13 +2666,15 @@ function pedirAscenso(destino){
 
   if (falta){
     track('segment_min_bloqueado', {to: destino, total: despues, missing: falta});
-    /* Un solo dato: cuanto falta. La cuenta de "tenes tanto a precio tal y
-       tanto a precio tal otro" era exacta y no la leia nadie: el cliente
-       quiere saber cuanto le falta, no de donde sale el numero. */
+    /* Dos datos y nada mas: cuanto falta y contra que minimo. La cuenta de
+       "tenes tanto a precio tal y tanto a precio tal otro" era exacta y no la
+       leia nadie; el minimo si hace falta, porque sin el numero de referencia
+       el cliente no sabe si le conviene seguir sumando. */
     return pintarAviso({
       titulo: 'Te faltan ' + ars(falta),
       texto: 'Para comprar a precio <b>' + nombre + '</b> te faltan <b>' +
-        ars(falta) + '</b>.<br><br>Seguí sumando y volvé a tocar ' +
+        ars(falta) + '</b>: el mínimo de activación ' + nombre + ' es <b>' +
+        ars(MINIMOS[destino]) + '</b>.<br><br>Seguí sumando y volvé a tocar ' +
         SEGMENTOS[destino].label.toUpperCase() +
         ': ahí tu carrito pasa solo a los precios nuevos.',
       no: 'Seguir comprando'
@@ -2710,7 +2712,8 @@ function pedirMinorista(){
     return pintarAviso({
       titulo: 'Te faltan ' + ars(falta),
       texto: 'Para poder sumar productos de la lista minorista te faltan <b>' +
-        ars(falta) + '</b>.',
+        ars(falta) + '</b>: el mínimo de activación ' + nombre + ' es <b>' +
+        ars(MINIMOS[segmento]) + '</b>.',
       no: 'Seguir comprando'
     });
   }
