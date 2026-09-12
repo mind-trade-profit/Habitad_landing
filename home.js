@@ -71,7 +71,7 @@
        selector NO va acotado: apunta al theme a proposito. Se agrega recien
        aca, con el ancla ya confirmada, para que un theme cambiado no termine
        escondiendo el titulo de una pagina que quedo sin landing. */
-    var sobra = "section[data-store=\"page-title\"] h1";
+    var sobra = "section[data-store=\"page-title\"]";
     if (sobra) {
       var recorte = document.createElement('style');
       recorte.id = 'habitad-recorte';
