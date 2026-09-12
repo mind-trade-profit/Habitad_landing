@@ -87,6 +87,32 @@
     destino.innerHTML = '';
     destino.appendChild(caja);
 
+    /* 3 bis · A todo el ancho. El theme envuelve la pagina en .container, que
+       tiene max-width y aire a los costados, y la landing quedaba en una
+       columna angosta entre dos margenes blancos. Sus bandas de color estan
+       hechas para llegar al borde -- la columna centrada la pone .wrap, dos
+       niveles mas adentro.
+
+       Se mide y se sangra en vez de usar 100vw: 100vw incluye la barra de
+       scroll, que en este equipo son 15px, y la landing terminaba corrida
+       medio pixel a la izquierda y cortada a la derecha. clientWidth no la
+       incluye. Se mide el PADRE, que no depende de estos margenes, asi que
+       recalcular no se muerde la cola. */
+    function aTodoElAncho() {
+      var r = destino.getBoundingClientRect();
+      var ancho = document.documentElement.clientWidth;
+      caja.style.width = ancho + 'px';
+      caja.style.marginLeft = (-r.left) + 'px';
+      caja.style.marginRight = (r.right - ancho) + 'px';
+    }
+    aTodoElAncho();
+
+    var reloj;
+    window.addEventListener('resize', function () {
+      clearTimeout(reloj);
+      reloj = setTimeout(aTodoElAncho, 120);
+    });
+
     /* 4 · Los popups y la barra de compra salen al <body>. Adentro de un
        contenedor con `transform` -- y los carruseles del theme tienen --
        `position:fixed` deja de ser fijo y la barra se pierde a mitad de la
