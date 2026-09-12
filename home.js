@@ -1,22 +1,23 @@
 /* ==========================================================================
-   LANDING HABITAD — se planta en /catalogos desde Google Tag Manager.
+   LANDING HABITAD — se planta en /catalogos desde el panel de la tienda.
 
    Generado por tools/construir_home_tienda.py. NO se edita a mano: se edita
    prototipo/embudo.html y se vuelve a generar.
 
-   Se instala con UNA etiqueta de HTML personalizado en GTM:
+   Se instala pegando el cargador en
 
-       <script src="https://mind-trade-profit.github.io/Habitad_landing/home.js" defer></script>
+     Configuracion > Codigos externos > Codigos de tracking > Para la tienda
 
-   con activador "Vista de pagina" filtrado a esa ruta. Para desactivarlo se
-   pausa la etiqueta: el theme vuelve a lo de siempre, sin tocar nada mas.
+   El codigo de ese campo sale en TODAS las paginas del storefront; el guardia
+   de ruta de aca abajo es el que decide en cual se planta la landing. Para
+   apagarla se borran esos renglones: el theme vuelve a lo de siempre.
    ========================================================================== */
 (function () {
   'use strict';
 
-  /* Una sola vez, y solo en la pagina que corresponde. GTM puede disparar dos
-     veces en una navegacion, y la landing no esta hecha para convivir consigo
-     misma. */
+  /* Una sola vez, y solo en la pagina que corresponde. El cargador puede
+     entrar dos veces -- una recarga parcial, una etiqueta duplicada -- y la
+     landing no esta hecha para convivir consigo misma. */
   if (window.__landingHabitad) return;
   var aqui = location.pathname.replace(/\/+$/, '').toLowerCase();
   var esperada = '/catalogos'.replace(/\/+$/, '').toLowerCase();
