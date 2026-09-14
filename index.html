@@ -210,42 +210,75 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .mini button{background:var(--tinta);color:#fff;border:0;border-radius:8px;padding:9px 13px;
   font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;flex:0 0 auto}
 
-/* ---- PACKS ----
-   Misma pista que el catalogo: los packs son productos como cualquier otro,
-   asi que reusan .carrusel-cat y la tarjeta entera en vez de un formato
-   propio. El bloque .pack anterior nunca llego a pintarse. */
-.carrusel-packs .grilla{grid-template-rows:1fr}
-
-/* ---- Tarjeta de pack ----
-   Otro formato que el catalogo: la foto va entera y arriba de ella flota el
-   panel con el nombre, la descripcion y el precio en pastilla.
-   La foto sigue en contain, no cover: las piezas de los combos son graficos
-   con texto adentro y recortarlos se comeria lo que dicen. */
-.card--pack{border:1px solid #e3e0d4;border-radius:17px;background:var(--crema);
-  padding:11px 11px 13px;overflow:visible}
-.card--pack:hover{box-shadow:var(--sombra);transform:translateY(-3px)}
-.card--pack .foto{aspect-ratio:1;border-radius:13px;overflow:hidden;background:#fff}
-.card--pack .foto img{object-fit:contain}
-.card--pack .card-body{padding:0;gap:0;background:none}
-
-/* El panel monta sobre el borde inferior de la foto, como en la referencia. */
-.pack-panel{position:relative;z-index:2;margin:-42px 7px 0;background:rgba(255,255,255,.95);
-  border:1px solid #eceadf;border-radius:13px;padding:11px 12px 12px;text-align:center;
-  box-shadow:0 6px 18px rgba(60,55,40,.13)}
-.pack-panel h3{font-family:Lora,serif;font-size:15px;font-weight:600;line-height:1.28;
-  color:var(--tinta);margin:0 0 4px;display:-webkit-box;-webkit-line-clamp:2;
-  -webkit-box-orient:vertical;overflow:hidden;min-height:2.55em}
-.pack-panel .desc{font-size:11.5px;line-height:1.45;color:var(--tinta-suave);margin:0;
-  -webkit-line-clamp:2;min-height:2.9em}
-.pack-panel .estrellas{justify-content:center;min-height:0;margin-top:5px;font-size:12px}
-.pack-panel .variante-sel{margin-top:7px;width:100%}
-.pack-precio{display:inline-flex;align-items:baseline;gap:7px;margin-top:9px;
-  background:var(--crema);border:1px solid #e3e0d4;border-radius:99px;padding:5px 15px}
-.pack-precio b{font-size:15.5px;font-weight:700;color:var(--tinta)}
-.pack-precio s{font-size:12px;color:var(--tinta-suave)}
-.card--pack .acciones{margin-top:11px}
-.card--pack .vermas{margin-top:8px;border-color:#d8d4c4;color:var(--tinta-suave)}
-.card--pack .vermas:hover{border-color:var(--verde);color:var(--verde)}
+/* ---- COMBOS · carrusel de portada ----
+   Una carta al frente y las vecinas escalonadas detras, cada una de un color.
+   La posicion la pone ubicarCombos() con transform: el CSS dice como se ve
+   cada carta y cuanto tarda en moverse, no donde esta.
+   La foto va en contain y sobre blanco: las piezas de los combos son graficos
+   con texto adentro, y recortarlas se comeria lo que dicen. */
+.cf{position:relative;margin-top:4px}
+.cf-escena{position:relative;height:560px;overflow:hidden;overflow:clip;border-radius:20px;
+  touch-action:pan-y;-webkit-user-select:none;user-select:none;outline:none}
+.cf-escena:focus-visible{box-shadow:inset 0 0 0 3px var(--verde)}
+.cf-pista{position:absolute;inset:0}
+.cf-carta{position:absolute;top:26px;left:50%;width:300px;margin-left:-150px;
+  display:flex;flex-direction:column;gap:10px;padding:12px 14px 14px;border-radius:22px;
+  background:var(--cf-color,var(--fucsia));color:#fff;cursor:pointer;
+  box-shadow:0 22px 40px -22px rgba(40,25,15,.55);
+  transition:transform .55s cubic-bezier(.2,.9,.25,1),opacity .35s,box-shadow .35s}
+.cf-carta--frente{cursor:default;box-shadow:0 34px 60px -24px rgba(40,25,15,.62)}
+.cf-carta--fuera{opacity:0;pointer-events:none}
+.cf-quieta .cf-carta{transition:none}
+.cf-arriba{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:38px}
+.cf-ico{flex:0 0 auto;width:38px;height:38px;padding:0;border:0;border-radius:50%;
+  background:transparent;color:#fff;display:grid;place-items:center;cursor:pointer;
+  transition:background .15s,transform .15s}
+.cf-ico:hover{background:rgba(255,255,255,.18)}
+.cf-ico:active{transform:scale(.9)}
+.cf-ico svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round}
+.cf-fav[aria-pressed="true"] svg{fill:currentColor}
+.cf-estado{font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+  background:rgba(0,0,0,.3);border-radius:99px;padding:4px 10px}
+.cf-foto{display:block;width:100%;aspect-ratio:1;padding:0;border:0;border-radius:16px;
+  overflow:hidden;background:#fff;cursor:pointer;box-shadow:0 14px 26px -16px rgba(0,0,0,.5)}
+.cf-foto img{display:block;width:100%;height:100%;object-fit:contain;-webkit-user-drag:none}
+.cf-sin-foto{display:grid;place-items:center;height:100%;font-size:46px}
+.cf-pie{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:0 2px}
+.cf-nombre{margin:0;font-family:Raleway,system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:14px;font-weight:800;line-height:1.25;letter-spacing:.02em;text-transform:uppercase;
+  color:#fff;cursor:pointer;min-height:2.5em;display:-webkit-box;-webkit-line-clamp:2;
+  -webkit-box-orient:vertical;overflow:hidden}
+.cf-precio{flex:0 0 auto;font-size:19px;font-weight:800;line-height:1.15;white-space:nowrap}
+.cf-agregar{position:relative;display:flex;align-items:center;justify-content:center;
+  width:100%;min-height:46px;padding:0 16px 0 40px;border:0;border-radius:12px;
+  background:#fff;color:var(--tinta);font:inherit;font-size:15px;font-weight:700;cursor:pointer;
+  transition:transform .15s,box-shadow .15s,background .15s}
+.cf-agregar::before{content:'+';position:absolute;left:16px;top:50%;transform:translateY(-52%);
+  font-size:24px;font-weight:400;line-height:1}
+.cf-agregar.ok::before,.cf-agregar:disabled::before{content:none}
+.cf-agregar:hover:not(:disabled){box-shadow:0 8px 18px -8px rgba(0,0,0,.45)}
+.cf-agregar:active:not(:disabled){transform:scale(.98)}
+.cf-agregar:disabled{background:rgba(255,255,255,.6);cursor:default;padding-left:16px}
+.cf-agregar.ok{background:var(--verde-suave);color:var(--verde-hondo);padding-left:16px}
+.cf-flecha{position:absolute;top:calc(50% - 38px);z-index:30}
+.cf-flecha--izq{left:max(0px,calc(50% - 545px))}
+.cf-flecha--der{right:max(0px,calc(50% - 545px))}
+.cf-cuenta{margin:6px 0 0;text-align:center;font-size:13px;color:var(--tinta-suave)}
+.cf-aviso{position:absolute;left:50%;bottom:40px;z-index:40;margin:0;padding:8px 16px;
+  border-radius:99px;background:var(--tinta);color:#fff;font-size:13px;font-weight:600;
+  white-space:nowrap;opacity:0;pointer-events:none;transform:translate(-50%,8px);
+  transition:opacity .2s,transform .2s}
+.cf-aviso.on{opacity:1;transform:translate(-50%,0)}
+.cf-pista .vacio{position:absolute;top:26px;left:50%;transform:translateX(-50%);width:min(520px,90%)}
+@media(max-width:700px){
+  .cf-carta{width:min(76vw,290px);margin-left:calc(min(76vw,290px) / -2)}
+  .cf-nombre{font-size:13px}
+  .cf-precio{font-size:17px}
+}
+@media(prefers-reduced-motion:reduce){
+  .cf-carta,.cf-aviso{transition:none}
+}
 
 /* ---- BENEFICIOS ---- */
 .benes{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
@@ -1099,22 +1132,27 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 </section>
 
 <!-- ══ 13 · PACKS ══ -->
-<section class="bloque bloque--crema rev">
+<section class="bloque bloque--crema rev" id="combos">
   <div class="wrap">
     <h2 class="tit">Ofertas packs y combos Habitad</h2>
     <p class="sub">Combinaciones armadas, a menor precio que comprándolas por separado.</p>
-    <div class="carrusel-cat carrusel-packs">
-      <button type="button" class="cat-flecha" data-pack="-1"
-              aria-label="Ver packs anteriores">
+    <div class="cf" id="cfCombos">
+      <div class="cf-escena" id="cfEscena" tabindex="0" role="region"
+           aria-roledescription="carrusel" aria-label="Packs y combos">
+        <div class="cf-pista" id="packs"></div>
+      </div>
+      <button type="button" class="cat-flecha cf-flecha cf-flecha--izq" data-cf="-1"
+              aria-label="Combo anterior">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none"
           stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
-      <div class="grilla" id="packs"></div>
-      <button type="button" class="cat-flecha" data-pack="1"
-              aria-label="Ver más packs">
+      <button type="button" class="cat-flecha cf-flecha cf-flecha--der" data-cf="1"
+              aria-label="Combo siguiente">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none"
           stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
+      <p class="cf-cuenta" id="cfCuenta" aria-live="polite"></p>
+      <p class="cf-aviso" id="cfAviso" role="status"></p>
     </div>
   </div>
 </section>
@@ -1976,7 +2014,10 @@ const EVENTOS = {
   begin_checkout:       {ga4: 'begin_checkout',   meta: 'InitiateCheckout'},
   quick_buy:            {ga4: 'begin_checkout',   meta: 'InitiateCheckout'},
   add_to_cart_error:    {ga4: 'add_to_cart_error'},
-  hero_cta:             {ga4: 'select_promotion'}
+  hero_cta:             {ga4: 'select_promotion'},
+  // Carrusel de combos: guardar en favoritos y compartir.
+  add_to_wishlist:      {ga4: 'add_to_wishlist',  meta: 'AddToWishlist'},
+  share:                {ga4: 'share'}
 };
 
 /* Arma el items[] que espera GA4 a partir de una lista de {prod, cant}. */
@@ -3092,143 +3133,305 @@ function nombrePack(n){
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
-/* Casi todas las descripciones arrancan repitiendo el nombre del producto, y
-   en el panel eso deja el titulo dos veces seguidas. Se compara sin acentos ni
-   puntuacion, porque la repeticion no siempre viene escrita igual
-   ("ANTIAGE-LINEAS" en el nombre y "ANTIAGE - LINEAS" en la descripcion). */
-function descPack(p){
-  const d = (p.d || '').replace(/\s+/g, ' ').trim();
-  if (!d) return '';
-  const clave = t => t.toLowerCase().normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
-  const limpiar = t => t.replace(/^[\s:\-\u2013.,]+/, '').trim();
+/* ══════════ COMBOS · CARRUSEL DE PORTADA ══════════
+   Lo pidio el cliente con una referencia: una carta al frente y las vecinas
+   escalonadas detras, cada una de un color, con corazon y compartir arriba,
+   nombre y precio abajo y el boton ancho de agregar. Reemplaza a la tarjeta
+   de pack con panel flotante, que se leia como una fila mas del catalogo.
 
-  /* Dos pasadas, porque la tienda repite el titulo de dos maneras distintas y
-     ninguna sola las cubre:
+   Los combos se venden a precio de lista en los tres segmentos -- la tienda
+   no los publica con precio mayorista ni distribuidor -- asi que no se
+   filtran por segmento: es preferible venderlos a lista que esconderlos.
 
-     1) Mismo texto con otra puntuacion o acentos -- "ANTIAGE-LINEAS" arriba y
-        "ANTIAGE - LINEAS" abajo. Se compara caracter a caracter ignorando todo
-        lo que no sea letra o numero.
-     2) Titulo parecido pero no igual -- "COMBO ACEITE PARA TU CUIDADO DE PIEL"
-        contra "Combo Aceite Cuidado de Piel". Ahi se descartan las palabras
-        iniciales que ya aparecen en el titulo. */
-  const n = clave(p.n);
-  if (n){
-    let i = 0, visto = '';
-    while (i < d.length && visto.length < n.length){ visto += clave(d[i]); i++; }
-    if (visto === n) return limpiar(d.slice(i));
-  }
+   Las cartas no se mueven con scroll sino con transform: cada una sabe a que
+   distancia esta de la del frente, y de eso sale su corrimiento, su escala y
+   si se ve. El circulo no tiene punta: despues del ultimo viene el primero. */
 
-  const titulo = new Set(p.n.split(/\s+/).map(clave).filter(Boolean));
-  if (!titulo.size) return d;
-  const palabras = d.split(' ');
-  let k = 0;
-  while (k < palabras.length && titulo.has(clave(palabras[k]))) k++;
-  // Frenos: una sola palabra en comun puede ser casualidad, y la descripcion
-  // nunca se puede quedar sin contenido.
-  if (k < 2 || k > palabras.length - 4) return d;
-  return limpiar(palabras.slice(k).join(' '));
+/* Cinco colores de la familia de la marca, todos con texto blanco por arriba
+   de 4,5:1: fucsia 4,72 · verde 4,90 · terracota 5,18 · fucsia hondo 6,59 ·
+   verde hondo 7,81. El dorado quedo afuera: con blanco da 1,96. */
+const COLORES_COMBO = ['#E01560', '#14823C', '#C2410C', '#B70F4D', '#0E5F2B'];
+
+const ICONO_CORAZON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.3s-7.4-4.5-9.5-9C1.1 8.3 2.8 4.9 6.2 4.6c2.1-.2 3.9 1 5.8 3.2 1.9-2.2 3.7-3.4 5.8-3.2 3.4.3 5.1 3.7 3.7 6.7-2.1 4.5-9.5 9-9.5 9z"/></svg>';
+const ICONO_COMPARTIR = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="M8.2 10.8l7.6-4.1M8.2 13.2l7.6 4.1"/></svg>';
+
+/* Los nombres llegan de la tienda en vivo: se escapan antes de ir al HTML. */
+const escCombo = t => String(t == null ? '' : t)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const idCombo = p => p.ids.minorista || p.ids.mayorista || p.ids.distribuidor;
+const vendidosDe = p => parseInt(String(p.vend || '').replace(/\D/g, ''), 10) || 0;
+
+const cf = {items: [], cartas: [], activo: 0};
+
+let favoritos = new Set();
+try {
+  favoritos = new Set(JSON.parse(localStorage.getItem('habitad:favoritos') || '[]').map(String));
+} catch (e) { /* sin almacenamiento: los favoritos duran la visita */ }
+
+/* Primero lo que se puede comprar, despues lo que tiene reseñas y ventas, y
+   al final el nombre. El alfabetico ponia al frente lo que empezaba con "A". */
+function ordenCombos(a, b){
+  return (conStock(b) - conStock(a)) ||
+    (((b.rat && b.rat.n) || 0) - ((a.rat && a.rat.n) || 0)) ||
+    (vendidosDe(b) - vendidosDe(a)) ||
+    a.n.localeCompare(b.n, 'es');
 }
 
-/* Tarjeta de pack. No reusa tarjeta() porque el orden es otro: la foto manda
-   y el panel se le monta encima. Las acciones y el carrito son los mismos. */
-function tarjetaPack(p, key){
-  const pr = precioDe(p), lista = p.pr.minorista;
-  const rebaja = (segmento !== 'minorista' && lista && pr && lista > pr)
-    ? Math.round((1 - pr / lista) * 100) : 0;
+function cartaCombo(p, i, total){
   const sinStock = !conStock(p);
-  const el = document.createElement('article');
-  el.className = 'card card--pack js-item-product';
-  const idTienda = p.ids.minorista || p.ids.mayorista || p.ids.distribuidor;
-  if (idTienda) el.setAttribute('data-store', 'product-item-' + idTienda);
+  const conOpciones = !!(p.vars && p.vars.length > 1);
+  const nombre = nombrePack(p.n);
+  const clave = 'combo-' + idCombo(p);
+  /* En el circulo el ultimo es vecino del primero: si le toca el mismo color,
+     se corre al tercero de la paleta. */
+  const nc = COLORES_COMBO.length;
+  const color = COLORES_COMBO[(total > 1 && i === total - 1 && i % nc === 0) ? 2 : i % nc];
+
+  const el = document.createElement('div');
+  el.className = 'cf-carta';
+  el.style.setProperty('--cf-color', color);
+  el.setAttribute('role', 'group');
+  el.setAttribute('aria-roledescription', 'combo');
+  el.setAttribute('aria-label', (i + 1) + ' de ' + total + ': ' + nombre);
   el.innerHTML =
-    '<div class="foto">' +
-      (p.img ? '<img src="' + p.img + '" alt="' + p.n + '" loading="lazy">' : '\ud83c\udf3f') +
-      (rebaja ? '<span class="tag">' + rebaja + '% OFF</span>' : '') +
-      (sinStock ? '<span class="tag tag--bug">sin stock</span>' : '') + '</div>' +
-    '<div class="pack-panel">' +
-      '<h3>' + nombrePack(p.n) + '</h3>' +
-      '<p class="desc">' + descPack(p) + '</p>' +
-      estrellasDe(p) +
-      (p.vars ? '<select class="variante-sel" data-variante>' + p.vars.map((v, i) =>
-        '<option value="' + i + '"' + (v.s ? '' : ' disabled') + '>' + v.n +
-        (v.s ? '' : ' (sin stock)') + '</option>').join('') + '</select>' : '') +
-      '<div class="pack-precio"><b class="precio">' + ars(pr) + '</b>' +
-        (rebaja ? '<s>' + ars(lista) + '</s>' : '') + '</div>' +
+    '<div class="cf-arriba">' +
+      '<button type="button" class="cf-ico cf-fav" aria-pressed="' +
+        favoritos.has(String(idCombo(p))) + '" aria-label="Guardar en favoritos">' +
+        ICONO_CORAZON + '</button>' +
+      (sinStock ? '<span class="cf-estado">Sin stock</span>' : '') +
+      '<button type="button" class="cf-ico cf-compartir" aria-label="Compartir este combo">' +
+        ICONO_COMPARTIR + '</button>' +
     '</div>' +
-    '<div class="card-body">' +
-      '<div class="acciones">' +
-        '<div class="qty"><button type="button" data-d="-1">-</button>' +
-        campoCantidad(1, 'Cantidad de ' + p.n) +
-        '<button type="button" data-d="1">+</button></div>' +
-        '<button class="add" type="button"' + (sinStock ? ' disabled' : '') + '>' +
-        (sinStock ? 'Sin stock' : 'Agregar') + '</button></div>' +
-      '<button class="vermas" type="button">Ver detalles</button></div>';
-  const cuenta = armarContador(el.querySelector('.qty'));
-  const sel = el.querySelector('[data-variante]');
-  if (sel) sel.onchange = () => { varElegida.set(p.n, +sel.value);
-    el.querySelector('.precio').textContent = ars(precioDe(p)); };
-  if (!sinStock) el.querySelector('.add').onclick =
-    e => agregar(p, key, cuenta.leer(), e.target);
-  /* La foto y el nombre tambien abren la ficha: hay clientes que ignoran el
-     boton y hacen clic en la imagen, que es lo que uno espera de una tarjeta
-     de producto. Los controles de cantidad y el boton de agregar quedan
-     afuera a proposito, para que un clic ahi no abra nada. */
-  el.querySelector('.vermas').onclick = () => abrirVista(p, key);
-  el.querySelectorAll('.foto, h3').forEach(z => {
-    z.classList.add('abre-ficha');
-    z.onclick = () => abrirVista(p, key);
-  });
+    '<button type="button" class="cf-foto" aria-label="Ver detalles de ' + escCombo(nombre) + '">' +
+      (p.img ? '<img data-src="' + escCombo(p.img) + '" alt="" decoding="async" draggable="false">'
+             : '<span class="cf-sin-foto" aria-hidden="true">🌿</span>') +
+    '</button>' +
+    '<div class="cf-pie">' +
+      '<h3 class="cf-nombre">' + escCombo(nombre) + '</h3>' +
+      '<b class="cf-precio">' + ars(precioDe(p)) + '</b>' +
+    '</div>' +
+    '<button type="button" class="cf-agregar"' + (sinStock ? ' disabled' : '') + '>' +
+      (sinStock ? 'Sin stock' : conOpciones ? 'Elegir opción' : 'Agregar al carrito') +
+    '</button>';
+
+  const abrir = () => abrirVista(p, clave);
+  el.querySelector('.cf-foto').addEventListener('click', abrir);
+  el.querySelector('.cf-nombre').addEventListener('click', abrir);
+  const boton = el.querySelector('.cf-agregar');
+  // Un combo con opciones abre la ficha: ahi se elige cual.
+  if (!sinStock) boton.addEventListener('click', () =>
+    conOpciones ? abrir() : agregar(p, clave, 1, boton));
+  el.querySelector('.cf-fav').addEventListener('click', e => alternarFavorito(p, e.currentTarget));
+  el.querySelector('.cf-compartir').addEventListener('click', () => compartirCombo(p));
+
+  /* Una carta de costado no se usa: primero se trae al frente. Va en captura
+     para que el clic no llegue a los botones de adentro. */
+  el.addEventListener('click', e => {
+    const pos = cf.cartas.indexOf(el);
+    if (pos === cf.activo) return;
+    e.preventDefault();
+    e.stopPropagation();
+    irACombo(pos);
+  }, true);
   return el;
 }
 
-function pintarPacks(){
-  const caja = $('#packs');
-  if (!caja) return;
-  /* Los combos se muestran siempre, en los tres segmentos. La tienda no los
-     publica con precio mayorista ni distribuidor, asi que se venden al precio
-     de lista y se dice: es preferible eso a esconderlos. */
-  const items = PRODUCTOS.filter(p => p.necs.includes('packs'));
-  const aPrecioDeLista = segmento !== 'minorista' && !items.some(p => hayEn(p, segmento));
-  const sub = caja.closest('.bloque').querySelector('.sub');
-  if (!items.length){
-    // Igual que el catalogo: si esta vacio se dice por que, en vez de dejar
-    // el hueco mudo que es lo que pasaba hasta ahora.
-    caja.innerHTML = '<div class="vacio"><strong>No hay packs con precio ' +
-      SEGMENTOS[segmento].label.toLowerCase() + '</strong>La tienda todavía no publica ' +
-      'los combos para este segmento. Se resuelve publicándolos desde el admin.</div>';
-    if (sub) sub.textContent = '';
+function alternarFavorito(p, boton){
+  const id = String(idCombo(p));
+  const ahora = !favoritos.has(id);
+  if (ahora) favoritos.add(id); else favoritos.delete(id);
+  try { localStorage.setItem('habitad:favoritos', JSON.stringify([...favoritos])); } catch (e) {}
+  boton.setAttribute('aria-pressed', String(ahora));
+  avisoCombo(ahora ? 'Guardado en favoritos' : 'Quitado de favoritos');
+  if (ahora) track('add_to_wishlist', {item_name: p.n, value: precioDe(p),
+                                       items: itemsGA([{prod: p, cant: 1}])});
+}
+
+/* Compartir: la hoja nativa del telefono si existe -- WhatsApp, Instagram, lo
+   que el cliente tenga --, y si no, el link al portapapeles. Se comparte la
+   ficha del combo en la tienda; si el catalogo vivo todavia no trajo la
+   direccion, se comparte esta pagina con el ancla del carrusel. */
+async function compartirCombo(p){
+  const u = p.urls && (p.urls.minorista || p.urls.mayorista || p.urls.distribuidor);
+  const url = u || (location.origin + location.pathname + '#combos');
+  const nombre = nombrePack(p.n);
+  const medir = metodo => track('share', {method: metodo, content_type: 'combo',
+                                          item_id: String(idCombo(p)), item_name: p.n});
+  if (navigator.share){
+    try {
+      await navigator.share({title: nombre, text: nombre + ' · Habitad Natural', url});
+      medir('hoja_nativa');
+    } catch (e) { /* lo cerro sin compartir */ }
     return;
   }
-  caja.innerHTML = '';
-  items.forEach((p, i) => caja.appendChild(tarjetaPack(p, 'pack-' + i)));
-  caja.scrollLeft = 0;
+  try {
+    await navigator.clipboard.writeText(url);
+    avisoCombo('Link copiado');
+    medir('copiar_link');
+  } catch (e) {
+    window.open('https://wa.me/?text=' + encodeURIComponent(nombre + ' ' + url), '_blank', 'noopener');
+    medir('whatsapp');
+  }
+}
+
+let relojAvisoCombo = 0;
+function avisoCombo(texto){
+  const a = $('#cfAviso');
+  if (!a) return;
+  a.textContent = texto;
+  a.classList.add('on');
+  clearTimeout(relojAvisoCombo);
+  relojAvisoCombo = setTimeout(() => a.classList.remove('on'), 1800);
+}
+
+/* Distancia de una carta a la del frente, por el lado mas corto del circulo.
+   Con tres o menos no hay circulo: van en fila. */
+function distanciaCombo(i){
+  const n = cf.cartas.length;
+  let d = i - cf.activo;
+  if (n > 3){
+    if (d > n / 2) d -= n;
+    else if (d < -n / 2) d += n;
+  }
+  return d;
+}
+
+function ubicarCombos(){
+  const escena = $('#cfEscena');
+  if (!escena) return;
+  if (!cf.cartas.length){ escena.style.height = ''; return; }
+  /* Medidas tomadas de la referencia: la vecina corrida dos tercios de carta
+     y al 84%, la de mas afuera a una carta y un decimo y al 70%. En celular
+     solo se asoman las vecinas. */
+  const angosto = escena.clientWidth < 700;
+  const PASO = angosto ? [0, .7] : [0, .66, 1.1];
+  const ESCALA = angosto ? [1, .82] : [1, .84, .7];
+  const ancho = cf.cartas[0].offsetWidth || 300;
+  cf.cartas.forEach((carta, i) => {
+    const d = distanciaCombo(i), a = Math.abs(d), lado = Math.sign(d);
+    const visible = a < PASO.length;
+    const paso = visible ? PASO[a] : PASO[PASO.length - 1] + .35;
+    const escala = visible ? ESCALA[a] : ESCALA[ESCALA.length - 1] * .9;
+    carta.style.transform = 'translateX(' + (lado * paso * ancho).toFixed(1) + 'px) scale(' + escala + ')';
+    carta.style.zIndex = String(20 - Math.min(a, 19));
+    carta.classList.toggle('cf-carta--frente', d === 0);
+    carta.classList.toggle('cf-carta--fuera', !visible);
+    carta.setAttribute('aria-hidden', String(d !== 0));
+    carta.querySelectorAll('button').forEach(b => { b.tabIndex = d === 0 ? 0 : -1; });
+    // La foto se pide recien cuando la carta esta por asomarse.
+    if (a <= PASO.length){
+      const img = carta.querySelector('img[data-src]');
+      if (img){ img.src = img.dataset.src; img.removeAttribute('data-src'); }
+    }
+  });
+  escena.style.height = (cf.cartas[cf.activo].offsetHeight + 52) + 'px';
+  const cuenta = $('#cfCuenta');
+  if (cuenta) cuenta.textContent = 'Combo ' + (cf.activo + 1) + ' de ' + cf.cartas.length;
+}
+
+function irACombo(i){
+  const n = cf.cartas.length;
+  if (!n) return;
+  cf.activo = ((i % n) + n) % n;
+  ubicarCombos();
+}
+
+function pintarPacks(){
+  const pista = $('#packs');
+  if (!pista) return;
+  const items = PRODUCTOS.filter(p => p.necs.includes('packs')).sort(ordenCombos);
+  const aPrecioDeLista = segmento !== 'minorista' && !items.some(p => hayEn(p, segmento));
+  const sub = pista.closest('.bloque').querySelector('.sub');
+  /* El combo que estaba al frente sigue al frente: al cambiar de segmento o al
+     llegar datos nuevos de la tienda, el cliente no pierde por donde iba. */
+  const alFrente = cf.items[cf.activo];
+  const idAntes = alFrente ? idCombo(alFrente) : null;
+
+  cf.items = items;
+  pista.classList.add('cf-quieta');
+  pista.innerHTML = '';
+  if (!items.length){
+    cf.cartas = [];
+    pista.innerHTML = '<div class="vacio"><strong>No hay combos publicados</strong>' +
+      'La tienda no tiene combos a la venta en este momento.</div>';
+    if (sub) sub.textContent = '';
+    ubicarCombos();
+    return;
+  }
+  cf.cartas = items.map((p, i) => cartaCombo(p, i, items.length));
+  cf.cartas.forEach(c => pista.appendChild(c));
+  const donde = idAntes == null ? -1 : items.findIndex(p => idCombo(p) === idAntes);
+  cf.activo = donde >= 0 ? donde : 0;
+  ubicarCombos();
+  // Se ubican sin transicion; de ahi en adelante, con.
+  void pista.offsetHeight;
+  requestAnimationFrame(() => pista.classList.remove('cf-quieta'));
+
   if (sub) sub.textContent = items.length +
     ' combinaciones armadas, a menor precio que comprándolas por separado.' +
     (aPrecioDeLista ? ' Los combos van a precio de lista: no tienen precio ' +
       SEGMENTOS[segmento].label.toLowerCase() + ' publicado.' : '');
-  flechasPacks();
 }
 
-function flechasPacks(){
-  const pista = $('#packs');
-  if (!pista) return;
-  const tope = pista.scrollWidth - pista.clientWidth - 2;
-  const izq = $('[data-pack="-1"]'), der = $('[data-pack="1"]');
-  if (izq) izq.disabled = pista.scrollLeft <= 2;
-  if (der) der.disabled = pista.scrollLeft >= tope;
-}
-
-document.querySelectorAll('[data-pack]').forEach(b => b.addEventListener('click', () => {
-  const pista = $('#packs');
-  pista.scrollBy({left: pista.clientWidth * Number(b.dataset.pack), behavior: 'smooth'});
-  requestAnimationFrame(flechasPacks);
-}));
+document.querySelectorAll('[data-cf]').forEach(b =>
+  b.addEventListener('click', () => irACombo(cf.activo + Number(b.dataset.cf))));
 {
-  const pista = $('#packs');
-  if (pista) pista.addEventListener('scroll', flechasPacks, {passive: true});
+  const escena = $('#cfEscena');
+  if (escena){
+    escena.addEventListener('keydown', e => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      irACombo(cf.activo + (e.key === 'ArrowRight' ? 1 : -1));
+    });
+    /* Deslizar, con el dedo o arrastrando el mouse. Solo cuenta el gesto
+       horizontal: el vertical sigue siendo el scroll de la pagina
+       (touch-action: pan-y en el CSS). */
+    let x0 = null, y0 = 0, arrastre = false;
+    escena.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      x0 = e.clientX; y0 = e.clientY; arrastre = false;
+    });
+    escena.addEventListener('pointermove', e => {
+      if (x0 === null || arrastre) return;
+      const dx = Math.abs(e.clientX - x0), dy = Math.abs(e.clientY - y0);
+      if (dx > 10 && dx > dy) arrastre = true;
+    });
+    escena.addEventListener('pointerup', e => {
+      if (x0 === null) return;
+      const dx = e.clientX - x0;
+      x0 = null;
+      if (arrastre && Math.abs(dx) > 40) irACombo(cf.activo + (dx < 0 ? 1 : -1));
+    });
+    escena.addEventListener('pointercancel', () => { x0 = null; arrastre = false; });
+    // Soltar un arrastre encima de una carta no es un clic sobre ella.
+    escena.addEventListener('click', e => {
+      if (!arrastre) return;
+      e.preventDefault();
+      e.stopPropagation();
+      arrastre = false;
+    }, true);
+  }
 }
-window.addEventListener('resize', flechasPacks);
+/* Se reubica cuando cambia el ancho del carrusel, no cuando cambia la ventana.
+   Con resize se media antes de tiempo: la landing ajusta su propio ancho unos
+   milisegundos despues del evento (aTodoElAncho, en el cargador de la tienda),
+   y al girar el telefono el carrusel quedaba calculado para el ancho anterior.
+   Solo cuenta el ancho: la altura la cambia ubicarCombos, y reaccionar a eso
+   seria un bucle. */
+{
+  const escena = $('#cfEscena');
+  if (escena && 'ResizeObserver' in window){
+    let anchoVisto = 0;
+    new ResizeObserver(entradas => {
+      const ancho = Math.round(entradas[0].contentRect.width);
+      if (ancho === anchoVisto) return;
+      anchoVisto = ancho;
+      ubicarCombos();
+    }).observe(escena);
+  } else {
+    window.addEventListener('resize', () => setTimeout(ubicarCombos, 200));
+  }
+}
 
 /* ---- Flechas del catálogo ----
    Avanzan una pantalla completa, o sea las 4 columnas visibles. */
@@ -3392,6 +3595,23 @@ function pintarCombos(p){
 
 function abrirVista(p, key){
   vista = {p, key};
+  llenarVista(p);
+  // Cantidad: arranca en 1 en cada apertura.
+  cuentaFicha.fijar(1);
+  pintarResenas(p);
+  pintarCombos(p);
+  abrirModal('modal');
+  track('view_item', {item_name:p.n, value:precioDe(p),
+                      items: itemsGA([{prod:p, cant:1}])});
+  /* Con la ficha ya a la vista se pide la de la tienda: si el administrador
+     cambio la descripcion, las fotos o el precio, se rellena en el lugar. */
+  if (catalogoVivo) catalogoVivo.refrescarFicha(p);
+}
+
+/* Todo lo que la ficha muestra de un producto. Vive aparte de abrirVista
+   porque se vuelve a llamar cuando llegan datos frescos de la tienda con la
+   ficha abierta: rellena sin reabrir, sin animar y sin tocar la cantidad. */
+function llenarVista(p){
   const pr = precioDe(p), lista = p.pr.minorista;
   const rebaja = (segmento !== 'minorista' && lista && pr && lista > pr)
     ? Math.round((1 - pr / lista) * 100) : 0;
@@ -3489,14 +3709,6 @@ function abrirVista(p, key){
      el boton llevaria a un carrito bloqueado. Es solo para minorista, y
      tampoco tiene sentido sin stock. */
   $('#mvRapida').hidden = segmento !== 'minorista' || !hayStock;
-
-  // Cantidad: arranca en 1 en cada apertura.
-  cuentaFicha.fijar(1);
-  pintarResenas(p);
-  pintarCombos(p);
-  abrirModal('modal');
-  track('view_item', {item_name:p.n, value:precioDe(p),
-                      items: itemsGA([{prod:p, cant:1}])});
 }
 
 $('#mvVerDesc').onclick = e => {
@@ -4276,7 +4488,554 @@ if (ANIM.activo && 'IntersectionObserver' in window){
   setTimeout(() => revs.forEach(el => el.classList.add('visto')), 2500);
 })();
 
+/* ══════════ CATÁLOGO VIVO ══════════
+   PRODUCTOS es una foto: la tomo sync_landing.py el dia que se armo la
+   landing. Si el administrador cambia un titulo, una descripcion, una foto o
+   un precio, la foto no se entera. Medido el 14/09: 7 precios, 9 nombres, 3
+   fotos y 7 stocks ya no coincidian con la tienda -- habia combos a $9.750
+   que en la tienda cuestan $13.600.
+
+   Dentro de la tienda la landing corre en el mismo dominio, asi que la lee
+   directo, sin credenciales, igual que un visitante:
+
+     · el listado  /productos/page/N/?results_only=true  -- 60 publicaciones
+       por pagina con titulo, precio, stock, foto y variantes. La tienda
+       entera son 7 paginas, unos 350 KB comprimidos.
+     · la ficha    /productos/<nombre>/  -- la descripcion entera, las fotos y
+       el precio exacto. Se pide sola, cuando alguien abre esa ficha.
+
+   Los lectores (VIVO) replican los de sync_catalogo.py y sync_landing.py
+   regla por regla. Probados contra las mismas paginas reales: 370
+   publicaciones y 12 fichas, identicos al sincronizador, descripciones
+   incluidas.
+
+   QUE HACE CON LO QUE LLEGA
+     Actualiza  : titulo, precio y stock de cada segmento, foto y variantes.
+     Da de baja : la publicacion que ya no esta en el listado. Si un producto
+                  se queda sin ninguna, sale.
+     Pega       : una publicacion nueva con el titulo de un producto que ya
+                  existe va al segmento que le falta.
+     Da de alta : SOLO combos -- titulos con combo, pack, kit o promo --, que
+                  van al carrusel. Un producto suelto nuevo necesita que alguien
+                  elija en que necesidad va, y eso sigue siendo sync_landing.py.
+     No toca    : la clasificacion por necesidad, las reseñas ni "vendidos".
+
+   REDES
+     · Fuera de habitadnatural.com no hace nada: el preview de GitHub Pages
+       sigue con la foto, que es lo unico que puede leer.
+     · Con el listado incompleto, con menos de 100 publicaciones o si
+       desapareceria mas del 25%, no se da de baja nada.
+     · Si la tienda no responde, queda lo ultimo leido -- o la foto -- y la
+       pagina funciona igual.
+
+   CUANDO
+     Lo ultimo leido se guarda en este navegador. Al abrir se aplica antes de
+     pintar, asi la primera imagen ya sale al dia, y en segundo plano se vuelve
+     a leer la tienda si paso mas de un minuto. Tambien al volver a la pestaña.
+     Si algo cambio se repinta, sin mover al cliente de donde estaba. */
+/* Lectores de la tienda, puros: reciben el HTML como texto y devuelven datos.
+   No tocan el DOM, asi se pueden probar en Node contra paginas reales antes
+   de que lleguen a la landing. Cada uno replica una funcion de
+   tools/sync_catalogo.py o tools/sync_landing.py -- el nombre lo dice -- para
+   que el catalogo vivo y el sincronizador lean exactamente lo mismo. */
+var VIVO = (function () {
+  'use strict';
+
+  /* ── Entidades HTML ──
+     Tabla propia para las comunes, y el navegador para cualquier otra. No se
+     le pasa el texto entero a un <textarea>: solo la entidad suelta, que es un
+     nombre de letras y numeros y no puede traer marcado. */
+  var TABLA = {quot: '"', amp: '&', lt: '<', gt: '>', apos: "'", nbsp: '\u00a0',
+    aacute: 'á', eacute: 'é', iacute: 'í', oacute: 'ó', uacute: 'ú',
+    Aacute: 'Á', Eacute: 'É', Iacute: 'Í', Oacute: 'Ó', Uacute: 'Ú',
+    ntilde: 'ñ', Ntilde: 'Ñ', uuml: 'ü', Uuml: 'Ü', iexcl: '¡',
+    iquest: '¿', ordm: 'º', ordf: 'ª', deg: '°', ndash: '–',
+    mdash: '—', hellip: '…', laquo: '«', raquo: '»', middot: '·',
+    bull: '•', lsquo: '‘', rsquo: '’', ldquo: '“', rdquo: '”',
+    copy: '©', reg: '®', trade: '™', times: '×', frac12: '½'};
+  var otras = {};
+
+  function entidad(nombre) {
+    if (Object.prototype.hasOwnProperty.call(TABLA, nombre)) return TABLA[nombre];
+    if (Object.prototype.hasOwnProperty.call(otras, nombre)) return otras[nombre];
+    var valor = null;
+    if (typeof document !== 'undefined') {
+      var ta = document.createElement('textarea');
+      ta.innerHTML = '&' + nombre + ';';
+      if (ta.value !== '&' + nombre + ';') valor = ta.value;
+    }
+    otras[nombre] = valor;
+    return valor;
+  }
+
+  function entidades(t) {
+    t = t == null ? '' : String(t);
+    if (t.indexOf('&') === -1) return t;
+    return t.replace(/&(#[xX][0-9a-fA-F]+|#\d+|[A-Za-z][A-Za-z0-9]*);/g, function (m, e) {
+      if (e.charAt(0) === '#') {
+        var c = (e.charAt(1) === 'x' || e.charAt(1) === 'X')
+          ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
+        return (c > 0 && c < 0x110000) ? String.fromCodePoint(c) : m;
+      }
+      var v = entidad(e);
+      return v == null ? m : v;
+    });
+  }
+
+  /* ── Titulos ── */
+  function sinAcentos(t) {
+    return t.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  // sync_landing.normalizar
+  function normalizar(t) {
+    t = sinAcentos(String(t || '').toLowerCase());
+    return t.replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  // sync_catalogo.clave_titulo
+  function claveTitulo(t) {
+    t = sinAcentos(String(t || '').toLowerCase());
+    return t.replace(/[^a-z0-9]+/g, ' ').trim();
+  }
+
+  // sync_landing.titulo_de_tienda: "Aceite de Jojoba – 30 ml// VENTA MINORISTA"
+  function tituloDeTienda(t) {
+    return String(t || '').split('//')[0].replace(/^[ \-–—\/|]+|[ \-–—\/|]+$/g, '');
+  }
+
+  // sync_landing.CATEGORIAS, la regla de "packs"
+  var PACK = /\bcombo|\bpack\b|\bkit\b|\bpromo\b/;
+  function esCombo(titulo) {
+    return PACK.test(normalizar(titulo));
+  }
+
+  /* ── Descripciones ── */
+
+  // sync_catalogo.limpiar_html
+  function limpiarHtml(fragmento) {
+    var t = String(fragmento || '');
+    t = t.replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, ' ');
+    t = t.replace(/<br\s*\/?>|<\/p>|<\/li>|<\/div>|<\/h[1-6]>/gi, ' · ');
+    t = t.replace(/<[^>]+>/g, ' ');
+    t = entidades(t);
+    t = t.replace(/[·\s]*·[·\s]*/g, ' · ');
+    return t.replace(/\s+/g, ' ').replace(/^[ ·]+|[ ·]+$/g, '');
+  }
+
+  // sync_catalogo.AVISOS y BASURA: avisos de deposito pegados al texto
+  var AVISOS = [
+    /esta\s+publicaci[oó]n\s+es\s+para\s+pedidos?\s+mayoristas?[^·]{0,90}?(?=[A-ZÁÉÍÓÚÑ]{4,}|·|$)/gi,
+    /atenci[oó]n\s*!*/gi,
+    /caso\s+contrario[^·]{0,60}?(?=[A-ZÁÉÍÓÚÑ]{4,}|·|$)/gi,
+    /sino\s+puede\s+elegir\s+la\s+publicaci[oó]n\s+minorista/gi,
+    /usar\s+lista\s+minorista/gi,
+    /elegir\s+minorista/gi,
+    /m[ií]nimos?\s+de\s+compra\s+de?\s*\d+\s*mil\s*,?/gi,
+    /\+\s*de\s*\d+\s*mil\s*,?/gi
+  ];
+  var BASURA = ['publicacion', 'minimo de compra', 'minimos de compra', 'caso contrario',
+    'atencion', 'elegir minorista', 'usar lista', 'pedidos mayoristas', 'minimos de', 'minimo de'];
+
+  // sync_catalogo.limpiar_descripcion
+  function limpiarDescripcion(texto) {
+    texto = String(texto || '');
+    AVISOS.forEach(function (patron) {
+      patron.lastIndex = 0;
+      texto = texto.replace(patron, ' ');
+    });
+    var partes = texto.split(' · ')
+      .map(function (p) { return p.trim(); })
+      .filter(function (p) { return p; });
+    while (partes.length > 1 && BASURA.some(function (b) {
+      return claveTitulo(partes[0]).indexOf(b) !== -1;
+    })) partes.shift();
+    return partes.join(' · ').replace(/\s{2,}/g, ' ')
+      .replace(/^[ ·,\-—!]+|[ ·,\-—!]+$/g, '');
+  }
+
+  // sync_landing.a_parrafos
+  function aParrafos(t) {
+    return String(t || '').replace(/[ \t]*·[ \t]*/g, '\n').trim();
+  }
+
+  /* ── Una publicacion ──
+     sync_catalogo.leer_ficha, la parte que no depende de donde salio el
+     HTML: precio y stock de la variante mas barata disponible, y las opciones
+     del desplegable si hay mas de una variante. */
+  function imagen640(u) {
+    if (!u) return '';
+    u = String(u).replace(/-\d+-\d+\.(webp|jpe?g|png)(\?.*)?$/i, '-640-0.$1');
+    return u.indexOf('//') === 0 ? 'https:' + u : u;
+  }
+
+  function publicacion(id, nombre, url, img, variantes) {
+    var disp = variantes.filter(function (v) { return v.available; });
+    var elegida = (disp.length ? disp : variantes).reduce(function (a, b) {
+      return (b.price_number || 0) < (a.price_number || 0) ? b : a;
+    });
+    var opciones = null;
+    if (variantes.length > 1) {
+      opciones = variantes
+        .filter(function (v) { return v.option0 || v.option1 || v.option2; })
+        .map(function (v) {
+          return {id: parseInt(v.id || 0, 10), n: String(v.option0 || v.option1 || v.option2),
+                  p: v.price_number, s: !!v.available};
+        });
+      if (!opciones.length) opciones = null;
+    }
+    return {
+      id: id,
+      n: nombre,
+      url: url,
+      img: img || imagen640(elegida.image_url),
+      precio: elegida.promotional_price_number || elegida.price_number || null,
+      stock: disp.length > 0,
+      opciones: opciones
+    };
+  }
+
+  /* ── El listado ──
+     /productos/page/N/?results_only=true trae 60 publicaciones por pagina.
+     Cada una abre con la clase js-item-product, y en esa misma etiqueta estan
+     el id y las variantes. Se corta el texto por esa clase en vez de armar un
+     DOM: son 1,3 MB por pagina y en un telefono el parser se nota. */
+  function leerListado(html) {
+    var salida = [];
+    var trozos = String(html || '').split('js-item-product');
+    for (var i = 1; i < trozos.length; i++) {
+      var t = trozos[i];
+      var id = /data-product-id="(\d+)"/.exec(t);
+      var va = /data-variants="([^"]*)"/.exec(t);
+      if (!id || !va) continue;
+      var variantes;
+      try { variantes = JSON.parse(entidades(va[1])); } catch (e) { continue; }
+      if (!variantes || !variantes.length) continue;
+      var nom = /class="[^"]*\bjs-item-name\b[^"]*"[^>]*>([\s\S]*?)<\/div>/.exec(t);
+      var url = /href="((?:https?:)?\/\/[^"]*\/productos\/[^"]+)"/.exec(t);
+      var img = /(\/\/[^\s"',]+-640-0\.(?:webp|jpe?g|png))\s+640w/.exec(t);
+      salida.push(publicacion(
+        parseInt(id[1], 10),
+        nom ? entidades(nom[1].replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim() : '',
+        url ? (url[1].indexOf('//') === 0 ? 'https:' + url[1] : url[1]) : '',
+        img ? 'https:' + img[1] : '',
+        variantes));
+    }
+    return salida;
+  }
+
+  /* ── La ficha ── */
+
+  // El contenido de un <div>, contando los <div> que tenga adentro.
+  function contenidoDiv(html, apertura) {
+    var m = apertura.exec(html);
+    if (!m) return null;
+    var inicio = m.index + m[0].length;
+    var re = /<div\b[^>]*>|<\/div\s*>/gi;
+    var prof = 1, x;
+    re.lastIndex = inicio;
+    while ((x = re.exec(html))) {
+      prof += x[0].charAt(1) === '/' ? -1 : 1;
+      if (!prof) return html.slice(inicio, x.index);
+    }
+    return html.slice(inicio);
+  }
+
+  // Fotos del carrusel de la ficha, en el tamano que usa la landing (480).
+  function galeria(html) {
+    var re = /<div[^>]*class="(?:[^"]*\s)?js-product-slide(?:\s[^"]*)?"[^>]*>/g;
+    var cortes = [], m;
+    while ((m = re.exec(html))) cortes.push(m.index);
+    var fotos = [], vistas = {};
+    for (var i = 0; i < cortes.length; i++) {
+      var trozo = html.slice(cortes[i], cortes[i + 1] || cortes[i] + 8000);
+      var f = /(\/\/[^\s"',]+\/products\/[^\s"',]+?)-\d+-\d+\.(webp|jpe?g|png)/i.exec(trozo);
+      if (!f || vistas[f[1]]) continue;
+      vistas[f[1]] = 1;
+      fotos.push('https:' + f[1] + '-480-0.' + f[2]);
+    }
+    return fotos.slice(0, 12);
+  }
+
+  function leerFicha(html) {
+    html = String(html || '');
+    var m = /LS\.variants\s*=\s*(\[[\s\S]*?\]);/.exec(html);
+    if (!m) return null;
+    var variantes;
+    try { variantes = JSON.parse(m[1]); } catch (e) { return null; }
+    if (!variantes || !variantes.length) return null;
+    // El mismo titulo que usa el sincronizador: el og:title.
+    var og = /<meta property="og:title" content="([^"]*)"/.exec(html);
+    var h1 = /<h1[^>]*\bjs-product-name\b[^>]*>([\s\S]*?)<\/h1>/.exec(html);
+    var nombre = og ? og[1] : (h1 ? h1[1] : '');
+    var pub = publicacion(parseInt(variantes[0].product_id, 10),
+      entidades(nombre.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim(), '', '', variantes);
+    var cuerpo = contenidoDiv(html, /<div[^>]*class="[^"]*\buser-content\b[^"]*"[^>]*>/);
+    pub.d = cuerpo == null ? null : aParrafos(limpiarDescripcion(limpiarHtml(cuerpo)));
+    pub.gal = galeria(html);
+    return pub;
+  }
+
+  return {
+    entidades: entidades, normalizar: normalizar, claveTitulo: claveTitulo,
+    tituloDeTienda: tituloDeTienda, esCombo: esCombo, limpiarHtml: limpiarHtml,
+    limpiarDescripcion: limpiarDescripcion, aParrafos: aParrafos,
+    leerListado: leerListado, leerFicha: leerFicha, galeria: galeria
+  };
+})();
+
+var catalogoVivo = (function () {
+  const EN_TIENDA = /(^|\.)habitadnatural\.com$/i.test(location.hostname);
+  const GUARDADO = 'habitad:catalogo-vivo:v1';
+  const FRESCO = 60 * 1000;      // antes de un minuto no se vuelve a leer
+  const TOPE_PAGINAS = 30;       // hoy son 7; el tope es para no girar en vacio
+  const DE_A = 3;                // paginas pedidas en paralelo
+  const SEGS = ['minorista', 'mayorista', 'distribuidor'];
+
+  let ultimo = 0;
+  let enCurso = null;
+  let relojRepintado = 0;
+  const fichasLeidas = new Map();
+
+  const firma = p => JSON.stringify([p.n, p.img, p.d, p.pr, p.st, p.vars || null, p.gal || null]);
+  const conId = (p, s) => p.ids[s] != null;
+
+  async function bajar(url){
+    const r = await fetch(url, {credentials: 'same-origin'});
+    if (r.status === 404) return '';
+    if (!r.ok) throw new Error(url + ' respondio ' + r.status);
+    return r.text();
+  }
+
+  /* El listado entero, de a tres paginas, hasta la primera vacia. Una vacia
+     seguida de otra con productos no es el final sino un error de la tienda,
+     y con eso no se da de baja nada. */
+  async function recorrerListado(){
+    const pubs = new Map();
+    for (let desde = 1; desde <= TOPE_PAGINAS; desde += DE_A){
+      const paginas = [];
+      for (let k = desde; k < desde + DE_A && k <= TOPE_PAGINAS; k++) paginas.push(k);
+      const textos = await Promise.all(paginas.map(k => bajar(k === 1
+        ? '/productos/?results_only=true'
+        : '/productos/page/' + k + '/?results_only=true')));
+      let vacia = 0;
+      for (let t = 0; t < textos.length; t++){
+        const leidas = VIVO.leerListado(textos[t]);
+        if (!leidas.length){ if (!vacia) vacia = paginas[t]; continue; }
+        if (vacia) return {pubs, completo: false};
+        leidas.forEach(f => { if (!pubs.has(f.id)) pubs.set(f.id, f); });
+        await new Promise(listo => setTimeout(listo, 0));   // aire para el hilo principal
+      }
+      if (vacia) return {pubs, completo: vacia > 1};
+    }
+    return {pubs, completo: false};
+  }
+
+  function aplicar(pubs, completo){
+    const cambiados = new Set(), salen = [], altas = [];
+
+    let referidas = 0, faltan = 0;
+    PRODUCTOS.forEach(p => SEGS.forEach(s => {
+      if (!conId(p, s)) return;
+      referidas++;
+      if (!pubs.has(+p.ids[s])) faltan++;
+    }));
+    const puedeBajar = completo && pubs.size >= 100 && faltan <= referidas * 0.25;
+    const usadas = new Set();
+
+    PRODUCTOS.forEach(p => {
+      const antes = firma(p);
+      SEGS.forEach(s => {
+        if (!conId(p, s)) return;
+        const f = pubs.get(+p.ids[s]);
+        if (f){
+          usadas.add(f.id);
+          if (f.precio) p.pr[s] = f.precio;
+          p.st[s] = f.stock;
+          if (f.url) (p.urls || (p.urls = {}))[s] = f.url;
+        } else if (puedeBajar){
+          delete p.ids[s]; delete p.pr[s]; delete p.st[s];
+          if (p.urls) delete p.urls[s];
+        }
+      });
+      if (!SEGS.some(s => conId(p, s))){ salen.push(p); return; }
+      /* Nombre, foto y variantes: de la publicacion del segmento mas alto que
+         siga viva. La minorista es la que ve el cliente. */
+      const canon = SEGS.map(s => conId(p, s) ? pubs.get(+p.ids[s]) : null).find(Boolean);
+      if (canon){
+        const nombre = tituloLimpio(VIVO.tituloDeTienda(canon.n));
+        if (nombre) p.n = nombre;
+        if (canon.img && canon.img !== p.img){ p.img = canon.img; delete p.gal; }
+        if (canon.opciones) p.vars = canon.opciones;
+        else if (p.vars){ delete p.vars; delete p.opcion; }
+      }
+      if (firma(p) !== antes) cambiados.add(p);
+    });
+    salen.forEach(p => PRODUCTOS.splice(PRODUCTOS.indexOf(p), 1));
+
+    /* Publicaciones sueltas. Primero se intenta pegarlas al producto que ya
+       tiene ese titulo, en el segmento que le falte: casi siempre son la ficha
+       mayorista o distribuidor de algo que ya esta. */
+    const porTitulo = new Map();
+    PRODUCTOS.forEach(p => {
+      const k = VIVO.claveTitulo(p.n);
+      if (k && !porTitulo.has(k)) porTitulo.set(k, p);
+    });
+    const huerfanas = [];
+    pubs.forEach(f => {
+      if (usadas.has(f.id)) return;
+      const p = porTitulo.get(VIVO.claveTitulo(tituloLimpio(VIVO.tituloDeTienda(f.n))));
+      const libres = p ? SEGS.filter(s => !conId(p, s)) : [];
+      if (!libres.length){ huerfanas.push(f); return; }
+      const caro = Math.max(0, ...SEGS.map(s => p.pr[s] || 0));
+      const s = (f.precio > caro && libres.indexOf('minorista') !== -1) ? 'minorista' : libres[0];
+      p.ids[s] = f.id; p.pr[s] = f.precio; p.st[s] = f.stock;
+      if (f.url) (p.urls || (p.urls = {}))[s] = f.url;
+      usadas.add(f.id);
+      cambiados.add(p);
+    });
+
+    // Altas: solo combos, y solo con el listado completo.
+    if (completo){
+      const grupos = new Map();
+      huerfanas.forEach(f => {
+        const titulo = VIVO.tituloDeTienda(f.n);
+        if (!VIVO.esCombo(titulo)) return;
+        const k = VIVO.claveTitulo(titulo);
+        if (!grupos.has(k)) grupos.set(k, []);
+        grupos.get(k).push(f);
+      });
+      grupos.forEach(grupo => {
+        // La mas cara es la minorista, despues mayorista, despues distribuidor.
+        grupo.sort((a, b) => (b.precio || 0) - (a.precio || 0));
+        const nuevo = {n: tituloLimpio(VIVO.tituloDeTienda(grupo[0].n)), img: grupo[0].img,
+                       d: descripcionLimpia(''), necs: ['packs'],
+                       pr: {}, st: {}, ids: {}, urls: {}, vivo: true};
+        grupo.slice(0, SEGS.length).forEach((f, k) => {
+          nuevo.ids[SEGS[k]] = f.id; nuevo.pr[SEGS[k]] = f.precio;
+          nuevo.st[SEGS[k]] = f.stock; nuevo.urls[SEGS[k]] = f.url;
+        });
+        if (grupo[0].opciones) nuevo.vars = grupo[0].opciones;
+        PRODUCTOS.push(nuevo);
+        altas.push(nuevo);
+      });
+    }
+    return {cambiados: [...cambiados], salen, altas};
+  }
+
+  // Se guardan solo las publicaciones que la landing usa: unos 60 KB.
+  function guardar(pubs, completo){
+    const usadas = new Set();
+    PRODUCTOS.forEach(p => SEGS.forEach(s => { if (conId(p, s)) usadas.add(+p.ids[s]); }));
+    const lista = [];
+    pubs.forEach(f => { if (usadas.has(f.id)) lista.push(f); });
+    try {
+      localStorage.setItem(GUARDADO, JSON.stringify({t: Date.now(), completo, total: pubs.size, pubs: lista}));
+    } catch (e) { /* sin lugar o bloqueado: la proxima vez se lee de nuevo */ }
+  }
+
+  function aplicarGuardado(){
+    if (!EN_TIENDA) return false;
+    let g = null;
+    try { g = JSON.parse(localStorage.getItem(GUARDADO) || 'null'); } catch (e) { return false; }
+    if (!g || !Array.isArray(g.pubs) || !g.pubs.length) return false;
+    ultimo = g.t || 0;
+    const r = aplicar(new Map(g.pubs.map(f => [f.id, f])), !!g.completo && (g.total || 0) >= 100);
+    api.informe = {origen: 'guardado', t: ultimo, cambiados: r.cambiados.length,
+                   salen: r.salen.length, altas: r.altas.map(p => p.n)};
+    return !!(r.cambiados.length || r.salen.length || r.altas.length);
+  }
+
+  /* Repinta todo lo que sale de PRODUCTOS sin mover al cliente: la grilla
+     vuelve a donde estaba y el carrusel deja al frente el mismo combo. */
+  function repintar(conFicha){
+    const grilla = $('#grilla');
+    const x = grilla ? grilla.scrollLeft : 0;
+    pintarChips();
+    pintar();
+    if (grilla && x){
+      grilla.style.scrollBehavior = 'auto';
+      grilla.scrollLeft = x;
+      grilla.style.scrollBehavior = '';
+      if (typeof actualizarFlechasCat === 'function') actualizarFlechasCat();
+    }
+    pintarPacks();
+    recalcular();
+    if (conFicha && vista && PRODUCTOS.indexOf(vista.p) !== -1) llenarVista(vista.p);
+  }
+
+  function refrescar(forzar){
+    if (!EN_TIENDA) return Promise.resolve(null);
+    if (enCurso) return enCurso;
+    if (!forzar && Date.now() - ultimo < FRESCO) return Promise.resolve(null);
+    const t0 = Date.now();
+    enCurso = recorrerListado()
+      .then(({pubs, completo}) => {
+        const r = aplicar(pubs, completo);
+        ultimo = Date.now();
+        guardar(pubs, completo);
+        api.informe = {origen: 'tienda', t: ultimo, ms: ultimo - t0, publicaciones: pubs.size,
+                       completo, cambiados: r.cambiados.length, salen: r.salen.length,
+                       altas: r.altas.map(p => p.n)};
+        if (r.cambiados.length || r.salen.length || r.altas.length) repintar(true);
+        return r;
+      })
+      .catch(err => {
+        if (window.console) console.warn('[catalogo vivo] no se pudo leer la tienda:', err);
+        return null;
+      })
+      .then(r => { enCurso = null; return r; });
+    return enCurso;
+  }
+
+  async function refrescarFicha(p){
+    if (!EN_TIENDA || !p) return;
+    const s = SEGS.find(x => conId(p, x));
+    if (!s) return;
+    let url = p.urls && p.urls[s];
+    if (!url && enCurso){ await enCurso; url = p.urls && p.urls[s]; }
+    if (!url) return;
+    let pedido = fichasLeidas.get(url);
+    if (!pedido || Date.now() - pedido.t > FRESCO){
+      pedido = {t: Date.now(), leida: bajar(url).then(VIVO.leerFicha).catch(() => null)};
+      fichasLeidas.set(url, pedido);
+    }
+    const f = await pedido.leida;
+    // Si en esa direccion hay otra publicacion, no se toca nada.
+    if (!f || f.id !== +p.ids[s]) return;
+    const antes = firma(p);
+    const nombre = tituloLimpio(VIVO.tituloDeTienda(f.n));
+    if (nombre) p.n = nombre;
+    if (f.d != null) p.d = descripcionLimpia(f.d);
+    if (f.gal.length > 1) p.gal = f.gal; else delete p.gal;
+    if (f.precio) p.pr[s] = f.precio;
+    p.st[s] = f.stock;
+    if (f.opciones) p.vars = f.opciones;
+    else if (p.vars){ delete p.vars; delete p.opcion; }
+    if (firma(p) === antes) return;
+    if (vista && vista.p === p) llenarVista(p);
+    clearTimeout(relojRepintado);
+    relojRepintado = setTimeout(() => repintar(false), 350);
+  }
+
+  const api = {enTienda: EN_TIENDA, informe: null, aplicarGuardado, refrescar, refrescarFicha};
+  if (EN_TIENDA){
+    // El administrador cambia algo en otra pestaña y vuelve: se ve sin recargar.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') refrescar();
+    });
+  }
+  // Para mirar desde la consola: __catalogoVivo.informe
+  window.__catalogoVivo = api;
+  return api;
+})();
+
+/* Antes del primer pintado va lo ultimo que se leyo de la tienda, si este
+   navegador lo tiene: la primera imagen ya sale al dia. Despues, sin apuro,
+   se vuelve a leer la tienda. */
+if (catalogoVivo.aplicarGuardado()) pintarChips();
 pintar(); pintarPacks(); recalcular();
+setTimeout(() => catalogoVivo.refrescar(), 400);
 </script>
 <!-- Reseñas: mismo script que ya corre en la tienda. Encuentra las tarjetas
      por su data-store y les inyecta las estrellas. En este prototipo local
