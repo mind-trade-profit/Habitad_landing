@@ -99,8 +99,17 @@
        incluye. Se mide el PADRE, que no depende de estos margenes, asi que
        recalcular no se muerde la cola. */
     function aTodoElAncho() {
-      var r = destino.getBoundingClientRect();
       var ancho = document.documentElement.clientWidth;
+      /* Sin ancho todavia no se fija nada. Pasa con una pestaña que carga sin
+         mostrarse o un navegador de app (Instagram, Facebook) que todavia no
+         pinto: clientWidth da 0, la landing quedaba en width 0 -- tarjetas de
+         34px -- y asi seguia hasta el proximo resize. Se deja el ancho natural
+         del contenedor y se vuelve a medir cuando haya uno de verdad. */
+      if (!ancho) {
+        caja.style.width = caja.style.marginLeft = caja.style.marginRight = '';
+        return;
+      }
+      var r = destino.getBoundingClientRect();
       caja.style.width = ancho + 'px';
       caja.style.marginLeft = (-r.left) + 'px';
       caja.style.marginRight = (r.right - ancho) + 'px';
@@ -108,10 +117,23 @@
     aTodoElAncho();
 
     var reloj;
-    window.addEventListener('resize', function () {
+    var remedir = function () {
       clearTimeout(reloj);
       reloj = setTimeout(aTodoElAncho, 120);
-    });
+    };
+    window.addEventListener('resize', remedir);
+    window.addEventListener('pageshow', remedir);
+    document.addEventListener('visibilitychange', remedir);
+    /* Y si el ancho cambia sin que llegue un resize -- navegadores de app,
+       pestañas que se muestran --, lo ve el observador. Solo cuenta el ancho:
+       el alto de la pagina cambia todo el tiempo y no es motivo. */
+    if ('ResizeObserver' in window) {
+      var anchoVisto = -1;
+      new ResizeObserver(function () {
+        var w = document.documentElement.clientWidth;
+        if (w !== anchoVisto) { anchoVisto = w; remedir(); }
+      }).observe(document.documentElement);
+    }
 
     /* 4 · Los popups y la barra de compra salen al <body>. Adentro de un
        contenedor con `transform` -- y los carruseles del theme tienen --
