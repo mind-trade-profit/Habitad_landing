@@ -1,5 +1,5 @@
 /* ==========================================================================
-   LANDING HABITAD — se planta en /catalogos desde el panel de la tienda.
+   LANDING HABITAD — se planta en /catalogos y / desde el panel de la tienda.
 
    Generado por tools/construir_home_tienda.py. NO se edita a mano: se edita
    prototipo/embudo.html y se vuelve a generar.
@@ -19,12 +19,14 @@
      entrar dos veces -- una recarga parcial, una etiqueta duplicada -- y la
      landing no esta hecha para convivir consigo misma. */
   if (window.__landingHabitad) return;
+  /* En que paginas se planta y sobre que ancla del theme. La ruta va sin la
+     barra final y en minusculas: la portada es "". */
+  var DESTINOS = {"/catalogos": {"ancla": ".user-content", "esconder": "section[data-store=\"page-title\"]"}, "": {"ancla": ".js-home-sections-container", "esconder": null}};
   var aqui = location.pathname.replace(/\/+$/, '').toLowerCase();
-  var esperada = '/catalogos'.replace(/\/+$/, '').toLowerCase();
-  if (aqui !== esperada) return;
+  if (!Object.prototype.hasOwnProperty.call(DESTINOS, aqui)) return;
   window.__landingHabitad = true;
 
-  var ANCLA = '.user-content';
+  var ANCLA = DESTINOS[aqui].ancla;
   var ENVOLTORIO = 'landing-habitad';
 
   /* 1 · Tapar el contenido viejo ANTES de que se vea. Si esperamos a tener
@@ -71,7 +73,7 @@
        selector NO va acotado: apunta al theme a proposito. Se agrega recien
        aca, con el ancla ya confirmada, para que un theme cambiado no termine
        escondiendo el titulo de una pagina que quedo sin landing. */
-    var sobra = "section[data-store=\"page-title\"]";
+    var sobra = DESTINOS[aqui].esconder;
     if (sobra) {
       var recorte = document.createElement('style');
       recorte.id = 'habitad-recorte';
