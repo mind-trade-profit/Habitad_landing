@@ -95,17 +95,7 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 /* Las categorias se acomodan en filas y se ven todas juntas. Antes iban en
    una sola fila que habia que arrastrar de costado: en celular se veian tres
    y las otras nueve quedaban escondidas sin ninguna señal de que estaban. */
-.chips{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;padding:4px 20px 15px}
-.chip{flex:0 0 auto;background:var(--papel);border:1.5px solid var(--borde);
-  border-radius:999px;padding:11px 20px;font:inherit;font-weight:600;font-size:14.5px;color:var(--tinta);
-  cursor:pointer;white-space:nowrap;transition:.16s;min-height:44px}
-.chip:hover{border-color:var(--verde);color:var(--verde)}
-.chip[aria-pressed="true"]{background:var(--verde);border-color:var(--verde);color:#fff}
-.chip .n{opacity:.65;font-weight:500;margin-left:6px;font-size:13px}
-.chip--packs{border-style:dashed;border-color:var(--fucsia);color:var(--fucsia-hondo)}
-/* Una categoria sin productos en este segmento se ve apagada. Sigue clickeable
-   porque al entrar se explica por que esta vacia, que es informacion util. */
-.chip--packs[aria-pressed="true"]{background:var(--fucsia);border-color:var(--fucsia);color:var(--btn-txt)}
+
 
 /* ---- SELECTOR DE CLIENTE, progresivo ---- */
 .seg-nivel{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
@@ -135,6 +125,9 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .tag{position:absolute;top:10px;left:10px;background:var(--verde);color:#fff;font-size:11.5px;
   font-weight:700;padding:4px 9px;border-radius:6px}
 .tag--bug{background:var(--alerta);top:auto;bottom:10px}
+/* El descuento va arriba a la DERECHA: la esquina izquierda es la que usan
+   los stickers de Nubea, y ahi se pisaban. */
+.card .tag:not(.tag--bug){left:auto;right:10px}
 .card-body{padding:14px;display:flex;flex-direction:column;gap:7px;flex:1}
 .card h3{font-size:15px;font-family:Raleway,sans-serif;font-weight:700;line-height:1.32}
 .pres{font-size:12.5px;color:var(--verde);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
@@ -279,6 +272,37 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 @media(prefers-reduced-motion:reduce){
   .cf-carta,.cf-aviso{transition:none}
 }
+
+/* ══ NUBEA ══
+   Badges, stickers y bloques que el cliente configura en Nubea. Los colores,
+   textos, formas y esquinas vienen de su panel; aca solo el esqueleto, con
+   las mismas medidas que usan los widgets de Nubea en la tienda. */
+.nb-badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;pointer-events:none}
+.nb-badge{display:inline-flex;align-items:center;gap:4px;max-width:100%;
+  font:600 11px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+.nb-badge--pill{padding:2px 8px;border-radius:999px;white-space:normal}
+.nb-badge--icon_text{font-size:12px;line-height:1.4}
+.nb-badge--plain_line{font-weight:400;line-height:1.4}
+.nb-badge svg{flex:0 0 auto;width:12px;height:12px;fill:none;stroke:currentColor;
+  stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ficha .nb-badges{margin:0 0 12px}
+.nb-stickers{position:absolute;inset:0;pointer-events:none;z-index:3}
+.nb-sticker{position:absolute;display:inline-flex;align-items:center;justify-content:center;
+  text-align:center;line-height:1.15;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.2);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.nb-sticker img{display:block;max-width:none;height:auto}
+.cf-foto,.ficha__principal{position:relative}
+.nb-bloques{display:grid;gap:10px;margin:0 0 16px}
+.nb-bloque{border:1px solid;border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.45}
+.nb-bloque__cab{display:flex;align-items:flex-start;gap:10px}
+.nb-bloque__cab b{display:block;font-weight:700}
+.nb-bloque__cab p{margin:2px 0 0}
+.nb-bloque svg{flex:0 0 auto;width:18px;height:18px;fill:none;stroke:currentColor;
+  stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nb-bloque__fila{display:flex;align-items:center;gap:10px;padding:3px 0}
+.nb-bloque__fila span{font-weight:600}
+.nb-bloque__fila em{margin-left:auto;text-align:right;font-style:normal}
+.nb-bloque__pie{margin:10px 0 0;padding-top:10px;border-top:1px dashed;font-weight:600}
 
 /* ---- BENEFICIOS ---- */
 .benes{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
@@ -454,36 +478,16 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   .hero{aspect-ratio:1136 / 1385}
 }
 
-/* ---- CHIPS PEGADOS ARRIBA DEL CATÁLOGO ----
-   Antes vivían en una sección aparte y había que volver a subir para cambiar
-   de necesidad. Ahora encabezan la grilla y quedan fijos mientras se recorre. */
+/* ---- BUSCADOR PEGADO ARRIBA DEL CATÁLOGO ----
+   Queda fijo mientras se recorre la grilla: desde que no hay categorias es el
+   unico filtro, y tiene que estar siempre a mano. El id sigue siendo
+   chipsBarra porque lo usan la medida de --barra-cat y el salto al catalogo. */
 .chips-barra{position:sticky;top:0;z-index:40;background:var(--crema);
   padding-top:8px;box-shadow:0 6px 14px -12px rgba(63,61,56,.5)}
-.chips{margin:0}
-.chips-mas{display:none;margin:0 auto 8px;background:none;border:0;font:inherit;
-  font-size:12.5px;font-weight:700;color:var(--verde);cursor:pointer;padding:4px 10px}
-/* Pegada arriba, la barra se achica. Suelta mide 174px en un celular -- un
-   quinto de la pantalla ocupado de forma permanente mientras se recorre la
-   grilla. Pegada deja una fila de categorias y el buscador, que es lo que
-   hace falta tener siempre a mano. */
 .chips-barra.pegada{box-shadow:0 8px 18px -12px rgba(63,61,56,.55)}
 @media(max-width:640px){
-  .chips-barra.pegada .chips{max-height:44px}
-  .chips-barra.pegada.abierta .chips{max-height:none}
-  .chips-barra.pegada .buscador{margin-bottom:2px}
-}
-@media(max-width:640px){
   .chips-barra{padding-top:6px}
-  /* Mas chicos para que entren mas por fila. */
-  .chips{gap:6px;padding:2px 12px 8px}
-  .chip{padding:8px 13px;font-size:12.5px;min-height:36px;border-width:1px}
-  .chip .n{margin-left:4px;font-size:11px}
-  /* Y acotadas a dos filas. Las doce sueltas ocupaban 272px: un tercio de la
-     pantalla, y encima pegado arriba mientras se recorre el catalogo. Con el
-     boton se abren cuando hacen falta y se vuelven a cerrar. */
-  .chips{max-height:88px;overflow:hidden}
-  .chips-barra.abierta .chips{max-height:none}
-  .chips-mas{display:block}
+  .chips-barra.pegada .buscador{margin-bottom:2px}
 }
 .variante-sel{width:100%;padding:8px 9px;border:1.5px solid var(--borde);border-radius:9px;
   background:var(--papel);font:inherit;font-size:13px;color:var(--tinta);cursor:pointer}
@@ -929,26 +933,9 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .buscador__limpiar{background:none;border:0;font-size:20px;line-height:1;cursor:pointer;
   color:var(--tinta-suave);padding:4px 8px;border-radius:50%}
 .buscador__limpiar:hover{color:var(--tinta)}
-.buscador__lista{position:absolute;left:20px;right:20px;top:calc(100% + 6px);z-index:60;
-  background:var(--papel);border:1px solid var(--borde);border-radius:13px;
-  box-shadow:0 12px 30px rgba(63,61,56,.18);overflow:hidden;max-height:60vh;overflow-y:auto}
-.buscador__item{display:flex;gap:11px;align-items:center;width:100%;background:none;
-  border:0;border-bottom:1px solid var(--borde);padding:9px 12px;cursor:pointer;
-  text-align:left;font:inherit}
-.buscador__item:last-child{border-bottom:0}
-.buscador__item:hover,.buscador__item[aria-selected="true"]{background:var(--crema)}
-.buscador__foto{width:42px;height:42px;border-radius:8px;object-fit:contain;
-  background:var(--crema);flex:0 0 auto}
-.buscador__txt{min-width:0;flex:1}
-.buscador__nom{display:block;font-size:13.5px;font-weight:600;color:var(--tinta);
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.buscador__cat{display:block;font-size:11.5px;color:var(--tinta-suave)}
-.buscador__precio{font-size:13.5px;font-weight:700;white-space:nowrap}
-.buscador__nada{padding:14px 16px;font-size:13.5px;color:var(--tinta-suave);line-height:1.5}
-.buscador__nada b{color:var(--tinta)}
+
 @media(max-width:640px){
   .buscador{padding:0 12px;margin-bottom:8px}
-  .buscador__lista{left:12px;right:12px}
   .buscador__campo input{font-size:16px;padding:9px 0}
 }
 
@@ -1032,36 +1019,30 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
        página pasa a ser el del catálogo. -->
 </header>
 
-<!-- ══ 4 + 6 · NECESIDADES Y CATÁLOGO, JUNTOS ══
-     Los chips viven acá y no en una sección aparte: el cliente cambia de
-     necesidad sin volver a subir. Además quedan pegados arriba mientras
-     recorre la grilla. -->
+<!-- ══ 4 + 6 · CATÁLOGO ══
+     Sin categorias, pedido del cliente: se ve todo el catalogo del segmento
+     elegido, y el que quiere achicar escribe en el buscador, que queda pegado
+     arriba mientras se recorre la grilla. -->
 <section class="bloque bloque--crema rev" id="necesidades">
   <div class="wrap">
-    <!-- No repetir la pregunta del hero: acá el título es una instrucción. -->
-    <h1 class="tit">¿Qué necesitás cuidar?</h1>
-    <p class="sub">Contanos qué necesitás y te mostramos los productos que te sirven.
-       Tocá una necesidad y la grilla se filtra al instante.</p>
+    <h1 class="tit">¿Qué estás buscando?</h1>
+    <p class="sub">Todo el catálogo a la vista. Escribí el nombre de un producto o lo que
+       necesitás cuidar, y la grilla se filtra al instante.</p>
   </div>
 
   <div class="chips-barra" id="chipsBarra">
-    <!-- Buscador propio. Abre la ficha de ESTA landing, no la del theme. -->
-    <div class="buscador">
+    <!-- Buscador propio: filtra la grilla de abajo y abre la ficha de ESTA
+         landing, no la del theme. -->
+    <div class="buscador" role="search">
       <label class="buscador__campo">
         <span class="buscador__lupa" aria-hidden="true">🔍</span>
-        <input type="search" id="buscar" autocomplete="off" role="combobox"
-               aria-expanded="false" aria-controls="buscarLista"
-               placeholder="Buscar un producto por nombre...">
+        <input type="search" id="buscar" autocomplete="off" enterkeyhint="search"
+               aria-controls="grilla" aria-label="Buscar en el catálogo"
+               placeholder="Buscá un producto: aceite, crema, dolor, piel...">
         <button type="button" class="buscador__limpiar" id="buscarLimpiar"
                 aria-label="Borrar la búsqueda" hidden>&times;</button>
       </label>
-      <div class="buscador__lista" id="buscarLista" role="listbox" hidden></div>
     </div>
-
-    <div class="chips" id="chips"></div>
-    <!-- Solo aparece en celular, y solo si las categorias no entran en las
-         dos filas que se muestran de entrada. -->
-    <button class="chips-mas" id="chipsMas" type="button" hidden></button>
   </div>
 
 
@@ -1394,6 +1375,9 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
           <p class="ficha__transferencia" id="mvTransferencia"></p>
         </div>
 
+        <!-- Badges de Nubea para la ficha ("junto al precio"). -->
+        <div class="nb-badges" id="mvNubeaBadges" hidden></div>
+
         <!-- El envio gratis es un beneficio minorista: la linea aparece solo
              para ese segmento, la maneja abrirVista(). -->
         <p class="ficha__envio" id="mvEnvio" hidden></p>
@@ -1416,7 +1400,10 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
         <button class="ficha__rapida" id="mvRapida" type="button">
           Comprar ahora</button>
 
-        <div class="envio-caja">
+        <!-- Bloques de Nubea: garantia, envio y los que el cliente sume. -->
+        <div class="nb-bloques" id="mvNubeaBloques" hidden></div>
+
+        <div class="envio-caja" id="mvEnvioCaja">
           <h4>Información de envío</h4>
           <div class="envio-fila"><span class="envio-ico">🚚</span>
             <b>Envío</b><span class="envio-val" id="mvEnvioPlazo"></span></div>
@@ -1481,6 +1468,11 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 <!-- ══ 9 + 18 · TIMELINE Y CARRITO, FIJOS AL PIE ══
      Un solo elemento: la barra aparece recien cuando hay algo en el carrito y
      lleva el progreso hacia los beneficios adentro. -->
+<!-- Nubea dibuja su barra de envio gratis solo si NO encuentra este
+     contenedor. En la landing la barra que vale es la de abajo, que cuenta el
+     carrito de la landing; la de Nubea cuenta el de la tienda y daba otro numero.
+     El umbral y los textos de Nubea los usa igual la barra de abajo. -->
+<div data-free-shipping-bar-container data-landing hidden></div>
 <div class="barra-fija" id="barraFija">
   <div class="bf-timeline">
     <!-- En celular las etiquetas salen de arriba de los puntos y se reparten
@@ -1965,12 +1957,6 @@ function estrellasDe(p){
          '<span class="cuenta">(' + p.rat.n + ')</span></div>';
 }
 
-/* Los combos se venden a precio de lista en los tres segmentos -- asi quedo
-   la seccion de packs -- por eso no se filtran por segmento. Si se filtraran,
-   el chip diria 0 en mayorista mientras la seccion de abajo muestra 26. */
-const esPack = need => need === 'packs';
-const cuantos = (need, seg) =>
-  PRODUCTOS.filter(p => p.necs.includes(need) && (esPack(need) || hayEn(p, seg))).length;
 
 /* ══════════ MEDICION ══════════
    Un solo lugar por donde pasan todos los eventos de la landing, y de ahi
@@ -2003,9 +1989,7 @@ const MEDICION = {
    informes que ya vienen armados. */
 const EVENTOS = {
   select_customer_type: {ga4: 'select_customer_type'},
-  select_category:      {ga4: 'select_content',   meta: null},
   search:               {ga4: 'search',           meta: 'Search'},
-  search_result_open:   {ga4: 'select_item'},
   view_item:            {ga4: 'view_item',        meta: 'ViewContent'},
   add_to_cart:          {ga4: 'add_to_cart',      meta: 'AddToCart'},
   cross_sell_add:       {ga4: 'add_to_cart',      meta: 'AddToCart'},
@@ -2408,7 +2392,6 @@ const HIST_SERIE = [
   addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal('modalHistoria'); });
 })();
 
-/* ---- 4 \u00b7 chips ---- */
 /*══════════ ANIMACIONES ══════════
    Regla que ordena todo esto: la animacion NUNCA decide si algo se ve. Si
    anime.js no cargo, o el visitante pidio menos movimiento, las cosas
@@ -2528,65 +2511,7 @@ function contarHasta(el, valor, sufijo, prefijo, demora){
   pase(() => { anime.remove(dato); escribir(valor); }, (demora || 0) + 1500);
 }
 
-let activa = 'dolor';
 
-/* Las categorias se dibujan de nuevo cada vez que cambia el segmento, porque
-   cambian las cantidades y con ellas el orden. Van de mayor a menor: primero
-   lo que la tienda mas ofrece, y al final lo que no tiene nada. Antes el orden
-   estaba fijo a mano y no decia nada. */
-function pintarChips(){
-  const caja = $('#chips');
-  if (!caja) return;
-  const conCantidad = NECESIDADES
-    .map(n => Object.assign({}, n, {cant: cuantos(n.id, segmento)}))
-    .sort((a, b) => (b.cant - a.cant) || a.label.localeCompare(b.label, 'es'));
-  caja.innerHTML = '';
-  /* Una categoria sin productos en este segmento no se muestra. Antes se
-     mostraba apagada, y en distribuidor eso dejaba "Aromas y ambiente: 0" en
-     pantalla: una categoria que existe pero no se puede comprar. */
-  conCantidad.filter(n => n.cant > 0).forEach(n => {
-    const b = document.createElement('button');
-    b.className = 'chip' + (n.destacado ? ' chip--packs' : '');
-    b.type = 'button'; b.dataset.need = n.id;
-    b.setAttribute('aria-pressed', n.id === activa);
-    b.innerHTML = n.label + '<span class="n">' + n.cant + '</span>';
-    b.onclick = () => filtrar(n.id);
-    caja.appendChild(b);
-  });
-  /* Si la categoria abierta se quedo sin productos al cambiar de segmento,
-     hay que mover al cliente a una que tenga: si no, queda mirando una grilla
-     vacia sin ningun chip marcado. */
-  const viva = conCantidad.find(n => n.cant > 0 && n.id === activa);
-  if (!viva){
-    const primera = conCantidad.find(n => n.cant > 0);
-    if (primera){
-      activa = primera.id;
-      caja.querySelectorAll('.chip').forEach(b =>
-        b.setAttribute('aria-pressed', b.dataset.need === activa));
-    }
-  }
-  ajustarBotonChips();
-}
-/* El boton solo tiene sentido si de verdad hay categorias tapadas. */
-function ajustarBotonChips(){
-  const caja = $('#chips'), boton = $('#chipsMas'), barra = $('#chipsBarra');
-  if (!caja || !boton || !barra) return;
-  const abierta = barra.classList.contains('abierta');
-  const tapadas = !abierta && caja.scrollHeight > caja.clientHeight + 2;
-  boton.hidden = !(tapadas || abierta);
-  boton.textContent = abierta ? 'Ver menos' : 'Ver todas las categorías';
-}
-
-{
-  const boton = $('#chipsMas'), barra = $('#chipsBarra');
-  if (boton && barra) boton.onclick = () => {
-    barra.classList.toggle('abierta');
-    ajustarBotonChips();
-  };
-  addEventListener('resize', ajustarBotonChips);
-}
-
-pintarChips();
 
 /* ---- 5 · selector de cliente, progresivo ---- */
 /* Al elegir el tipo de cliente se baja al catalogo.
@@ -2900,8 +2825,6 @@ function aplicarSegmento(id, conservarCarrito){
   TIERS = TIERS_POR_SEGMENTO[id] || TIERS_POR_SEGMENTO.minorista;
   logradosPrevios = 0;
   pintarHitos();
-  // Los chips se rehacen: cambian las cantidades y tambien el orden.
-  pintarChips();
   // El envio gratis es un beneficio minorista: al mayorista y al distribuidor
   // no se les promete algo que no van a tener.
   const beneEnvio = $('#beneEnvio');
@@ -3047,7 +2970,8 @@ function tarjeta(p, key){
     '<div class="foto">' +
       (p.img ? '<img src="' + p.img + '" alt="' + p.n + '" loading="lazy">' : '🌿') +
       (rebaja ? '<span class="tag">' + rebaja + '% OFF</span>' : '') +
-      (sinStock ? '<span class="tag tag--bug">sin stock</span>' : '') + '</div>' +
+      (sinStock ? '<span class="tag tag--bug">sin stock</span>' : '') +
+      (nubea ? nubea.stickersHtml(p) : '') + '</div>' +
     '<div class="card-body">' +
       '<h3>' + p.n + '</h3>' +
       // Hueco donde la app deja las estrellas. Vacio no ocupa lugar.
@@ -3060,6 +2984,8 @@ function tarjeta(p, key){
       '<div class="precios"><span class="precio">' + ars(pr) + '</span>' +
         (rebaja ? '<span class="precio-viejo">' + ars(lista) + '</span>' +
                   '<span class="precio-seg">-' + rebaja + '%</span>' : '') + '</div>' +
+      (function(){ const b = nubea ? nubea.badgesHtml(p, 'tarjeta') : '';
+                   return b ? '<div class="nb-badges">' + b + '</div>' : ''; })() +
       '<div class="acciones">' +
         '<div class="qty"><button type="button" data-d="-1">-</button>' +
         campoCantidad(1, 'Cantidad de ' + p.n) +
@@ -3085,38 +3011,55 @@ function tarjeta(p, key){
   return el;
 }
 
+/* ---- Catalogo ----
+   Sin categorias, pedido del cliente: se ve todo lo que se puede comprar en el
+   segmento elegido, y quien quiere achicar escribe en el buscador. Los combos
+   entran en los tres segmentos, a precio de lista, igual que en su carrusel.
+
+   Sin busqueda va primero lo que se puede comprar y lo mas elegido -- reseñas,
+   ventas --; con busqueda, lo que mejor coincide con lo escrito.
+
+   var y no let: pintar() se puede llamar antes de que el guion llegue hasta
+   aca, y con let eso seria un error en vez de una busqueda vacia. */
+var busqueda = '';
+
 function pintar(){
   const g = $('#grilla'); g.innerHTML = '';
-  const need = NECESIDADES.find(n => n.id === activa);
-  const items = PRODUCTOS.filter(p => p.necs.includes(activa) &&
-    (esPack(activa) || hayEn(p, segmento)));
   const seg = SEGMENTOS[segmento].label.toLowerCase();
-  $('#cat-sub').textContent = items.length
-    ? items.length + ' producto(s) con precio ' + seg + ' en ' + need.label + '.' : '';
+  const texto = (busqueda || '').trim();
+  const items = texto
+    ? buscarProductos(texto)
+    : PRODUCTOS.filter(p => p.necs.includes('packs') || hayEn(p, segmento)).sort(ordenDestacados);
+
+  $('#cat-sub').textContent = !items.length ? '' : texto
+    ? items.length + (items.length === 1 ? ' resultado' : ' resultados') +
+      ' para «' + texto + '» con precio ' + seg + '.'
+    : items.length + ' productos con precio ' + seg + '.';
+
   if (!items.length){
-    // Vacia porque la tienda no publica ese rubro para ese segmento, no por un
-    // error de codigo. Se dice cual es la situacion real.
-    const enMino = cuantos(activa, 'minorista');
-    g.innerHTML = '<div class="vacio"><strong>No hay productos ' + seg + ' en ' +
-      need.label + '</strong>' + (enMino
-        ? 'La tienda tiene ' + enMino + ' con precio minorista, pero ninguna publicacion ' +
-          seg + ' para este rubro. Se resuelve publicandolos desde el admin.'
-        : 'Todavia no hay productos cargados en esta necesidad.') + '</div>';
+    const limpio = texto.replace(/[<>&"]/g, '');
+    if (texto){
+      // Se dice si existe con otro precio: es la diferencia entre "no lo hay"
+      // y "no lo vendemos a este segmento".
+      const enOtro = PRODUCTOS.filter(p => coincide(p, texto)).length;
+      g.innerHTML = '<div class="vacio"><strong>Nada con «' + limpio + '»</strong>' +
+        (enOtro && segmento !== 'minorista'
+          ? 'Hay ' + enOtro + ' con precio de lista: cambiá a Minorista para verlos.'
+          : 'Probá con otra palabra: el nombre del producto o lo que necesitás cuidar.') + '</div>';
+    } else {
+      g.innerHTML = '<div class="vacio"><strong>No hay productos ' + seg + ' publicados</strong>' +
+        'La tienda todavía no publica productos para este segmento.</div>';
+    }
+    if (typeof actualizarFlechasCat === 'function') actualizarFlechasCat();
     return;
   }
-  items.forEach((p, i) => g.appendChild(tarjeta(p, activa + '-' + i)));
-  // Cada necesidad arranca desde el principio, no donde quedó la anterior.
+  // La clave es el producto, no la posicion en la grilla: el mismo producto
+  // agregado con y sin busqueda tiene que sumar en la misma linea del carrito.
+  items.forEach(p => g.appendChild(tarjeta(p, 'cat-' +
+    (p.ids.minorista || p.ids.mayorista || p.ids.distribuidor))));
+  // Cada busqueda arranca desde el principio de la grilla.
   g.scrollLeft = 0;
   if (typeof actualizarFlechasCat === 'function') actualizarFlechasCat();
-}
-
-function filtrar(id){
-  activa = id;
-  document.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.need === id));
-  history.replaceState(null, '', '#necesidades?n=' + id);
-  const need = NECESIDADES.find(n => n.id === id);
-  track('select_category', {need_id:id, need_name:need.label});
-  pintar(); recalcular();
 }
 
 /* ---- Packs ----
@@ -3159,7 +3102,7 @@ const ICONO_COMPARTIR = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx=
 const escCombo = t => String(t == null ? '' : t)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const idCombo = p => p.ids.minorista || p.ids.mayorista || p.ids.distribuidor;
-const vendidosDe = p => parseInt(String(p.vend || '').replace(/\D/g, ''), 10) || 0;
+function vendidosDe(p){ return parseInt(String(p.vend || '').replace(/\D/g, ''), 10) || 0; }
 
 const cf = {items: [], cartas: [], activo: 0};
 
@@ -3169,8 +3112,9 @@ try {
 } catch (e) { /* sin almacenamiento: los favoritos duran la visita */ }
 
 /* Primero lo que se puede comprar, despues lo que tiene reseñas y ventas, y
-   al final el nombre. El alfabetico ponia al frente lo que empezaba con "A". */
-function ordenCombos(a, b){
+   al final el nombre. El alfabetico ponia al frente lo que empezaba con "A".
+   Lo usan el carrusel de combos, el catalogo y las sugerencias. */
+function ordenDestacados(a, b){
   return (conStock(b) - conStock(a)) ||
     (((b.rat && b.rat.n) || 0) - ((a.rat && a.rat.n) || 0)) ||
     (vendidosDe(b) - vendidosDe(a)) ||
@@ -3205,6 +3149,7 @@ function cartaCombo(p, i, total){
     '<button type="button" class="cf-foto" aria-label="Ver detalles de ' + escCombo(nombre) + '">' +
       (p.img ? '<img data-src="' + escCombo(p.img) + '" alt="" decoding="async" draggable="false">'
              : '<span class="cf-sin-foto" aria-hidden="true">🌿</span>') +
+      (nubea ? nubea.stickersHtml(p) : '') +
     '</button>' +
     '<div class="cf-pie">' +
       '<h3 class="cf-nombre">' + escCombo(nombre) + '</h3>' +
@@ -3339,7 +3284,7 @@ function irACombo(i){
 function pintarPacks(){
   const pista = $('#packs');
   if (!pista) return;
-  const items = PRODUCTOS.filter(p => p.necs.includes('packs')).sort(ordenCombos);
+  const items = PRODUCTOS.filter(p => p.necs.includes('packs')).sort(ordenDestacados);
   const aPrecioDeLista = segmento !== 'minorista' && !items.some(p => hayEn(p, segmento));
   const sub = pista.closest('.bloque').querySelector('.sub');
   /* El combo que estaba al frente sigue al frente: al cambiar de segmento o al
@@ -3693,7 +3638,7 @@ function llenarVista(p){
   // Envio gratis: se anuncia solo al minorista, que es el unico que lo tiene.
   const envio = $('#mvEnvio');
   envio.hidden = segmento !== 'minorista';
-  if (!envio.hidden) envio.textContent = 'Envío gratis en compras superiores a ' + ars(60000);
+  if (!envio.hidden) envio.textContent = 'Envío gratis en compras superiores a ' + ars(nubea ? nubea.umbralEnvio() : 60000);
 
   /* Sin stock no se compra. La ficha no lo estaba apagando: se podia cargar
      al carrito y recien fallaba del otro lado, en el carrito de Tiendanube,
@@ -3709,6 +3654,7 @@ function llenarVista(p){
      el boton llevaria a un carrito bloqueado. Es solo para minorista, y
      tampoco tiene sentido sin stock. */
   $('#mvRapida').hidden = segmento !== 'minorista' || !hayStock;
+  if (nubea) nubea.llenarFicha(p);
 }
 
 $('#mvVerDesc').onclick = e => {
@@ -3771,7 +3717,10 @@ function mensajeProgreso(subtotal, falta, proximo, pct){
   if (!proximo){
     msg.textContent = '¡Desbloqueaste todos los beneficios!';
   } else {
-    msg.innerHTML = (falta < 12000 ? '¡Ya estás cerca! ' : '') +
+    /* Para el envio gratis va el texto que el cliente escribio en Nubea. */
+    const deNubea = proximo.nombre === 'Envío gratis' && nubea && nubea.textoEnvio('falta', falta);
+    if (deNubea) msg.textContent = deNubea;
+    else msg.innerHTML = (falta < 12000 ? '¡Ya estás cerca! ' : '') +
       'Te faltan <b>' + ars(falta) + '</b> para ' + proximo.nombre.toUpperCase();
     track('reward_progress', {subtotal, next_tier:proximo.nombre, missing:falta});
   }
@@ -3820,7 +3769,8 @@ function recalcular(){
   if (reciente){
     const t = logrados[logrados.length-1];
     const msg = $('#bfMsg');
-    msg.textContent = '¡' + t.nombre.toUpperCase() + ' DESBLOQUEADO!';
+    msg.textContent = (t.nombre === 'Envío gratis' && nubea && nubea.textoEnvio('logrado')) ||
+                      '¡' + t.nombre.toUpperCase() + ' DESBLOQUEADO!';
     msg.classList.add('festejo');
     track('reward_unlocked', {tier_name:t.nombre, subtotal});
     clearTimeout(festejoTimer);
@@ -3870,7 +3820,7 @@ function sugerir(subtotal, falta, proximo){
     // siempre. Bajarla hace que el bloque sirva de verdad.
     const cand = PRODUCTOS.filter(p => hayEn(p, segmento) && conStock(p) && !enCarrito.has(p.n))
       .filter(p => precioDe(p) >= falta*0.55 && precioDe(p) <= falta*1.5)
-      .sort((a,b) => (b.necs.includes(activa)) - (a.necs.includes(activa))).slice(0,3);
+      .sort(ordenDestacados).slice(0,3);
     if (cand.length){
       $('#m9-tit').textContent = 'Te faltan ' + ars(falta) + ' para ' + proximo.nombre.toLowerCase();
       $('#m9-lista').innerHTML = ''; cand.forEach(p => $('#m9-lista').appendChild(fila(p,'m9')));
@@ -4018,201 +3968,136 @@ $('#checkoutSeguir').onclick = () => cerrarModal('modalCheckout');
 $('#checkoutCerrar').onclick = () => cerrarModal('modalCheckout');
 $('#modalCheckout').onclick = e => { if (e.target.id === 'modalCheckout') cerrarModal('modalCheckout'); };
 /* ══════════ BUSCADOR ══════════
-   Busca sobre el mismo catalogo que muestra la landing y abre NUESTRA ficha de
-   producto, no la del theme. Ese es el punto: si el cliente busca por el
-   buscador de Brasilia se va a la ficha vieja y sale del embudo.
+   Es el unico filtro del catalogo desde que salieron las categorias: el
+   cliente ve todo y achica escribiendo. Filtra la grilla en el momento, y la
+   ficha que se abre es la de ESTA landing, no la del theme.
 
    Compara sin acentos y por palabras sueltas, asi "aceite almendra" encuentra
-   "Aceite de Almendras" y "almendras" tambien encuentra "ALMENDRA". */
-(function buscador(){
-  const campo = $('#buscar'), lista = $('#buscarLista'), limpiar = $('#buscarLimpiar');
-  if (!campo || !lista) return;
-
-  const clave = t => (t || '').toLowerCase().normalize('NFD')
+   "Aceite de Almendras". Y busca tambien por la necesidad de cada producto:
+   "dolor" o "piel" traen lo que antes estaba en esa categoria. */
+function claveBusqueda(t){
+  return (t || '').toLowerCase().normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+}
 
-  /* Raiz de una palabra, para que el singular y el plural se encuentren.
-     Sin esto "geles" no devolvia nada -- ni "cremas", ni "aceites" -- porque
-     la comparacion era por texto exacto y en el catalogo dice "Gel" y
-     "Crema". Se corta el plural castellano: -es despues de consonante
-     ("geles" -> "gel") y -s despues de vocal ("cremas" -> "crema").
-     Palabras de tres letras o menos no se tocan: "mas" no es plural de "ma". */
-  const raiz = w => {
-    if (w.length <= 3) return w;
-    if (/[^aeiou]es$/.test(w)) return w.slice(0, -2);
-    if (/[aeiou]s$/.test(w))   return w.slice(0, -1);
-    return w;
-  };
+/* Raiz de una palabra, para que el singular y el plural se encuentren. Sin
+   esto "geles" no devolvia nada -- ni "cremas", ni "aceites" --, porque en el
+   catalogo dice "Gel" y "Crema". Se corta el plural castellano: -es despues
+   de consonante ("geles" -> "gel") y -s despues de vocal ("cremas" ->
+   "crema"). Tres letras o menos no se tocan: "mas" no es plural de "ma". */
+function raizBusqueda(w){
+  if (w.length <= 3) return w;
+  if (/[^aeiou]es$/.test(w)) return w.slice(0, -2);
+  if (/[aeiou]s$/.test(w))   return w.slice(0, -1);
+  return w;
+}
 
-  /* Cada producto se indexa por las raices de su nombre Y de su categoria,
-     asi una palabra generica como "gel" o "aceite" cae en todo lo que
-     corresponde aunque el nombre lo escriba en plural. */
-  const raicesDe = p => {
-    if (p._raices) return p._raices;
-    const cats = p.necs.map(id => (NECESIDADES.find(n => n.id === id) || {}).label || '');
-    p._raices = clave(p.n + ' ' + cats.join(' ')).split(' ').map(raiz).filter(Boolean);
-    return p._raices;
-  };
-  const contieneRaiz = (p, w) => {
-    const r = raiz(w);
-    /* Las dos raices tienen que medir al menos tres letras para compararse por
-       prefijo. Sin ese piso, buscar "gel" tambien devolvia todo lo que dice
-       "100 g" en el nombre -- que son decenas -- porque "gel" empieza con "g".
-       Medido: 12 resultados donde correspondian 7. */
-    if (r.length < 3) return raicesDe(p).includes(r);
-    return raicesDe(p).some(x =>
-      x === r || (x.length >= 3 && (x.startsWith(r) || r.startsWith(x))));
-  };
+/* Raices del nombre Y de las necesidades de cada producto. Se guardan, y se
+   rehacen si el catalogo vivo le cambio el nombre. */
+function raicesDe(p){
+  if (p._raices && p._raicesDe === p.n) return p._raices;
+  const cats = p.necs.map(id => (NECESIDADES.find(n => n.id === id) || {}).label || '');
+  p._raices = claveBusqueda(p.n + ' ' + cats.join(' ')).split(' ').map(raizBusqueda).filter(Boolean);
+  p._raicesDe = p.n;
+  return p._raices;
+}
 
-  let resultados = [], marcado = -1;
+/* Las dos raices tienen que medir al menos tres letras para compararse por
+   prefijo. Sin ese piso, "gel" tambien devolvia todo lo que dice "100 g" en el
+   nombre, porque "gel" empieza con "g". Medido: 12 resultados donde iban 7. */
+function contieneRaiz(p, w){
+  const r = raizBusqueda(w);
+  if (r.length < 3) return raicesDe(p).includes(r);
+  return raicesDe(p).some(x =>
+    x === r || (x.length >= 3 && (x.startsWith(r) || r.startsWith(x))));
+}
 
-  function buscar(texto){
-    const palabras = clave(texto).split(' ').filter(p => p.length > 1);
-    if (!palabras.length) return [];
-    // Solo lo que el cliente puede comprar en el segmento que esta mirando,
-    // igual que el resto de la landing. Los combos valen en los tres.
-    const candidatos = PRODUCTOS.filter(p =>
-      p.necs.includes('packs') || hayEn(p, segmento));
-    return candidatos
-      .map(p => {
-        const nombre = clave(p.n);
-        // Primero el texto tal cual; si no da, por raices, que es lo que hace
-        // que "geles" encuentre los geles.
-        const literal = palabras.every(w => nombre.includes(w));
-        if (!literal && !palabras.every(w => contieneRaiz(p, w))) return null;
-        // Ordena mejor lo que empieza con lo buscado que lo que solo lo
-        // contiene, y lo literal antes que lo encontrado por raiz.
-        const arranca = nombre.startsWith(palabras[0]) ? 0 : 1;
-        return {p, orden: (literal ? 0 : 4000) + arranca * 1000 + nombre.length};
-      })
-      .filter(Boolean)
-      .sort((a, b) => a.orden - b.orden)
-      .map(x => x.p);
-  }
+function palabrasDe(texto){
+  return claveBusqueda(texto).split(' ').filter(w => w.length > 1);
+}
 
-  /* La busqueda se mide cuando el cliente para de escribir, no en cada
-     tecla: si no, "aceite" son seis eventos y el informe queda ilegible. */
-  let relojBusqueda = null;
-  function medirBusqueda(texto){
-    clearTimeout(relojBusqueda);
+function coincide(p, texto){
+  const palabras = palabrasDe(texto);
+  if (!palabras.length) return false;
+  const nombre = claveBusqueda(p.n);
+  return palabras.every(w => nombre.includes(w)) || palabras.every(w => contieneRaiz(p, w));
+}
+
+/* Lo que se puede comprar en el segmento que se esta mirando -- los combos en
+   los tres --, ordenado por cuanto se parece a lo buscado: primero el texto
+   tal cual, despues lo encontrado por raiz; primero lo que empieza con la
+   palabra; y lo que tiene stock antes que lo que no. */
+function buscarProductos(texto){
+  const palabras = palabrasDe(texto);
+  if (!palabras.length) return [];
+  return PRODUCTOS.filter(p => p.necs.includes('packs') || hayEn(p, segmento))
+    .map(p => {
+      const nombre = claveBusqueda(p.n);
+      const literal = palabras.every(w => nombre.includes(w));
+      if (!literal && !palabras.every(w => contieneRaiz(p, w))) return null;
+      const arranca = nombre.startsWith(palabras[0]) ? 0 : 1;
+      return {p, orden: (literal ? 0 : 4000) + arranca * 1000 +
+                        (conStock(p) ? 0 : 500) + nombre.length};
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.orden - b.orden)
+    .map(x => x.p);
+}
+
+(function buscador(){
+  const campo = $('#buscar'), limpiar = $('#buscarLimpiar');
+  if (!campo) return;
+
+  /* Se mide cuando el cliente para de escribir, no en cada tecla: si no,
+     "aceite" son seis eventos y el informe queda ilegible. search_term es el
+     nombre que espera GA4; query queda para el dataLayer. */
+  let relojMedida = null;
+  function medir(texto){
+    clearTimeout(relojMedida);
     if (!texto.trim()) return;
-    relojBusqueda = setTimeout(() => {
-      // search_term es el nombre que espera GA4 en su evento `search`;
-      // query queda para el dataLayer, que es como se venia llamando.
+    relojMedida = setTimeout(() => {
       track('search', {search_term: texto.trim(), query: texto.trim(),
-                       results: resultados.length});
+                       results: document.querySelectorAll('#grilla .card').length});
     }, 900);
   }
 
-  /* Veinte y no ocho: una palabra generica como "aceite" o "tintura" da mas
-     de veinte resultados, y cortarlos en ocho escondia media categoria. La
-     lista ya tiene su propio scroll, asi que no crece la pagina. */
-  const TOPE_RESULTADOS = 20;
-
-  function pintar(texto){
-    const todos = buscar(texto);
-    const sobran = Math.max(0, todos.length - TOPE_RESULTADOS);
-    resultados = todos.slice(0, TOPE_RESULTADOS);
-    medirBusqueda(texto);
-    marcado = -1;
+  function aplicar(texto){
+    busqueda = texto;
     limpiar.hidden = !texto;
-    if (!texto.trim()){
-      lista.hidden = true; campo.setAttribute('aria-expanded', 'false'); return;
-    }
-    if (!resultados.length){
-      // Si no hay nada acá pero sí con precio de lista, se dice: es la
-      // diferencia entre "no existe" y "no lo vendemos a este segmento".
-      const enLista = PRODUCTOS.filter(p => {
-        const palabras = clave(texto).split(' ').filter(w => w.length > 1);
-        return palabras.length && palabras.every(w => contieneRaiz(p, w));
-      }).length;
-      lista.innerHTML = '<p class="buscador__nada">Nada con <b>' +
-        texto.replace(/[<>&]/g, '') + '</b>' +
-        (enLista ? ' con precio ' + SEGMENTOS[segmento].label.toLowerCase() +
-                   '. Hay ' + enLista + ' con precio de lista.' : ' en el catálogo.') +
-        '</p>';
-      lista.hidden = false; campo.setAttribute('aria-expanded', 'true'); return;
-    }
-    lista.innerHTML = resultados.map((p, i) => {
-      const nec = (NECESIDADES.find(n => p.necs.includes(n.id)) || {}).label || '';
-      return '<button type="button" class="buscador__item" role="option" data-i="' + i + '">' +
-        (p.img ? '<img class="buscador__foto" src="' + p.img + '" alt="" loading="lazy">'
-               : '<span class="buscador__foto"></span>') +
-        '<span class="buscador__txt"><span class="buscador__nom">' + p.n + '</span>' +
-        '<span class="buscador__cat">' + nec + '</span></span>' +
-        '<span class="buscador__precio">' + ars(precioDe(p)) + '</span></button>';
-    }).join('');
-    if (sobran){
-      lista.insertAdjacentHTML('beforeend',
-        '<p class="buscador__nada">y ' + sobran + ' más. Escribí algo más ' +
-        'específico para achicar la lista.</p>');
-    }
-    lista.querySelectorAll('.buscador__item').forEach(b =>
-      b.onclick = () => abrir(+b.dataset.i));
-    lista.hidden = false;
-    campo.setAttribute('aria-expanded', 'true');
+    pintar();
+    medir(texto);
   }
 
-  function abrir(i){
-    const p = resultados[i];
-    if (!p) return;
-    track('search_result_open', {item_name: p.n, query: campo.value});
-    cerrar();
-    abrirVista(p, 'busqueda-' + p.n);
-  }
-
-  function cerrar(){
-    lista.hidden = true;
-    campo.setAttribute('aria-expanded', 'false');
-    marcado = -1;
-  }
-
-  function marcar(paso){
-    if (!resultados.length) return;
-    const items = lista.querySelectorAll('.buscador__item');
-    if (marcado >= 0) items[marcado].setAttribute('aria-selected', 'false');
-    marcado = (marcado + paso + items.length) % items.length;
-    items[marcado].setAttribute('aria-selected', 'true');
-    items[marcado].scrollIntoView({block: 'nearest'});
-  }
-
-  // Se espera a que deje de tipear: buscar en cada tecla sobre 145 productos
-  // no hace falta y ademas parpadea.
+  // Se espera a que deje de tipear: repintar la grilla en cada tecla parpadea.
   let reloj = null;
   campo.addEventListener('input', () => {
     clearTimeout(reloj);
-    reloj = setTimeout(() => pintar(campo.value), 140);
+    reloj = setTimeout(() => aplicar(campo.value), 160);
   });
-
   campo.addEventListener('keydown', e => {
-    if (e.key === 'ArrowDown'){ e.preventDefault(); marcar(1); }
-    else if (e.key === 'ArrowUp'){ e.preventDefault(); marcar(-1); }
-    else if (e.key === 'Enter'){ e.preventDefault(); abrir(marcado >= 0 ? marcado : 0); }
-    else if (e.key === 'Escape'){ cerrar(); campo.blur(); }
-  });
-
-  limpiar.onclick = () => { campo.value = ''; pintar(''); campo.focus(); };
-
-  /* Busqueda que llega por la URL: /?q=calendula
-     Es la pieza que permite conectar el buscador del theme con este sin tocar
-     el de la tienda. En vez de deshabilitar el buscador de Brasilia -- que
-     dejaria al cliente sin buscar en el resto del sitio -- alcanza con que su
-     pagina de resultados redirija aca con ?q=, y el cliente cae en NUESTRA
-     ficha en vez de en la del theme. */
-  {
-    const q = new URLSearchParams(location.search).get('q');
-    if (q){
-      campo.value = q;
-      pintar(q);
-      campo.scrollIntoView({block: 'center'});
-      track('search_desde_url', {query: q});
+    if (e.key === 'Enter'){
+      e.preventDefault();
+      clearTimeout(reloj);
+      aplicar(campo.value);
+      campo.blur();   // en el celular cierra el teclado y deja ver la grilla
+    } else if (e.key === 'Escape'){
+      clearTimeout(reloj);
+      campo.value = '';
+      aplicar('');
     }
-  }
-  document.addEventListener('click', e => {
-    if (!e.target.closest('.buscador')) cerrar();
   });
-  // Al cambiar de segmento cambian precios y disponibilidad.
-  campo.addEventListener('focus', () => { if (campo.value) pintar(campo.value); });
+  limpiar.onclick = () => { campo.value = ''; aplicar(''); campo.focus(); };
+
+  /* Busqueda que llega por la URL: /?q=calendula. Permite mandar aca el
+     buscador del theme sin deshabilitarlo. La grilla la pinta el arranque. */
+  const q = new URLSearchParams(location.search).get('q');
+  if (q){
+    campo.value = q;
+    busqueda = q;
+    limpiar.hidden = false;
+    track('search_desde_url', {query: q});
+    setTimeout(irAlCatalogo, 300);
+  }
 })();
 
 /* ══════════ PASO A LA TIENDA ══════════
@@ -4486,6 +4371,290 @@ if (ANIM.activo && 'IntersectionObserver' in window){
   }), {threshold:0, rootMargin:'0px 0px -12% 0px'});
   revs.forEach(el => io.observe(el));
   setTimeout(() => revs.forEach(el => el.classList.add('visto')), 2500);
+})();
+
+/* ══════════ NUBEA ══════════
+   Lo que el cliente configura en Nubea, dibujado con los componentes de la
+   landing. La app de Nubea no puede dibujar aca: busca tarjetas del theme
+   (data-product-id), sus stickers dejan de mirar a los 30 segundos, los
+   bloques de ficha solo corren en plantillas de producto y su barra de envio
+   gratis cuenta el carrito de la tienda.
+
+   Se lee la misma configuracion publica que usan sus widgets -- con CORS
+   abierto, asi que funciona tambien en el preview -- y se aplican sus mismas
+   reglas. La API cachea 5 minutos: lo que el cliente cambia en el panel se
+   ve en la landing en ese plazo.
+
+   El producto de cada regla es la publicacion del segmento que se esta
+   mirando, igual que en la tienda: un sticker puesto a la ficha minorista
+   del Aceite de Romero no aparece en la mayorista, que es otra publicacion. */
+var nubea = (function () {
+  const API = 'https://api.nubea.com.ar';
+  const GUARDADO = 'habitad:nubea:v1';
+  const FRESCO = 5 * 60 * 1000;
+  const vacio = () => ({badges: {shape: 'pill', maxPerCard: 2, badges: []}, stickers: [], bloques: [], envio: null});
+  let datos = vacio();
+  let ultimo = 0;
+
+  /* Iconos de los widgets de Nubea, tal cual. Los de badges y los de bloques
+     son dos juegos distintos en su codigo. */
+  const ICONOS_BADGE = {
+    truck: '<path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>',
+    card: '<rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/>',
+    bank: '<path d="M3 21h18"/><path d="M5 21V9l7-5 7 5v12"/><path d="M9 21v-6h6v6"/>',
+    cash: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/>',
+    percent: '<path d="M19 5 5 19"/><circle cx="7" cy="7" r="2"/><circle cx="17" cy="17" r="2"/>',
+    gift: '<rect x="3" y="8" width="18" height="4"/><path d="M5 12v9h14v-9"/><path d="M12 8v13"/><path d="M12 8a3 3 0 1 0-3-3 5 5 0 0 0 3 3z"/><path d="M12 8a3 3 0 1 1 3-3 5 5 0 0 1-3 3z"/>',
+    shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'
+  };
+  const PRESET_ICONO = {shipping: 'truck', installments: 'card', transfer: 'bank', cash: 'cash',
+                        discount: 'percent', gift: 'gift', warranty: 'shield', time: 'clock'};
+  const ICONOS_BLOQUE = {
+    shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+    check: '<polyline points="20 6 9 17 4 12"/>',
+    truck: '<path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>',
+    clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+    gift: '<polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>',
+    tag: '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>',
+    star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+    heart: '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>',
+    package: '<line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>',
+    refresh: '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>',
+    award: '<circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>',
+    leaf: '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/>',
+    phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
+    lock: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'
+  };
+
+  const esc = t => String(t == null ? '' : t)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  // Colores del panel: solo lo que parece un color, para que no se cuele CSS.
+  const color = (c, porDefecto) => /^#[0-9a-f]{3,8}$|^rgba?\([\d\s.,%]+\)$/i.test(String(c || '')) ? c : porDefecto;
+  const svg = cuerpo => '<svg viewBox="0 0 24 24" aria-hidden="true">' + cuerpo + '</svg>';
+
+  // La publicacion que se esta mirando: la del segmento, o la minorista.
+  const idDe = p => Number(p.ids[segmento] || p.ids.minorista || p.ids.mayorista || p.ids.distribuidor);
+
+  /* product-badges: q(). Por categoria no se puede resolver en la landing --
+     no sabemos en que categoria de la tienda esta cada publicacion --, asi que
+     esas reglas no se aplican aca. */
+  function aplica(regla, p){
+    switch (regla.targetType){
+      case 'all': return true;
+      case 'products': return Array.isArray(regla.productIds) && regla.productIds.includes(idDe(p));
+      default: return false;
+    }
+  }
+
+  function normalizar(badges, stickers, bloques, envio){
+    const b = badges && typeof badges === 'object' ? badges : {};
+    const max = Number(b.maxPerCard);
+    return {
+      badges: {shape: ['pill', 'icon_text', 'plain_line'].includes(b.shape) ? b.shape : 'pill',
+               maxPerCard: Number.isInteger(max) && max > 0 ? max : 2,
+               badges: Array.isArray(b.badges) ? b.badges : []},
+      stickers: Array.isArray(stickers) ? stickers : [],
+      bloques: Array.isArray(bloques) ? bloques : [],
+      envio: envio && typeof envio === 'object' && envio.threshold ? envio : null
+    };
+  }
+
+  /* ── Badges ── */
+  function badgesHtml(p, donde){
+    const forma = datos.badges.shape;
+    const lista = datos.badges.badges
+      .filter(x => donde === 'ficha' ? x.showInProductPage !== false : x.showInGrid !== false)
+      .filter(x => aplica(x, p))
+      .slice(0, datos.badges.maxPerCard);
+    if (!lista.length) return '';
+    return lista.map(x => {
+      const texto = color(x.textColor, '#14532D');
+      const estilo = 'color:' + texto + (forma === 'pill'
+        ? ';background:' + color(x.backgroundColor, '#DCFCE7') +
+          (x.borderColor ? ';border:1px solid ' + color(x.borderColor, 'transparent') : '')
+        : '');
+      const icono = forma === 'plain_line' ? '' : ICONOS_BADGE[x.icon || PRESET_ICONO[x.preset]] || '';
+      return '<span class="nb-badge nb-badge--' + forma + '" style="' + estilo + '">' +
+        (icono ? svg(icono) : '') + '<span>' + esc(x.text) + '</span></span>';
+    }).join('');
+  }
+
+  /* ── Stickers ── product-stickers: Rt() para el aspecto, Ot() para la
+     esquina, y de a 34px cuando hay mas de uno en la misma esquina. */
+  const TAMANO = {small: 11, medium: 13, large: 16};
+  const RADIO = {pill: '999px', rounded: '8px', rectangle: '0', circle: '50%', burst: '8px'};
+  const ESTRELLA = 'polygon(50% 0%, 61% 13%, 77% 7%, 79% 24%, 95% 24%, 88% 39%, 100% 50%, 88% 61%, 95% 76%, 79% 76%, 77% 93%, 61% 87%, 50% 100%, 39% 87%, 23% 93%, 21% 76%, 5% 76%, 12% 61%, 0% 50%, 12% 39%, 5% 24%, 21% 24%, 23% 7%, 39% 13%)';
+
+  function stickersHtml(p){
+    const pilas = {};
+    const partes = datos.stickers.filter(x => aplica(x, p)).map(x => {
+      const esquina = ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'center'].includes(x.corner) ? x.corner : 'top-left';
+      const pila = pilas[esquina] = (pilas[esquina] || 0) + 1;
+      const corrida = 8 + (pila - 1) * 34;
+      const escala = Number(x.sizeScale) || 1;
+      const giro = Number(x.rotation) || 0;
+      let lugar, mueve = [];
+      if (esquina === 'center'){
+        lugar = 'top:50%;left:50%;';
+        mueve.push('translate(-50%, calc(-50% + ' + ((pila - 1) * 34) + 'px))');
+      } else {
+        lugar = (esquina.indexOf('top') === 0 ? 'top:' : 'bottom:') + corrida + 'px;' +
+                (esquina.indexOf('left') > 0 ? 'left:8px;' : 'right:8px;');
+      }
+      if (giro) mueve.push('rotate(' + giro + 'deg)');
+      const transform = mueve.length ? 'transform:' + mueve.join(' ') + ';' : '';
+
+      if (x.contentType === 'image'){
+        if (!/^https:\/\//.test(String(x.imageUrl || ''))) return '';
+        return '<span class="nb-sticker" style="' + lugar + transform + 'box-shadow:none">' +
+          '<img src="' + esc(x.imageUrl) + '" alt="" style="width:' + Math.round(72 * escala) + 'px"></span>';
+      }
+      const fondo = color(x.backgroundColor, '#EF4444');
+      let estilo = 'background:' + (x.backgroundColor2
+        ? 'linear-gradient(135deg, ' + fondo + ', ' + color(x.backgroundColor2, fondo) + ')' : fondo) +
+        ';color:' + color(x.textColor, '#FFFFFF') +
+        ';font-weight:' + (x.fontBold ? 700 : 500) +
+        ';font-size:' + Math.round((TAMANO[x.fontSize] || 13) * escala) + 'px' +
+        ';border-radius:' + (RADIO[x.shape] || '8px') + ';';
+      if (x.shape === 'circle' || x.shape === 'burst'){
+        const burst = x.shape === 'burst';
+        const lado = Math.round((burst ? 76 : 58) * escala);
+        estilo += 'width:' + lado + 'px;height:' + lado + 'px;white-space:normal;word-break:break-word;' +
+          'padding:' + Math.round(lado * (burst ? .26 : .16)) + 'px;box-sizing:border-box;line-height:1.05;' +
+          (burst ? 'clip-path:' + ESTRELLA + ';' : '');
+      } else {
+        estilo += 'padding:' + Math.round(4 * escala) + 'px ' + Math.round(9 * escala) + 'px;';
+      }
+      const texto = (x.emoji ? x.emoji + ' ' : '') + (x.text || '');
+      return '<span class="nb-sticker" style="' + lugar + transform + estilo + '">' + esc(texto) + '</span>';
+    }).filter(Boolean);
+    return partes.length ? '<span class="nb-stickers" aria-hidden="true">' + partes.join('') + '</span>' : '';
+  }
+
+  /* ── Bloques de ficha ── product-content-blocks. Garantia y envio son los
+     que tiene configurados el cliente; cualquier otro tipo se muestra con su
+     titulo y su texto, para que no desaparezca en silencio. */
+  function bloqueHtml(b){
+    const d = b.design || {};
+    const c = d.colors || {};
+    const acento = color(c.accent, '#111827');
+    const estilo = 'background:' + color(c.background, '#f8fafc') + ';color:' + color(c.text, '#0f172a') +
+                   ';border-color:' + color(c.border, '#e2e8f0');
+    const icono = nombre => ICONOS_BLOQUE[nombre] ? '<span style="color:' + acento + ';display:inline-flex">' + svg(ICONOS_BLOQUE[nombre]) + '</span>' : '';
+    let cuerpo = '';
+    if (d.type === 'shipping' || b.type === 'shipping'){
+      cuerpo = (d.title ? '<b style="display:block;margin-bottom:6px">' + esc(d.title) + '</b>' : '') +
+        (Array.isArray(d.rows) ? d.rows : []).map(r =>
+          '<div class="nb-bloque__fila">' + icono(r.icon) + '<span>' + esc(r.label) + '</span>' +
+          (r.value ? '<em>' + esc(r.value) + '</em>' : '') + '</div>').join('') +
+        (d.freeShippingText ? '<p class="nb-bloque__pie" style="border-color:' + color(c.border, '#e2e8f0') +
+          ';color:' + acento + '">' + esc(d.freeShippingText) + '</p>' : '');
+    } else {
+      cuerpo = '<div class="nb-bloque__cab">' + icono(d.icon) + '<div>' +
+        (d.title ? '<b>' + esc(d.title) + '</b>' : '') + (d.text ? '<p>' + esc(d.text) + '</p>' : '') +
+        (Array.isArray(d.items) ? d.items.map(it => '<p><b>' + esc(it.title || '') + '</b> ' + esc(it.text || it.content || '') + '</p>').join('') : '') +
+        '</div></div>';
+    }
+    return '<div class="nb-bloque" style="' + estilo + '">' + cuerpo + '</div>';
+  }
+
+  /* ── La ficha ── */
+  function llenarFicha(p){
+    const badges = $('#mvNubeaBadges');
+    if (badges){
+      badges.innerHTML = badgesHtml(p, 'ficha');
+      badges.hidden = !badges.innerHTML;
+    }
+    const foto = $('.ficha__principal');
+    if (foto){
+      const viejos = foto.querySelector('.nb-stickers');
+      if (viejos) viejos.remove();
+      foto.insertAdjacentHTML('beforeend', stickersHtml(p));
+    }
+    const caja = $('#mvNubeaBloques');
+    if (caja){
+      const propios = datos.bloques.filter(b => b.surface !== 'grid' &&
+        (b.targetType !== 'products' || (Array.isArray(b.productIds) && b.productIds.includes(idDe(p)))));
+      caja.innerHTML = propios.map(bloqueHtml).join('');
+      caja.hidden = !propios.length;
+      // Si el cliente cargo su bloque de envio, la caja de envio de relleno sobra.
+      const envio = $('#mvEnvioCaja');
+      if (envio) envio.hidden = propios.some(b => b.type === 'shipping' || (b.design || {}).type === 'shipping');
+    }
+  }
+
+  /* ── Envio gratis ── free-shipping-bar: el umbral mueve el hito minorista, y
+     los textos del panel reemplazan a los de la barra para ese hito. */
+  function umbralEnvio(){
+    return datos.envio ? Number(datos.envio.threshold) || 60000 : 60000;
+  }
+  function textoEnvio(que, falta){
+    const t = datos.envio && datos.envio[que === 'logrado' ? 'textAchieved' : 'textInProgress'];
+    if (!t) return null;
+    let monto;
+    try { monto = new Intl.NumberFormat('es-AR').format(Math.max(0, Math.ceil(falta || 0))); }
+    catch (e) { monto = String(Math.ceil(falta || 0)); }
+    return String(t).replace(/\{\{\s*amount\s*\}\}/g, monto);
+  }
+  function moverHito(){
+    const hito = TIERS_POR_SEGMENTO.minorista.find(t => t.nombre === 'Envío gratis');
+    if (!hito) return;
+    hito.min = umbralEnvio();
+    TIERS_POR_SEGMENTO.minorista.sort((a, b) => a.min - b.min);
+  }
+
+  function aplicar(nuevos){
+    datos = nuevos;
+    moverHito();
+  }
+
+  /* Apaga la barra de Nubea si llego a dibujarse antes que la landing. */
+  document.querySelectorAll('[data-free-shipping-bar-container]:not([data-landing])')
+    .forEach(n => n.remove());
+
+  function aplicarGuardado(){
+    try {
+      const g = JSON.parse(localStorage.getItem(GUARDADO) || 'null');
+      if (!g || !g.datos) return false;
+      ultimo = g.t || 0;
+      aplicar(normalizar(g.datos.badges, g.datos.stickers, g.datos.bloques, g.datos.envio));
+      return true;
+    } catch (e) { return false; }
+  }
+
+  async function traer(ruta){
+    const r = await fetch(API + ruta, {credentials: 'omit'});
+    if (!r.ok) return null;
+    return r.json();
+  }
+
+  async function refrescar(){
+    if (Date.now() - ultimo < FRESCO) return false;
+    const antes = JSON.stringify(datos);
+    try {
+      const [badges, stickers, bloques, envio] = await Promise.all([
+        traer('/product-badges/storefront/' + TIENDA_ID),
+        traer('/product-stickers/storefront/' + TIENDA_ID),
+        traer('/product-content-blocks/storefront/' + TIENDA_ID),
+        traer('/free-shipping-bar/storefront/' + TIENDA_ID)
+      ]);
+      const nuevos = normalizar(badges, stickers, bloques, envio);
+      ultimo = Date.now();
+      try { localStorage.setItem(GUARDADO, JSON.stringify({t: ultimo, datos: nuevos})); } catch (e) {}
+      if (JSON.stringify(nuevos) === antes) return false;
+      aplicar(nuevos);
+      return true;
+    } catch (e) {
+      if (window.console) console.warn('[nubea] no se pudo leer la configuracion:', e);
+      return false;
+    }
+  }
+
+  const api = {aplicarGuardado, refrescar, badgesHtml, stickersHtml, llenarFicha,
+               umbralEnvio, textoEnvio, get datos(){ return datos; }};
+  window.__nubea = api;
+  return api;
 })();
 
 /* ══════════ CATÁLOGO VIVO ══════════
@@ -4951,7 +5120,6 @@ var catalogoVivo = (function () {
   function repintar(conFicha){
     const grilla = $('#grilla');
     const x = grilla ? grilla.scrollLeft : 0;
-    pintarChips();
     pintar();
     if (grilla && x){
       grilla.style.scrollBehavior = 'auto';
@@ -5033,9 +5201,24 @@ var catalogoVivo = (function () {
 /* Antes del primer pintado va lo ultimo que se leyo de la tienda, si este
    navegador lo tiene: la primera imagen ya sale al dia. Despues, sin apuro,
    se vuelve a leer la tienda. */
-if (catalogoVivo.aplicarGuardado()) pintarChips();
+catalogoVivo.aplicarGuardado();
+// Lo ultimo de Nubea, si este navegador lo tiene, tambien antes de pintar.
+if (nubea.aplicarGuardado() && segmento === 'minorista') TIERS = TIERS_POR_SEGMENTO.minorista;
+pintarHitos();
 pintar(); pintarPacks(); recalcular();
 setTimeout(() => catalogoVivo.refrescar(), 400);
+/* Y la configuracion de Nubea al dia. Si cambio algo, se repinta todo lo que
+   la usa: tarjetas, carrusel, barra y la ficha si esta abierta. */
+setTimeout(() => nubea.refrescar().then(cambio => {
+  if (!cambio) return;
+  if (segmento === 'minorista') TIERS = TIERS_POR_SEGMENTO.minorista;
+  pintarHitos();
+  const g = $('#grilla'), x = g ? g.scrollLeft : 0;
+  pintar();
+  if (g && x){ g.style.scrollBehavior = 'auto'; g.scrollLeft = x; g.style.scrollBehavior = ''; }
+  pintarPacks(); recalcular();
+  if (vista) llenarVista(vista.p);
+}), 250);
 </script>
 <!-- Reseñas: mismo script que ya corre en la tienda. Encuentra las tarjetas
      por su data-store y les inyecta las estrellas. En este prototipo local
