@@ -120,8 +120,10 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .card:hover{box-shadow:var(--sombra);transform:translateY(-3px)}
 .foto{aspect-ratio:1;background:var(--crema);display:grid;place-items:center;position:relative;
   color:#c3ccae;font-size:40px;overflow:hidden}
-/* Envases y proporciones originales: contain, nunca cover. */
-.foto img{width:100%;height:100%;object-fit:contain;display:block}
+/* Envases y proporciones originales: contain, nunca cover.
+   La imagen va en absoluto: como hijo normal de la grilla, una foto mas alta
+   que ancha agrandaba el cuadro -- de 224 a 252px -- y con el la tarjeta. */
+.foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
 .tag{position:absolute;top:10px;left:10px;background:var(--verde);color:#fff;font-size:11.5px;
   font-weight:700;padding:4px 9px;border-radius:6px}
 .tag--bug{background:var(--alerta);top:auto;bottom:10px}
@@ -502,15 +504,25 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .carrusel-cat .grilla{
   display:grid;
   grid-auto-flow:column;
-  /* Filas de igual alto: la mas alta manda y las demas estiran. Sin esto,
-     una tarjeta con desplegable o con nombre largo desalineaba la fila. */
-  grid-template-rows:repeat(2,1fr);
+  /* Cada tarjeta de su alto. Con filas 1fr y stretch, la tarjeta mas alta de
+     TODO el catalogo estiraba a las demas: sin categorias son 149 productos,
+     y los que tienen desplegable dejaban un hueco de 70px debajo de la
+     descripcion en todas. Las filas quedan parejas igual, porque las
+     tarjetas miden lo mismo por construccion: foto cuadrada, titulo en dos
+     lineas, franja fija para descripcion o desplegable, y franja fija para
+     los badges. */
+  grid-template-rows:repeat(2,auto);
+  /* Sin columnas explicitas. La regla base de .grilla -- la de la grilla vieja,
+     que no era carrusel -- le dejaba columnas fijas a la primera pagina y el
+     resto tomaba el ancho del carrusel: seis tarjetas angostas, y con la foto
+     cuadrada, 28px mas bajas que las demas. */
+  grid-template-columns:none;
   grid-auto-columns:calc((100% - 3 * 20px) / 4);
   gap:20px;
   flex:1;min-width:0;
   overflow-x:auto;scroll-snap-type:x proximity;scroll-behavior:smooth;
   padding:4px 2px 16px;
-  align-items:stretch;
+  align-items:start;
 }
 .carrusel-cat .card{scroll-snap-align:start}
 .cat-flecha{flex:0 0 auto;width:44px;height:44px;border-radius:50%;
@@ -673,12 +685,24 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
    El alto lo fija la fila, no el contenido. Lo variable se acota: el nombre
    a dos lineas y el bloque de estrellas con alto reservado, aunque el
    producto no tenga ninguna. */
-.carrusel-cat .card{height:100%}
 .card h3{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
   overflow:hidden;min-height:2.7em}
 .estrellas{min-height:20px}
 .estrellas:empty{display:flex}
 .card .precios{margin-top:auto}
+/* Franja del medio de la tarjeta: la descripcion en dos lineas o, si el
+   producto tiene variantes, el desplegable en su lugar. Mismo alto en las
+   dos, asi una tarjeta con variantes no es mas alta que las demas. */
+.card-medio{font-size:13px;line-height:1.55;height:calc(2 * 1.55em);
+  display:flex;align-items:center;overflow:hidden}
+.card-medio .desc{flex:1}
+.card-medio .variante-sel{margin:0}
+/* Los badges de Nubea en una franja fija de dos renglones de pastilla. */
+.card .nb-badges{height:40px;overflow:hidden;align-content:flex-start}
+/* Sin stock no hay cantidad que elegir: el contador se va y "Sin stock" usa la
+   fila entera. En celular no entraban juntos, el boton se partia en dos
+   renglones y esas tarjetas quedaban 21px mas altas. */
+.card--sin-stock .qty{display:none}
 .card .variante-sel{margin-top:2px}
 
 /* ══ Banner de marca registrada ══ */
@@ -694,20 +718,25 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .muro{display:grid;grid-auto-flow:column;
   grid-auto-columns:calc((100% - 2 * 18px) / 3);gap:18px;
   overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;
-  scrollbar-width:none;padding:4px 2px}
+  scrollbar-width:none;padding:4px 2px;align-items:start}
 .muro::-webkit-scrollbar{display:none}
 .muro__item{scroll-snap-align:start;background:var(--papel);border:1px solid var(--borde);
-  border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column}
+  border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;
+  /* Alto fijo: lo decide el diseño, no la reseña mas larga. Lo que no entra
+     se corta adentro, y el pie queda siempre a la vista. */
+  height:300px;overflow:hidden}
 .muro__item--foto{border-color:var(--verde)}
 .muro__astros{color:#e0a92b;font-size:14px;letter-spacing:1px}
-.muro__titulo{font-weight:700;font-size:14.5px;margin:6px 0 4px}
+.muro__titulo{font-weight:700;font-size:14.5px;margin:6px 0 4px;flex:0 0 auto;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:1;overflow:hidden}
 .muro__texto{margin:0 0 10px;font-size:14px;line-height:1.55;color:var(--tinta-suave);
-  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:7;overflow:hidden}
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:7;overflow:hidden;
+  flex:0 1 auto;min-height:0}
 /* Con foto queda menos lugar para el texto, y la foto es la que convence. */
-.muro__item--foto .muro__texto{-webkit-line-clamp:3}
-.muro__foto{width:100%;height:172px;object-fit:cover;border-radius:10px;
-  display:block;margin-bottom:10px}
-.muro__pie{margin-top:auto;display:flex;gap:8px;align-items:center;
+.muro__item--foto .muro__texto{-webkit-line-clamp:2}
+.muro__foto{width:100%;height:100px;object-fit:cover;border-radius:10px;
+  display:block;margin-bottom:10px;flex:0 0 auto}
+.muro__pie{margin-top:auto;flex:0 0 auto;display:flex;gap:8px;align-items:center;
   border-top:1px dashed var(--borde);padding-top:9px}
 .muro__inicial{width:30px;height:30px;border-radius:50%;background:var(--verde-suave);
   color:var(--verde);display:grid;place-items:center;font-weight:700;font-size:13px;flex:0 0 auto}
@@ -2597,6 +2626,13 @@ let segPedido = null;
 
 const faltaPara = (seg, total) => Math.max(0, MINIMOS[seg] - total);
 
+/* Que lineas del carrito pasan a otro segmento: las que la lista de destino
+   publica, a su precio, y los combos, a precio de lista, porque la landing
+   los vende asi en los tres segmentos. Antes los combos no viajaban: un
+   carrito de combos de $212.640 medía $0 a precio mayorista, y el aviso pedia
+   los $100.000 enteros mientras la barra mostraba $212.640. */
+const viajaA = (p, destino) => hayEn(p, destino) || p.necs.includes('packs');
+
 function pintarAviso(o){
   $('#segAvisoTit').textContent = o.titulo;
   $('#segAvisoTxt').innerHTML = o.texto;
@@ -2626,8 +2662,8 @@ function pedirSegmento(id){
 /* Subir: se mide el carrito con los precios del destino. */
 function pedirAscenso(destino){
   const items = Object.values(carrito);
-  const viajan = items.filter(i => hayEn(i.prod, destino));
-  const quedan = items.filter(i => !hayEn(i.prod, destino));
+  const viajan = items.filter(i => viajaA(i.prod, destino));
+  const quedan = items.filter(i => !viajaA(i.prod, destino));
   const ahora = totalCarrito();
   const despues = viajan.reduce((a, i) => a + precioEn(i, destino) * i.cant, 0);
   const falta = faltaPara(destino, despues);
@@ -2639,13 +2675,25 @@ function pedirAscenso(destino){
        "tenes tanto a precio tal y tanto a precio tal otro" era exacta y no la
        leia nadie; el minimo si hace falta, porque sin el numero de referencia
        el cliente no sabe si le conviene seguir sumando. */
+    /* Si parte del carrito no cuenta, se dice cuanto suma y cuanto cuenta, y
+       que queda afuera. Sin esa linea el aviso contradecia a la barra: la
+       barra sumaba todo y el aviso solo lo que la lista de destino publica. */
+    const n = quedan.length;
     return pintarAviso({
       titulo: 'Te faltan ' + ars(falta),
       texto: 'Para comprar a precio <b>' + nombre + '</b> te faltan <b>' +
         ars(falta) + '</b>: el mínimo de activación ' + nombre + ' es <b>' +
-        ars(MINIMOS[destino]) + '</b>.<br><br>Seguí sumando y volvé a tocar ' +
+        ars(MINIMOS[destino]) + '</b>.' +
+        (n ? '<br><br>Tu carrito suma <b>' + ars(ahora) + '</b>, pero a precio ' + nombre +
+             ' cuenta <b>' + ars(despues) + '</b>: ' +
+             (n === 1 ? 'hay un producto que no tiene' : 'hay ' + n + ' productos que no tienen') +
+             ' precio ' + nombre + ' y no ' + (n === 1 ? 'suma' : 'suman') + ' para el mínimo.'
+           : '') +
+        '<br><br>Seguí sumando y volvé a tocar ' +
         SEGMENTOS[destino].label.toUpperCase() +
         ': ahí tu carrito pasa solo a los precios nuevos.',
+      listaTit: n === 1 ? 'No tiene precio ' + nombre + ':' : 'No tienen precio ' + nombre + ':',
+      lista: quedan.map(i => i.prod.n),
       no: 'Seguir comprando'
     });
   }
@@ -2657,7 +2705,9 @@ function pedirAscenso(destino){
     texto: 'Llegaste al mínimo de <b>' + ars(MINIMOS[destino]) + '</b>. ' +
       'Tus <b>' + viajan.reduce((a, i) => a + i.cant, 0) + ' producto' +
       (viajan.reduce((a, i) => a + i.cant, 0) > 1 ? 's' : '') + '</b> pasan a precio ' +
-      nombre + ': <b>' + ars(ahora) + '</b> → <b>' + ars(despues) + '</b>.',
+      nombre + ': <b>' + ars(ahora) + '</b> → <b>' + ars(despues) + '</b>.' +
+      (viajan.some(i => !hayEn(i.prod, destino))
+        ? ' Los combos siguen a precio de lista, igual que en toda la lista ' + nombre + '.' : ''),
     listaTit: quedan.length === 1
       ? 'Este producto sale del carrito, porque la lista ' + nombre + ' no lo publica:'
       : 'Estos ' + quedan.length + ' productos salen del carrito, porque la lista ' +
@@ -2712,7 +2762,7 @@ $('#modalSegmento').onclick = e => {
    dos listas en la misma compra sin que el cliente lo haya pedido. */
 function convertirCarrito(destino){
   Object.entries(carrito).forEach(([k, i]) => {
-    if (!hayEn(i.prod, destino)) delete carrito[k];
+    if (!viajaA(i.prod, destino)) delete carrito[k];
     else i.seg = destino;
   });
 }
@@ -2961,7 +3011,7 @@ function tarjeta(p, key){
     ? Math.round((1 - pr / lista) * 100) : 0;
   const sinStock = !conStock(p);
   const el = document.createElement('article');
-  el.className = 'card js-item-product';
+  el.className = 'card js-item-product' + (sinStock ? ' card--sin-stock' : '');
   // Ancla oficial de Tiendanube: es por donde las apps instaladas encuentran
   // el producto. Trusty / Opiniones Nube inyecta las estrellas aca.
   const idTienda = p.ids.minorista || p.ids.mayorista || p.ids.distribuidor;
@@ -2976,16 +3026,26 @@ function tarjeta(p, key){
       '<h3>' + p.n + '</h3>' +
       // Hueco donde la app deja las estrellas. Vacio no ocupa lugar.
       estrellasDe(p) +
-      '<p class="desc">' + resumenTarjeta(p) + '</p>' +
-      (p.vars ? '<div class="pres">' + (p.opcion || 'Variante') + '</div>' +
-        '<select class="variante-sel" data-variante>' + p.vars.map((v, i) =>
+      /* Con variantes, el desplegable va en el lugar de la descripcion: elegir
+         la variante es lo que hace falta en la tarjeta, y la descripcion
+         entera sigue en la ficha. El nombre de la opcion queda en la etiqueta
+         accesible. */
+      '<div class="card-medio">' + (p.vars
+        ? '<select class="variante-sel" data-variante aria-label="' + (p.opcion || 'Variante') +
+          '" title="' + (p.opcion || 'Variante') + '">' + p.vars.map((v, i) =>
           '<option value="' + i + '"' + (v.s ? '' : ' disabled') + '>' + v.n +
-          (v.s ? '' : ' (sin stock)') + '</option>').join('') + '</select>' : '') +
+          (v.s ? '' : ' (sin stock)') + '</option>').join('') + '</select>'
+        : '<p class="desc">' + resumenTarjeta(p) + '</p>') + '</div>' +
       '<div class="precios"><span class="precio">' + ars(pr) + '</span>' +
         (rebaja ? '<span class="precio-viejo">' + ars(lista) + '</span>' +
                   '<span class="precio-seg">-' + rebaja + '%</span>' : '') + '</div>' +
-      (function(){ const b = nubea ? nubea.badgesHtml(p, 'tarjeta') : '';
-                   return b ? '<div class="nb-badges">' + b + '</div>' : ''; })() +
+      /* La franja de badges va en todas las tarjetas apenas Nubea tenga alguno
+         para la grilla, aunque a este producto no le toque: si no, las que
+         no tienen quedarian mas bajas. */
+      (function(){
+        if (!nubea || !nubea.datos.badges.badges.some(x => x.showInGrid !== false)) return '';
+        return '<div class="nb-badges">' + nubea.badgesHtml(p, 'tarjeta') + '</div>';
+      })() +
       '<div class="acciones">' +
         '<div class="qty"><button type="button" data-d="-1">-</button>' +
         campoCantidad(1, 'Cantidad de ' + p.n) +
