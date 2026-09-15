@@ -15,6 +15,20 @@
 (function () {
   'use strict';
 
+  /* 0 · En TODAS las paginas de la tienda, sin el menu "Categorias" del
+     encabezado: lo pidio el cliente el 15/09. Es un bloque del theme aparte
+     del menu que arma el admin -- el desplegable de escritorio y la fila de
+     categorias del celular -- y se esconde con CSS en vez de borrarse, porque
+     la landing lee de ahi la lista de categorias visibles. Va antes del
+     guardia de ruta: tiene que valer tambien en las paginas sin landing. */
+  if (!document.getElementById('habitad-sin-categorias')) {
+    var sinCategorias = document.createElement('style');
+    sinCategorias.id = 'habitad-sin-categorias';
+    sinCategorias.textContent = '.js-desktop-main-categories-col,' +
+      '.js-main-categories-container{display:none !important}';
+    (document.head || document.documentElement).appendChild(sinCategorias);
+  }
+
   /* Una sola vez, y solo en la pagina que corresponde. El cargador puede
      entrar dos veces -- una recarga parcial, una etiqueta duplicada -- y la
      landing no esta hecha para convivir consigo misma. */
@@ -3597,7 +3611,7 @@ var nubea = (function () {
                   se queda sin ninguna, sale.
      Pega       : una publicacion nueva con el titulo de un producto que ya
                   existe va al segmento que le falta.
-     Da de alta : SOLO combos -- titulos con combo, pack, kit o promo --, que
+     Da de alta : SOLO combos -- titulos con combo, pack, kit o promo, o su plural --, que
                   van al carrusel. Un producto suelto nuevo necesita que alguien
                   elija en que necesidad va, y eso sigue siendo sync_landing.py.
      No toca    : la clasificacion por necesidad, las reseñas ni "vendidos".
@@ -3686,8 +3700,10 @@ var VIVO = (function () {
     return String(t || '').split('//')[0].replace(/^[ \-–—\/|]+|[ \-–—\/|]+$/g, '');
   }
 
-  // sync_landing.CATEGORIAS, la regla de "packs"
-  var PACK = /\bcombo|\bpack\b|\bkit\b|\bpromo\b/;
+  // sync_landing.CATEGORIAS, la regla de "packs". Con plural: sin la "s?",
+  // "kits de Cremas Naturales" y "kits tinturas madre" -- dos de los cuatro
+  // productos de la categoria de kits -- no llegaban al carrusel (15/09).
+  var PACK = /\bcombo|\bpacks?\b|\bkits?\b|\bpromos?\b/;
   function esCombo(titulo) {
     return PACK.test(normalizar(titulo));
   }
