@@ -4761,15 +4761,21 @@ function nombreDeMango(mango){
   return String(mango || '').replace(/-/g, ' ').replace(/\s{2,}/g, ' ').trim();
 }
 
-function buscarDesdeElAnuncio(texto){
+function buscarDesdeElAnuncio(texto, aunqueNoHaya){
   const campo = $('#buscar'), limpiar = $('#buscarLimpiar');
-  if (!campo || !texto) return;
+  if (!campo || !texto) return false;
+  /* Si la busqueda no encuentra nada, no se pone: un "Nada con «...»" como
+     primera pantalla del que viene de un anuncio es peor que el catalogo
+     entero. aunqueNoHaya es la excepcion: el producto existe pero es de otro
+     segmento, y ahi el cartel vacio explica que hay que cambiar a Minorista. */
+  if (!aunqueNoHaya && !buscarProductos(texto).length) return false;
   campo.value = texto;
   busqueda = texto;
   if (limpiar) limpiar.hidden = false;
   if (categoriasVivas) categoriasVivas.soltar();
   pintar();
   setTimeout(irAlCatalogo, 300);
+  return true;
 }
 
 /* Devuelve true cuando ya no queda nada por intentar: o se abrio la ficha, o
@@ -4791,9 +4797,10 @@ function abrirProductoDelAnuncio(ultimoIntento){
      nombre lo muestra igual, y cuando es de otro segmento la grilla ya avisa
      que existe con precio de lista. */
   anuncioResuelto = true;
-  buscarDesdeElAnuncio(p ? p.n : nombreDeMango(productoDelAnuncio));
+  const puesta = buscarDesdeElAnuncio(p ? p.n : nombreDeMango(productoDelAnuncio), !!p);
   track('producto_desde_anuncio', {item_name: p ? p.n : productoDelAnuncio,
-                                   metodo: p ? 'otro-segmento' : 'busqueda'});
+                                   metodo: p ? 'otro-segmento'
+                                            : puesta ? 'busqueda' : 'catalogo'});
   return true;
 }
 
