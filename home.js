@@ -1,5 +1,5 @@
 /* ==========================================================================
-   LANDING HABITAD — se planta en /catalogos y / desde el panel de la tienda.
+   LANDING HABITAD — se planta en /catalogos desde el panel de la tienda.
 
    Generado por tools/construir_home_tienda.py. NO se edita a mano: se edita
    prototipo/embudo.html y se vuelve a generar.
@@ -15,132 +15,22 @@
 (function () {
   'use strict';
 
-  /* 0 · En TODAS las paginas de la tienda, sin el menu "Categorias" del
-     encabezado: lo pidio el cliente el 15/09. Es un bloque del theme aparte
-     del menu que arma el admin -- el desplegable de escritorio y la fila de
-     categorias del celular -- y se esconde con CSS en vez de borrarse, porque
-     la landing lee de ahi la lista de categorias visibles. Va antes del
-     guardia de ruta: tiene que valer tambien en las paginas sin landing. */
-  if (!document.getElementById('habitad-sin-categorias')) {
-    var sinCategorias = document.createElement('style');
-    sinCategorias.id = 'habitad-sin-categorias';
-    sinCategorias.textContent = '.js-desktop-main-categories-col,' +
-      '.js-main-categories-container{display:none !important}';
-    (document.head || document.documentElement).appendChild(sinCategorias);
-  }
-
   /* Una sola vez, y solo en la pagina que corresponde. El cargador puede
      entrar dos veces -- una recarga parcial, una etiqueta duplicada -- y la
      landing no esta hecha para convivir consigo misma. */
   if (window.__landingHabitad) return;
   /* En que paginas se planta y sobre que ancla del theme. La ruta va sin la
      barra final y en minusculas: la portada es "". */
-  var DESTINOS = {"/catalogos": {"ancla": ".user-content", "esconder": "section[data-store=\"page-title\"]"}, "": {"ancla": ".js-home-sections-container", "esconder": "#homepage-reviews-container"}};
+  var DESTINOS = {"/catalogos": {"ancla": ".user-content", "esconder": "section[data-store=\"page-title\"]"}};
   var aqui = location.pathname.replace(/\/+$/, '').toLowerCase();
-  var CASA = Object.prototype.hasOwnProperty.call(DESTINOS, '') ? '/' : '/catalogos/';
 
-  /* ── El buscador del theme lleva a la landing ──
-     El buscador de Brasilia esta en el encabezado de TODAS las paginas y
-     seguia mandando a la ficha vieja. No se reemplaza: se le engancha la
-     salida. El formulario lleva al catalogo de la landing con lo buscado, y
-     cada sugerencia del desplegable abre la ficha de la landing.
-
-     Va antes del guardia de ruta, porque el encabezado esta en todas las
-     paginas, no solo donde la landing se planta. Y con captura, para llegar
-     antes que el manejador del theme.
-
-     Cuando la landing ya esta en esta pagina contesta ella, sin recargar:
-     para eso deja puestas __habitadBuscar y __habitadAbrirProducto. */
-  if (!window.__habitadBuscadorEnganchado) {
-    window.__habitadBuscadorEnganchado = true;
-
-    document.addEventListener('submit', function (ev) {
-      var form = ev.target;
-      if (!form || !form.classList ||
-          !form.classList.contains('js-search-form')) return;
-      var campo = form.querySelector('input[name="q"]');
-      var texto = campo && campo.value ? String(campo.value).trim() : '';
-      if (!texto) return;                  // vacio: que haga lo de siempre
-      ev.preventDefault();
-      if (window.__habitadBuscar && window.__habitadBuscar(texto)) {
-        if (campo.blur) campo.blur();
-        return;
-      }
-      location.href = CASA + '?q=' + encodeURIComponent(texto);
-    }, true);
-
-    document.addEventListener('click', function (ev) {
-      var t = ev.target;
-      if (!t || !t.closest) return;
-      var a = t.closest('a[href*="/productos/"]');
-      if (!a || !a.closest('.js-search-form-suggestions, .search-suggestions')) return;
-      var m = /\/productos\/([^/?#]+)/.exec(a.getAttribute('href') || '');
-      if (!m) return;
-      var mango = m[1];
-      try { mango = decodeURIComponent(mango); } catch (e) {}
-      ev.preventDefault();
-      // El desplegable queda tapando la ficha si no se lo cierra a mano.
-      var caja = document.querySelector('.js-search-form-suggestions');
-      if (caja) caja.style.display = 'none';
-      var campo = document.querySelector('.js-search-input');
-      if (campo && campo.blur) campo.blur();
-      if (window.__habitadAbrirProducto && window.__habitadAbrirProducto(mango)) return;
-      location.href = CASA + '?producto=' + encodeURIComponent(mango);
-    }, true);
-  }
-
-  /* La pagina de resultados del theme: al catalogo de la landing, con la misma
-     busqueda. Se desvia a todos y no solo al que viene de un anuncio, porque
-     /search/ esta en Disallow del robots.txt y no esta en el sitemap: no tiene
-     nada que perder. tienda=1 es la salida de emergencia que ofrece la grilla
-     vacia cuando la landing no tiene esa publicacion. */
-  if ((aqui === '/search' || aqui === '/buscar') &&
-      !/[?&]tienda=1\b/.test(location.search || '')) {
-    var q = /[?&]q=([^&]*)/.exec(location.search || '');
-    var loBuscado = '';
-    if (q) { try { loBuscado = decodeURIComponent(q[1].replace(/\+/g, ' ')); } catch (e) {} }
-    location.replace(CASA + (loBuscado ? '?q=' + encodeURIComponent(loBuscado) : ''));
-    return;
-  }
-
-  /* Los anuncios de catalogo de Meta apuntan a la ficha del producto: la
-     direccion sale del catalogo y no se puede cambiar desde el anuncio. Ahi la
-     landing no se planta, asi que el cliente que toco el anuncio ve la pagina
-     vieja. A ese, y solo a ese, se lo lleva a la landing con su producto
-     abierto. El que llega de Google, de un enlace o escribiendo la direccion
-     se queda en la ficha nativa: el SEO no se toca.
-
-     Se va con replace y no con href para que "atras" lo devuelva a Instagram y
-     no a la ficha, que lo mandaria de nuevo para aca.
-
-     El salto ocurre recien cuando corre este guion, con LS.ready, y eso juega a
-     favor: para entonces el pixel de la tienda ya mando el ViewContent con el
-     identificador del producto, que es lo que Meta necesita para atribuir la
-     venta y seguir optimizando el anuncio.
-
-     El destino sale de DESTINOS y no de una direccion fija: si alguna vez se
-     vuelve a publicar solo en /catalogos, el desvio la sigue sola. */
-  var ficha = /^\/productos\/([^/]+)\/?$/.exec(location.pathname);
-  if (ficha) {
-    var busca = location.search || '';
-    /* tienda=1 lo puso la landing al devolver a alguien cuya publicacion no
-       tiene. Sin esto, un anuncio de uno de esos productos rebotaria en
-       circulos entre la ficha y la landing. */
-    var deMeta = !/[?&]tienda=1/.test(busca) && (
-                 /[?&]fbclid=/i.test(busca) ||
-                 /[?&]utm_source=[^&]*(facebook|instagram|meta)/i.test(busca) ||
-                 /^https?:\/\/([^/]*\.)?(facebook|instagram)\.com\//i
-                   .test(document.referrer || ''));
-    if (deMeta) {
-      /* pathname ya viene codificado: sin decodificar primero, un nombre con
-         acentos o con % salia codificado dos veces y no lo encontraba nadie. */
-      var mango = ficha[1];
-      try { mango = decodeURIComponent(mango); } catch (e) {}
-      location.replace(CASA + '?producto=' + encodeURIComponent(mango) +
-                       busca.replace(/^\?/, '&'));
-    }
-    return;
-  }
+  /* Aca vivian tres cosas que tocaban paginas donde la landing NO se planta:
+     el CSS que escondia el menu "Categorias" del encabezado, el enganche del
+     buscador del theme con el desvio de /search/, y el desvio a la landing de
+     quien llegaba a una ficha desde un anuncio de Meta. El 16/09/2026 el
+     cliente pidio dejar la tienda como estaba -- habilito las 35 categorias -- y
+     se sacaron las tres. Estan en el historial: commits 56f3ae1 y 66230d2.
+     Desde entonces esto no hace absolutamente nada fuera de DESTINOS. */
   if (!Object.prototype.hasOwnProperty.call(DESTINOS, aqui)) return;
   window.__landingHabitad = true;
 
@@ -4885,16 +4775,16 @@ var categoriasVivas = (function () {
   return api;
 })();
 
-/* ══════════ EL PRODUCTO DEL ANUNCIO ══════════
-   Los anuncios de catalogo de Meta no llevan a la landing: llevan a la ficha
-   de la tienda, /productos/<nombre>/, porque la direccion sale del catalogo de
-   productos y no se puede cambiar desde el anuncio. Ahi la landing no se
-   planta, y el cliente que toco el anuncio ve la pagina vieja del theme, sin
-   nada del embudo.
+/* ══════════ LLEGAR CON UN PRODUCTO ABIERTO ══════════
+   /catalogos/?producto=<nombre> abre la ficha de esa publicacion en cuanto
+   carga, donde <nombre> es el de la direccion de la tienda,
+   /productos/<nombre>/. Sirve para mandar a alguien directo a un producto
+   dentro del embudo, desde un anuncio, un mensaje o un enlace suelto.
 
-   El guardia de home.js reconoce a ese visitante -- Meta le agrega fbclid -- y
-   lo manda aca con ?producto=<nombre>. Lo que sigue busca esa publicacion y le
-   abre la ficha, para que llegue mirando justo lo que toco.
+   Lo estrenó el desvio de los anuncios de catalogo de Meta, que reconocia al
+   visitante por el fbclid y lo traia para aca. Ese desvio se saco el
+   16/09/2026, cuando el cliente pidio dejar la tienda como estaba (esta en el
+   historial, commit 56f3ae1); el enlace con ?producto= sigue andando solo.
 
    La direccion de cada producto la trae el catalogo vivo en p.urls, asi que
    puede no estar en el primer pintado: se prueba con lo guardado y se
@@ -4906,8 +4796,8 @@ const productoDelAnuncio = (function (){
   return v ? String(v).replace(/^\/+|\/+$/g, '').toLowerCase() : '';
 })();
 let anuncioResuelto = false;
-/* Lo prende el desvio de los anuncios antes de abrir la ficha: ese ViewContent
-   ya salio en la ficha de la tienda. */
+/* Se prende antes de abrir sola la ficha de ?producto=: si el visitante vino de
+   una ficha de la tienda, ese ViewContent ya salio alla. */
 let viewContentYaContado = false;
 
 // El nombre que Tiendanube pone en la direccion: /productos/<esto>/
