@@ -730,12 +730,34 @@ const EVENTOS = {
   share:                {ga4: 'share'}
 };
 
-/* Arma el items[] que espera GA4 a partir de una lista de {prod, cant}. */
+/* El identificador que espera el catalogo de Meta en content_ids es el de la
+   VARIANTE, no el de la publicacion: el theme arma variantMetaContentIds con
+   el de variante, y son distintos aun con una sola variante. Lo trae el
+   catalogo vivo en p.vids.
+
+   Si no lo sabemos -- catalogo todavia sin leer, o una publicacion sin
+   variantes conocidas -- se devuelve null y el evento sale sin content_ids,
+   como salia antes: un id inventado seria peor, porque Meta lo cuenta y no lo
+   puede atribuir a nada. */
+function idParaMeta(p, seg, vi){
+  const donde = seg || segmento;
+  if (p.vars){
+    const v = p.vars[vi ?? varElegida.get(p.n) ?? 0];
+    if (v && v.id) return String(v.id);
+  }
+  const vid = p.vids && (p.vids[donde] ?? p.vids.minorista);
+  return vid ? String(vid) : null;
+}
+
+/* Arma el items[] que espera GA4 a partir de una lista de {prod, cant}.
+   meta_id viaja de prestado para que track() arme content_ids; se lo saca
+   antes de mandarlo a GA4. */
 const itemsGA = lista => (lista || []).map(i => {
   const seg = i.seg || segmento;
   return {
     item_name: i.prod.n,
     item_id: String((i.prod.ids || {})[seg] || (i.prod.ids || {}).minorista || ''),
+    meta_id: idParaMeta(i.prod, seg, i.vi),
     item_category: (NECESIDADES.find(n => i.prod.necs.includes(n.id)) || {}).label || '',
     item_variant: SEGMENTOS[seg].label,
     price: precioEn(i, seg),
@@ -761,15 +783,34 @@ const track = (event, data) => {
     ? Object.assign({currency: MEDICION.moneda}, d) : d;
 
   if (typeof gtag === 'function' && mapa.ga4){
-    gtag('event', mapa.ga4, Object.assign({evento_landing: event}, conPlata));
+    // meta_id y sinMeta son de la casa: GA4 no los espera.
+    const paraGA4 = Object.assign({evento_landing: event}, conPlata);
+    delete paraGA4.sinMeta;
+    if (paraGA4.items){
+      paraGA4.items = paraGA4.items.map(i => {
+        const limpio = Object.assign({}, i); delete limpio.meta_id; return limpio;
+      });
+    }
+    gtag('event', mapa.ga4, paraGA4);
   }
-  if (typeof fbq === 'function' && mapa.meta){
-    fbq('track', mapa.meta, {
+  if (typeof fbq === 'function' && mapa.meta && !d.sinMeta){
+    const paraMeta = {
       content_name: d.item_name || d.need_name || d.query || event,
       content_type: 'product',
       value: d.value || 0,
       currency: MEDICION.moneda
-    });
+    };
+    /* Sin content_ids, Meta recibe el evento y no lo puede atribuir a ninguna
+       publicacion del catalogo: no sirve para los anuncios de catalogo ni para
+       armar publicos. Con ellos, cada ViewContent y cada AddToCart quedan
+       pegados al producto que el cliente miro. */
+    const conId = (d.items || []).filter(i => i.meta_id);
+    if (conId.length){
+      paraMeta.content_ids = conId.map(i => i.meta_id);
+      paraMeta.contents = conId.map(i => ({id: i.meta_id, quantity: i.quantity,
+                                           item_price: i.price}));
+    }
+    fbq('track', mapa.meta, paraMeta);
   }
   if (MEDICION.debug){
     console.log('[medicion]', event, '->',
@@ -2327,7 +2368,6 @@ function agregar(p, key, cant, boton, seg){
                   seg: donde, vi: varElegida.get(p.n) ?? 0};
   track('add_to_cart', {item_name:p.n, value:precioEn(carrito[key], donde)*cant,
                         segment:donde, items: itemsGA([carrito[key]])});
-  metaAddToCart(p, donde, carrito[key].vi, cant, precioEn(carrito[key], donde));
   if (boton){
     const t = boton.textContent;
     boton.textContent = '✓ Agregado'; boton.classList.add('ok');
@@ -2409,9 +2449,13 @@ function abrirVista(p, key){
   pintarResenas(p);
   pintarCombos(p);
   abrirModal('modal');
+  /* Al que llega de un anuncio, la ficha de la tienda ya le mando el
+     ViewContent de este mismo producto antes del salto -- por eso el salto
+     espera. Mandar otro contaria dos veces la misma visita. */
   track('view_item', {item_name:p.n, value:precioDe(p),
-                      items: itemsGA([{prod:p, cant:1}])});
-  metaViewContent(p);
+                      items: itemsGA([{prod:p, cant:1}]),
+                      sinMeta: viewContentYaContado});
+  viewContentYaContado = false;
   /* Con la ficha ya a la vista se pide la de la tienda: si el administrador
      cambio la descripcion, las fotos o el precio, se rellena en el lugar. */
   if (catalogoVivo) catalogoVivo.refrescarFicha(p);
@@ -2981,93 +3025,24 @@ function buscarProductos(texto){
   }
 })();
 
-/* ══════════ LO QUE SE LE CUENTA A META ══════════
-   El pixel de la tienda (1757642231387805) corre en todas las paginas, asi que
-   no hay nada que instalar: alcanza con hablarle.
-
-   Por que hace falta. La ficha de la landing es una ventana, no una pagina, y
-   el carrito es propio hasta "Finalizar compra". Entre que el cliente llega y
-   que paga, Meta no veia nada: ni que miro un producto ni que lo agrego. Los
-   carritos abandonados le resultaban invisibles, que es justo la senal que mas
-   le sirve para encontrar compradores parecidos.
-
-   Lo delicado es el identificador. El catalogo de Meta de esta tienda usa el id
-   de la VARIANTE, no el de la publicacion: el theme arma variantMetaContentIds
-   con el de variante, y son distintos incluso cuando hay una sola (el unguento
-   es la variante 1011235811 y el producto 229337688). Si no lo sabemos, no se
-   manda el evento: un id que no esta en el catalogo es peor que ningun evento,
-   porque Meta lo cuenta y no lo puede atribuir a nada. */
-
-const monedaDeLaTienda = () =>
-  (typeof LS !== 'undefined' && LS.currency && LS.currency.code) || 'ARS';
-
-function idParaMeta(p, seg, vi){
-  const donde = seg || segmento;
-  if (p.vars){
-    const v = p.vars[vi ?? varElegida.get(p.n) ?? 0];
-    if (v && v.id) return String(v.id);
-  }
-  const vid = p.vids && (p.vids[donde] ?? p.vids.minorista);
-  return vid ? String(vid) : null;
-}
-
-/* Un solo lugar para hablarle al pixel. Si un bloqueador lo tapo, fbq no existe
-   y no pasa nada: el resto de la landing no se entera. */
-let fbqReal = null;
-
-function meta(evento, datos){
-  try {
-    /* Se le habla al fbq de verdad y no al filtro: si no, el filtro del pase a
-       la tienda se tragaria tambien nuestros propios AddToCart. */
-    const f = fbqReal || window.fbq;
-    if (typeof f !== 'function') return false;
-    f('track', evento, datos);
-    return true;
-  } catch (err){
-    if (window.console) console.warn('[meta] no se pudo mandar ' + evento + ':', err);
-    return false;
-  }
-}
-
-/* El que llega de un anuncio ya trae un ViewContent de este mismo producto: lo
-   mando la ficha de la tienda antes del salto, y por eso el salto espera. Aca
-   se saltea el primero para no contar dos veces la misma visita. */
-let viewContentYaContado = false;
-
-function metaViewContent(p, vi){
-  if (viewContentYaContado){ viewContentYaContado = false; return; }
-  const id = idParaMeta(p, segmento, vi);
-  if (!id) return;
-  meta('ViewContent', {content_ids: [id], content_type: 'product',
-                       content_name: p.n, value: precioDe(p),
-                       currency: monedaDeLaTienda()});
-}
-
-function metaAddToCart(p, donde, vi, cant, unitario){
-  const id = idParaMeta(p, donde, vi);
-  if (!id || !(cant > 0) || !(unitario > 0)) return;
-  meta('AddToCart', {
-    content_ids: [id], content_type: 'product',
-    contents: [{id: id, quantity: cant, item_price: unitario}],
-    currency: monedaDeLaTienda(), value: unitario * cant
-  });
-}
-
-/* ── Que el pase a la tienda no lo cuente dos veces ──
+/* ══════════ QUE EL PASE A LA TIENDA NO CUENTE DOS VECES ══════════
    Al pasar el carrito, el theme dispara su propio AddToCart por cada linea
-   (LS.events.productAddedToCart). Esos productos ya se le contaron a Meta
-   cuando el cliente los agrego aca, asi que se descartan: si no, cada compra
-   saldria con el doble de AddToCart y el embudo de Meta quedaria deformado.
+   (LS.events.productAddedToCart, con el content_id correcto). Esos productos ya
+   se le contaron a Meta cuando el cliente los agrego aca, asi que se descartan:
+   si no, cada compra saldria con el doble de AddToCart y el embudo de Meta
+   quedaria deformado.
 
-   El pixel de esta tienda no manda copia por servidor (canSendPreFbq es false),
-   asi que filtrar fbq alcanza. El Purchase no corre riesgo: sale en /comprar/,
-   que es otra carga de pagina donde este filtro ya no existe. */
+   El pixel de esta tienda no manda copia por servidor -- canSendPreFbq es
+   false --, asi que filtrar fbq alcanza. El filtro se pone recien al empezar el
+   pase, no antes: mientras el cliente navega no se toca nada de la tienda. Y el
+   Purchase no corre ningun riesgo, porque sale en /comprar/, que es otra carga
+   de pagina donde este filtro ya no existe. */
 let pasandoALaTienda = false;
 let relojDelPase = 0;
 
 function filtrarAddToCartDelTheme(){
   if (typeof window.fbq !== 'function' || window.fbq.__habitad) return;
-  const real = fbqReal = window.fbq;
+  const real = window.fbq;
   const filtro = function (accion, evento){
     if (pasandoALaTienda && accion === 'track' && evento === 'AddToCart') return;
     return real.apply(this, arguments);
@@ -3083,13 +3058,9 @@ function abrirElPase(){
   filtrarAddToCartDelTheme();
   pasandoALaTienda = true;
   clearTimeout(relojDelPase);
-  // Red de seguridad: si algo se cuelga, el filtro no se queda puesto.
-  relojDelPase = setTimeout(cerrarElPase, 30000);
-}
-
-function cerrarElPase(){
-  clearTimeout(relojDelPase);
-  pasandoALaTienda = false;
+  /* Red de seguridad: si el pase se cuelga y el cliente se queda aca, el filtro
+     no puede quedarse puesto para siempre. */
+  relojDelPase = setTimeout(() => { pasandoALaTienda = false; }, 30000);
 }
 
 /* ══════════ PASO A LA TIENDA ══════════
@@ -3203,7 +3174,7 @@ async function mandarALaTienda(items, boton, textoOriginal){
   }
 
   let fallaron = 0;
-  // Lo que entra ahora ya se le conto a Meta al agregarlo aca.
+  // Lo que entra ahora ya se le conto a Meta cuando el cliente lo agrego aca.
   abrirElPase();
   // De a uno: el primero crea el carrito de la tienda y los demas se suman.
   for (const it of items){
@@ -4096,9 +4067,10 @@ var VIVO = (function () {
       id: id,
       n: nombre,
       url: url,
-      /* El id de la variante elegida. Es el que espera el catalogo de Meta en
-         content_ids -- el theme arma variantMetaContentIds con este, no con el
-         de la publicacion --, y hasta con una sola variante son distintos. */
+      /* El id de la variante mas barata disponible. Es el que espera el
+         catalogo de Meta en content_ids: el theme arma variantMetaContentIds
+         con el de variante, y es distinto del de la publicacion incluso cuando
+         hay una sola variante. */
       variante: parseInt(elegida.id || 0, 10) || null,
       img: img || imagen640(elegida.image_url),
       precio: elegida.promotional_price_number || elegida.price_number || null,
@@ -4934,6 +4906,9 @@ const productoDelAnuncio = (function (){
   return v ? String(v).replace(/^\/+|\/+$/g, '').toLowerCase() : '';
 })();
 let anuncioResuelto = false;
+/* Lo prende el desvio de los anuncios antes de abrir la ficha: ese ViewContent
+   ya salio en la ficha de la tienda. */
+let viewContentYaContado = false;
 
 // El nombre que Tiendanube pone en la direccion: /productos/<esto>/
 function mangoDeUrl(url){
