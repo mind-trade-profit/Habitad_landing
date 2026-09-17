@@ -6472,7 +6472,11 @@ addEventListener('popstate', ev => {
     if (!mango){
       if (fichaAbierta()) cerrarModal('modal');
       document.title = tituloDelSitio;
-    } else if (!vista || mangoDeProducto(vista.p) !== mango){
+    } else if (!fichaAbierta() || !vista || mangoDeProducto(vista.p) !== mango){
+      /* Se mira si la ficha esta ABIERTA, no que producto tiene cargado: vista
+         guarda el ultimo que se vio y no se limpia al cerrar, asi que volver
+         "adelante" al mismo producto dejaba la direccion puesta y la ficha
+         cerrada. */
       abrirFichaDeMango(mango, false);
     }
   } finally {
