@@ -6568,6 +6568,10 @@ function abrirFichaDeMango(mango, conRespaldo){
      de que toco UN producto es dejarlo sin explicacion. El tienda=1 corta
      cualquier ida y vuelta con el guardia. */
   if (ponerBusqueda(nombreDeMango(mango), false)) return {p: null, como: 'busqueda'};
+  /* Fuera de la tienda no hay ninguna ficha a la que devolverlo: en la vista
+     previa de GitHub Pages esa direccion es un 404 del propio GitHub. Ahi se
+     queda con el catalogo entero, que es lo mejor que hay. */
+  if (!catalogoVivo.enTienda) return {p: null, como: 'catalogo'};
   location.replace('/productos/' + encodeURIComponent(mango) + '/?tienda=1');
   return {p: null, como: 'ficha-de-la-tienda'};
 }
