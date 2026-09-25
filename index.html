@@ -546,7 +546,7 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   font-size:14px;color:var(--tinta);outline:none}
 /* El alto lo fija el panel, no el contenido: con 3 categorias o con 40, ocupa
    lo mismo y se desplaza adentro. Eso es lo que lo hace igual en toda pantalla. */
-.cat-panel__lista{max-height:min(46vh,340px);overflow-y:auto;overscroll-behavior:contain;
+.cat-panel__lista{max-height:clamp(220px,46vh,340px);overflow-y:auto;overscroll-behavior:contain;
   padding:12px;margin:0;gap:8px;justify-content:flex-start}
 .cat-panel__vacio{margin:0;padding:0 14px 14px;font-size:13.5px;color:var(--tinta-suave)}
 
@@ -555,7 +555,7 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   .chips-barra{padding-top:6px}
   .chips-barra.pegada .buscador{margin-bottom:2px}
   .cat-abrir{font-size:14px;padding:10px 15px}
-  .cat-panel__lista{max-height:min(52vh,330px);padding:10px;gap:7px}
+  .cat-panel__lista{max-height:clamp(200px,52vh,330px);padding:10px;gap:7px}
   .chip{padding:8px 13px;font-size:12.5px;min-height:36px;border-width:1px}
   .chip .n{margin-left:4px;font-size:11px}
 }
