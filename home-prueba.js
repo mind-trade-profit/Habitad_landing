@@ -41,25 +41,50 @@
       !Object.prototype.hasOwnProperty.call(DESTINOS, aqui)) alasOpiniones();
 
   function alasOpiniones() {
-    var CAJAS = '[id*="nubea"],[class*="nubea"],[data-nubea],#reviewsapp,' +
-                '[data-store="product-reviews"]';
     var desde = Date.now();
     var reloj = setInterval(function () {
       despertar();
-      var caja = null, todas = document.querySelectorAll(CAJAS), i;
-      /* Con altura de verdad: la app deja anclas vacias de un pixel dando
-         vueltas, y saltar a una de esas es peor que no saltar. */
-      for (i = 0; i < todas.length; i++) {
-        if (todas[i].offsetHeight > 120) { caja = todas[i]; break; }
-      }
+      var caja = cajaDeOpiniones();
       if (caja) {
         clearInterval(reloj);
-        try { caja.scrollIntoView({behavior: 'smooth', block: 'start'}); }
-        catch (e) { caja.scrollIntoView(); }
+        bajarHasta(caja);
         return;
       }
       if (Date.now() - desde > 12000) clearInterval(reloj);
     }, 300);
+  }
+
+  /* El widget de resenas, y NO cualquier cosa de la app. Nubea usa el prefijo
+     "nubea-" tambien para los bloques de descripcion, asi que buscarlo por ahi
+     deja al cliente a mitad de la ficha. Estos ids son los que pone hoy. */
+  function cajaDeOpiniones() {
+    var i, propios = document.querySelectorAll(
+      '#product-reviews-widget,#product-reviews-container,#reviewsapp');
+    for (i = 0; i < propios.length; i++) {
+      if (propios[i].offsetHeight > 200) return propios[i];
+    }
+    /* Respaldo por si le cambian el id: el bloque que diga lo que dice el
+       formulario. Se mira solo en los candidatos grandes, no en toda la pagina. */
+    var otros = document.querySelectorAll('[id*="nubea"],[class*="nubea"],[data-nubea],' +
+                                          '[id*="review"],[class*="review"]');
+    for (i = 0; i < otros.length; i++) {
+      if (otros[i].offsetHeight > 200 &&
+          /Dej[a\u00e1] tu opini[o\u00f3]n|Opiniones de clientes/i.test(otros[i].innerText || '')) {
+        return otros[i];
+      }
+    }
+    return null;
+  }
+
+  /* Con aire arriba: el encabezado de la tienda es fijo y block:'start' pega
+     el titulo de las resenas justo debajo, medio tapado. */
+  function bajarHasta(caja) {
+    try {
+      var y = caja.getBoundingClientRect().top + (window.pageYOffset || 0) - 70;
+      window.scrollTo({top: y < 0 ? 0 : y, behavior: 'smooth'});
+    } catch (e) {
+      caja.scrollIntoView();
+    }
   }
 
   /* Los eventos con los que la tienda decide que hubo "primera interaccion".
