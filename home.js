@@ -248,6 +248,22 @@ const NECESIDADES = [
    5% en el checkout es la unica que rompe la compra en el ultimo paso. */
 const TRANSFERENCIA = 5;
 
+/* ── La app de reseñas ──
+   Escribir una reseña lo maneja Avalie, la app de la tienda: el boton abre su
+   pagina en una ventana. El 25/09/2026 esa pagina abre EN BLANCO, porque la app
+   contesta «Necessário pagar o plano para ter acesso» para todos los productos
+   de esta tienda. No es de la landing: el mismo bloque `#reviewsapp` tampoco se
+   dibuja en las fichas propias de Tiendanube.
+
+   Mientras el plan siga sin pagar no se muestra el boton: mandar al cliente a
+   una ventana vacia es peor que no ofrecerle nada. Las estrellas se siguen
+   viendo, porque salen del catalogo de la landing y no de la app.
+
+   **No se puede detectar solo**: la app no permite CORS, asi que la landing no
+   le puede preguntar si esta disponible. Cuando el cliente reactive el plan,
+   se pone en true y se vuelve a publicar. */
+const RESENAS_APP = false;
+
 /* CATALOGO REAL - 145 productos de habitadnatural.com.
    Cada uno con los precios de las publicaciones que la tienda tiene para
    cada segmento: pr.minorista / pr.mayorista / pr.distribuidor. Un producto
@@ -2483,17 +2499,25 @@ function pintarResenas(p){
       '<div class="resena__astros">' + astros(r.r) + '</div>' +
       (r.t ? '<p class="resena__titulo">' + r.t + '</p>' : '') +
       '<p class="resena__texto">' + r.x + '</p></article>').join('');
-  } else if (p.rat){
-    html += '<p class="resenas-vacio">Tiene ' + p.rat.n + ' calificaci' + (p.rat.n > 1 ? 'ones' : 'ón') + ' con estrellas, pero todavía nadie dejó su ' +
-      'comentario. Si lo compraste, contá cómo te fue.</p>';
   } else {
-    html += '<p class="resenas-vacio">Todavía no tiene reseñas. Si lo compraste, ' +
-      'sé el primero en opinar.</p>';
+    /* La invitacion a opinar solo si se puede opinar. Con la app caida, pedirle
+       algo al cliente que despues no va a poder hacer es peor que callarse. */
+    const invita = RESENAS_APP;
+    if (p.rat){
+      html += '<p class="resenas-vacio">Tiene ' + p.rat.n + ' calificaci' +
+        (p.rat.n > 1 ? 'ones' : 'ón') + ' con estrellas, pero todavía nadie dejó su comentario.' +
+        (invita ? ' Si lo compraste, contá cómo te fue.' : '') + '</p>';
+    } else {
+      html += '<p class="resenas-vacio">Todavía no tiene reseñas.' +
+        (invita ? ' Si lo compraste, sé el primero en opinar.' : '') + '</p>';
+    }
   }
   caja.innerHTML = html;
 
   const id = p.ids.minorista || p.ids.mayorista || p.ids.distribuidor;
-  $('#mvEscribir').onclick = () => {
+  const escribir = $('#mvEscribir');
+  escribir.hidden = !RESENAS_APP;
+  escribir.onclick = () => {
     window.open('https://avalie.meuarquivodigital.com/reviews/4937911/' + id + '/nuvemshop',
                 '_blank', 'noopener,width=760,height=720');
     track('review_start', {product_id:id});
