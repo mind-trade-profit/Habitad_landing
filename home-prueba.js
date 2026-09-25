@@ -4977,10 +4977,21 @@ var categoriasVivas = (function () {
 
       const nodos = aplanar(menu);
       const leidas = new Map();
+      let ultimoPintado = 0;
       for (let i = 0; i < nodos.length; i += DE_A){
         const tanda = nodos.slice(i, i + DE_A);
         const res = await Promise.all(tanda.map(c => leerCategoria(c.ruta).catch(() => undefined)));
         tanda.forEach((c, j) => leidas.set(c.ruta, res[j]));
+        /* Con el panel abierto hay alguien esperando: las que ya contestaron
+           se muestran en cuanto llegan. Las ocultas devuelven null y nunca
+           entran en ids, asi que no llegan a asomarse y despues irse. Un
+           repintado por segundo como mucho; son trece tandas. */
+        if (panelAbierto() && Date.now() - ultimoPintado > 1000){
+          tanda.forEach((c, j) => { if (res[j]) ids.set(c.ruta, res[j]); });
+          indexarNombres();
+          repintarCatalogo();
+          ultimoPintado = Date.now();
+        }
       }
 
       /* null: oculta o borrada, sale. undefined: no respondio, se queda con
