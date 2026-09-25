@@ -50,7 +50,7 @@
         bajarHasta(caja);
         return;
       }
-      if (Date.now() - desde > 12000) clearInterval(reloj);
+      if (Date.now() - desde > 20000) clearInterval(reloj);
     }, 300);
   }
 
@@ -76,14 +76,27 @@
     return null;
   }
 
-  /* Con aire arriba: el encabezado de la tienda es fijo y block:'start' pega
-     el titulo de las resenas justo debajo, medio tapado. */
+  /* De golpe y no con scroll suave: el formulario esta a unos 3.700px del
+     tope, y animar eso son varios segundos de pantalla borrosa para alguien
+     que ya dijo a donde queria ir. Con 70px de aire arriba, porque el
+     encabezado de la tienda es fijo y si no tapa el titulo. */
   function bajarHasta(caja) {
+    var puesto = saltar(caja);
+    /* El widget sigue creciendo mientras carga estrellas y fotos, asi que se
+       reacomoda una vez. Si el cliente ya se movio solo, se lo deja en paz. */
+    setTimeout(function () {
+      if (puesto >= 0 && Math.abs((window.pageYOffset || 0) - puesto) < 4) saltar(caja);
+    }, 900);
+  }
+
+  function saltar(caja) {
     try {
       var y = caja.getBoundingClientRect().top + (window.pageYOffset || 0) - 70;
-      window.scrollTo({top: y < 0 ? 0 : y, behavior: 'smooth'});
+      window.scrollTo(0, y < 0 ? 0 : y);
+      return Math.round(window.pageYOffset || 0);
     } catch (e) {
       caja.scrollIntoView();
+      return -1;
     }
   }
 
