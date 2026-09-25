@@ -248,21 +248,22 @@ const NECESIDADES = [
    5% en el checkout es la unica que rompe la compra en el ultimo paso. */
 const TRANSFERENCIA = 5;
 
-/* ── La app de reseñas ──
-   Escribir una reseña lo maneja Avalie, la app de la tienda: el boton abre su
-   pagina en una ventana. El 25/09/2026 esa pagina abre EN BLANCO, porque la app
-   contesta «Necessário pagar o plano para ter acesso» para todos los productos
-   de esta tienda. No es de la landing: el mismo bloque `#reviewsapp` tampoco se
-   dibuja en las fichas propias de Tiendanube.
+/* ── Las reseñas las maneja Nubea ──
+   La tienda tiene DOS apps de reseñas instaladas y solo una funciona:
 
-   Mientras el plan siga sin pagar no se muestra el boton: mandar al cliente a
-   una ventana vacia es peor que no ofrecerle nada. Las estrellas se siguen
-   viendo, porque salen del catalogo de la landing y no de la app.
+     · **Avalie** (`avalie.meuarquivodigital.com`) esta con el plan sin pagar.
+       Contesta «Necessário pagar o plano para ter acesso» para todos los
+       productos, asi que su pagina abre en blanco y su bloque `#reviewsapp`
+       queda vacio hasta en las fichas propias de Tiendanube. **No se usa.**
+     · **Nubea** es la que anda: es la misma app que ya nos da los badges y los
+       bloques de ficha. Su widget de reseñas se carga en el inicio de la tienda
+       con `onfirstinteraction` y es el que el cliente ve funcionando.
 
-   **No se puede detectar solo**: la app no permite CORS, asi que la landing no
-   le puede preguntar si esta disponible. Cuando el cliente reactive el plan,
-   se pone en true y se vuelve a publicar. */
-const RESENAS_APP = false;
+   De aca salen las reseñas que muestra la ficha. Escribir una se hace en la
+   ficha de la tienda, porque el widget de Nubea necesita `LS.product` o el
+   formulario de producto del theme, y en /catalogos no existe ninguno de los
+   dos. */
+const RESENAS_API = 'https://api.nubea.com.ar/product-reviews/public';
 
 /* CATALOGO REAL - 145 productos de habitadnatural.com.
    Cada uno con los precios de las publicaciones que la tienda tiene para
@@ -2482,46 +2483,133 @@ function astros(n){
   return '★'.repeat(ll) + '☆'.repeat(Math.max(0, 5 - ll));
 }
 
+/* ══════════ LAS RESEÑAS, EN VIVO ══════════
+   Las reseñas horneadas en RESENAS son la base -- salen a la primera pintada,
+   sin esperar nada --, pero son una foto del dia que se sincronizo. Estas son
+   las de verdad, las mismas que el cliente ve en la ficha de la tienda.
+
+   La API de Nubea es publica y con CORS abierto, asi que anda tambien fuera de
+   la tienda. Devuelve `{reviews, total, hasMore, rating:{average, count}}`.
+
+   Se pide una vez por publicacion y queda en memoria: abrir y cerrar la misma
+   ficha no vuelve a pedir nada. */
+var resenasVivas = (function (){
+  const cache = new Map();          // id de publicacion -> {resenas, nota} | null
+  const pidiendo = new Map();
+  const CUANTAS = 8;
+
+  // Lo que devuelve Nubea, con los nombres que usa la ficha.
+  function traducir(r){
+    return {
+      a: r.customerName || 'Cliente',
+      f: String(r.createdAt || '').slice(0, 10),
+      r: Number(r.rating) || 0,
+      t: r.title || '',
+      x: r.body || '',
+      img: (Array.isArray(r.images) && r.images.length) ? r.images[0] : null,
+      verificada: r.isVerifiedPurchase === true
+    };
+  }
+
+  function leer(id){ return id ? (cache.get(String(id)) || null) : null; }
+
+  function pedir(id){
+    if (!id) return Promise.resolve(null);
+    const k = String(id);
+    if (cache.has(k)) return Promise.resolve(cache.get(k));
+    if (pidiendo.has(k)) return pidiendo.get(k);
+    const p = fetch(RESENAS_API + '/' + TIENDA_ID + '/' + k +
+                    '?page=1&limit=' + CUANTAS + '&sort=newest')
+      .then(r => { if (!r.ok) throw new Error('reseñas: ' + r.status); return r.json(); })
+      .then(d => {
+        const lista = Array.isArray(d.reviews) ? d.reviews : [];
+        /* Solo las aprobadas y con texto o titulo: una calificacion sin
+           comentario ya esta contada en el promedio. */
+        const resenas = lista
+          .filter(r => !r.status || r.status === 'approved')
+          .map(traducir)
+          .filter(r => r.t || r.x);
+        const nota = d.rating && d.rating.count
+          ? {avg: Number(d.rating.average) || 0, n: Number(d.rating.count) || 0}
+          : null;
+        const dato = {resenas, nota, total: Number(d.total) || resenas.length};
+        cache.set(k, dato);
+        return dato;
+      })
+      .catch(err => {
+        if (window.console) console.warn('[reseñas] no se pudieron leer:', err);
+        cache.set(k, null);           // no se reintenta en esta visita
+        return null;
+      })
+      .then(d => { pidiendo.delete(k); return d; });
+    pidiendo.set(k, p);
+    return p;
+  }
+
+  return {leer, pedir};
+})();
+
 function pintarResenas(p){
   const caja = $('#mvResenas');
+  const idPub = p.ids.minorista || p.ids.mayorista || p.ids.distribuidor;
+  const vivo = resenasVivas.leer(idPub);
+
+  /* Lo que escriben los clientes va escapado siempre. Con las reseñas
+     horneadas daba igual -- las escribimos nosotros --, pero estas vienen de
+     afuera y entran por innerHTML. */
+  const nota = (vivo && vivo.nota) || p.rat || null;
+  const lista = (vivo && vivo.resenas && vivo.resenas.length) ? vivo.resenas
+              : (p.revs && p.revs.length ? p.revs : []);
+
   let html = '';
-  if (p.rat){
+  if (nota){
     html += '<div class="resumen-resenas"><div><div class="nota-grande">' +
-      p.rat.avg.toFixed(1) + '</div><span class="astros">' + astros(p.rat.avg) +
-      '</span></div><small>Basado en ' + p.rat.n + ' calificaci' + (p.rat.n > 1 ? 'ones' : 'ón') + '</small></div>';
+      nota.avg.toFixed(1) + '</div><span class="astros">' + astros(nota.avg) +
+      '</span></div><small>Basado en ' + nota.n + ' calificaci' + (nota.n > 1 ? 'ones' : 'ón') + '</small></div>';
   }
-  if (p.revs && p.revs.length){
-    html += p.revs.map(r =>
+  if (lista.length){
+    html += lista.map(r =>
       '<article class="resena"><div class="resena__cab">' +
-        '<span class="resena__autor">' + r.a + '</span>' +
-        '<span class="resena__fecha">' + r.f + '</span>' +
-        '<span class="resena__verificada">Compra verificada</span></div>' +
+        '<span class="resena__autor">' + escCombo(r.a) + '</span>' +
+        '<span class="resena__fecha">' + escCombo(r.f) + '</span>' +
+        (r.verificada === false ? '' :
+          '<span class="resena__verificada">Compra verificada</span>') + '</div>' +
       '<div class="resena__astros">' + astros(r.r) + '</div>' +
-      (r.t ? '<p class="resena__titulo">' + r.t + '</p>' : '') +
-      '<p class="resena__texto">' + r.x + '</p></article>').join('');
+      (r.t ? '<p class="resena__titulo">' + escCombo(r.t) + '</p>' : '') +
+      '<p class="resena__texto">' + escCombo(r.x) + '</p></article>').join('');
+  } else if (nota){
+    html += '<p class="resenas-vacio">Tiene ' + nota.n + ' calificaci' +
+      (nota.n > 1 ? 'ones' : 'ón') + ' con estrellas, pero todavía nadie dejó su ' +
+      'comentario. Si lo compraste, contá cómo te fue.</p>';
   } else {
-    /* La invitacion a opinar solo si se puede opinar. Con la app caida, pedirle
-       algo al cliente que despues no va a poder hacer es peor que callarse. */
-    const invita = RESENAS_APP;
-    if (p.rat){
-      html += '<p class="resenas-vacio">Tiene ' + p.rat.n + ' calificaci' +
-        (p.rat.n > 1 ? 'ones' : 'ón') + ' con estrellas, pero todavía nadie dejó su comentario.' +
-        (invita ? ' Si lo compraste, contá cómo te fue.' : '') + '</p>';
-    } else {
-      html += '<p class="resenas-vacio">Todavía no tiene reseñas.' +
-        (invita ? ' Si lo compraste, sé el primero en opinar.' : '') + '</p>';
-    }
+    html += '<p class="resenas-vacio">Todavía no tiene reseñas. Si lo compraste, ' +
+      'sé el primero en opinar.</p>';
   }
   caja.innerHTML = html;
 
-  const id = p.ids.minorista || p.ids.mayorista || p.ids.distribuidor;
+  /* Escribir una reseña se hace en la ficha de la tienda: ahi corre el widget
+     de Nubea, que necesita LS.product o el formulario de producto del theme, y
+     en /catalogos no existe ninguno de los dos. Sin la direccion de la ficha no
+     hay a donde mandarlo, asi que no se muestra el boton. */
   const escribir = $('#mvEscribir');
-  escribir.hidden = !RESENAS_APP;
+  const mango = mangoDeProducto(p);
+  escribir.hidden = !mango;
   escribir.onclick = () => {
-    window.open('https://avalie.meuarquivodigital.com/reviews/4937911/' + id + '/nuvemshop',
-                '_blank', 'noopener,width=760,height=720');
-    track('review_start', {product_id:id});
+    /* Sin ancla: el widget de Nubea se monta recien con la primera
+       interaccion del visitante, asi que al cargar no existe ningun elemento
+       al que saltar. */
+    window.open('/productos/' + encodeURIComponent(mango) + '/', '_blank', 'noopener');
+    track('review_start', {product_id: idPub});
   };
+
+  /* Y si todavia no llegaron las de verdad, se piden y se repinta una sola vez.
+     Solo si la ficha sigue abierta en este producto: el cliente pudo haberla
+     cerrado o cambiado mientras tanto. */
+  if (!vivo){
+    resenasVivas.pedir(idPub).then(d => {
+      if (d && vista && vista.p === p) pintarResenas(p);
+    });
+  }
 }
 
 /* Las preguntas de la ficha son las mismas del inicio y no cambian con el
