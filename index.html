@@ -512,27 +512,52 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
    al catalogo. */
 .chips-barra{position:sticky;top:0;z-index:40;background:var(--crema);
   padding-top:8px;box-shadow:0 6px 14px -12px rgba(63,61,56,.5)}
-.chips{margin:0}
-.chips-mas{display:none;margin:0 auto 8px;background:none;border:0;font:inherit;
-  font-size:12.5px;font-weight:700;color:var(--verde);cursor:pointer;padding:4px 10px}
 .chips-barra.pegada{box-shadow:0 8px 18px -12px rgba(63,61,56,.55)}
+
+/* ---- ELEGIR CATEGORIA ----
+   El boton y el panel. La clave es que el panel tiene alto propio y scroll
+   propio: cuantas categorias ves no depende del ancho de la pantalla. */
+.cat-elige{padding-top:4px;padding-bottom:2px}
+.cat-elige__fila{display:flex;gap:10px;align-items:center;justify-content:center;
+  flex-wrap:wrap}
+.cat-abrir{display:inline-flex;align-items:center;gap:9px;cursor:pointer;
+  background:var(--papel);border:1.5px solid var(--borde);border-radius:999px;
+  padding:11px 18px;font:inherit;font-size:14.5px;color:var(--tinta);
+  max-width:100%;transition:border-color .18s,box-shadow .18s}
+.cat-abrir:hover{border-color:var(--verde)}
+.cat-abrir[aria-expanded="true"]{border-color:var(--verde);
+  box-shadow:0 0 0 3px var(--verde-suave)}
+.cat-abrir__et{color:var(--tinta-suave);font-size:13px;flex:none}
+.cat-abrir__val{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cat-abrir__flecha{display:flex;flex:none;width:16px;height:16px;color:var(--tinta-suave);
+  transition:transform .2s}
+.cat-abrir__flecha svg{width:100%;height:100%}
+.cat-abrir[aria-expanded="true"] .cat-abrir__flecha{transform:rotate(180deg)}
+.cat-quitar{cursor:pointer;background:none;border:0;font:inherit;font-size:13px;
+  font-weight:600;color:var(--verde);text-decoration:underline;
+  text-underline-offset:3px;padding:6px 4px}
+
+.cat-panel{max-width:860px;margin:10px auto 0;background:var(--papel);
+  border:1.5px solid var(--borde);border-radius:14px;
+  box-shadow:0 10px 30px -18px rgba(63,61,56,.6);overflow:hidden}
+.cat-panel__buscar{display:flex;align-items:center;gap:8px;padding:10px 14px;
+  border-bottom:1px solid var(--borde)}
+.cat-panel__buscar input{flex:1;min-width:0;border:0;background:none;font:inherit;
+  font-size:14px;color:var(--tinta);outline:none}
+/* El alto lo fija el panel, no el contenido: con 3 categorias o con 40, ocupa
+   lo mismo y se desplaza adentro. Eso es lo que lo hace igual en toda pantalla. */
+.cat-panel__lista{max-height:min(46vh,340px);overflow-y:auto;overscroll-behavior:contain;
+  padding:12px;margin:0;gap:8px;justify-content:flex-start}
+.cat-panel__vacio{margin:0;padding:0 14px 14px;font-size:13.5px;color:var(--tinta-suave)}
+
+.chips--sub{margin-top:10px;justify-content:center}
 @media(max-width:640px){
   .chips-barra{padding-top:6px}
   .chips-barra.pegada .buscador{margin-bottom:2px}
-  /* Pegada arriba, la barra se achica: una fila de categorias y el buscador.
-     Suelta medía 174px en un celular, un quinto de la pantalla ocupado
-     mientras se recorre la grilla. */
-  .chips-barra.pegada .chips{max-height:44px}
-  .chips-barra.pegada.abierta .chips{max-height:none}
-  .chips-barra.pegada .chips--sub{display:none}
-  /* Mas chicas para que entren mas por fila. */
-  .chips{gap:6px;padding:2px 12px 8px}
+  .cat-abrir{font-size:14px;padding:10px 15px}
+  .cat-panel__lista{max-height:min(52vh,330px);padding:10px;gap:7px}
   .chip{padding:8px 13px;font-size:12.5px;min-height:36px;border-width:1px}
   .chip .n{margin-left:4px;font-size:11px}
-  /* Y acotadas a dos filas: el boton las abre cuando hacen falta. */
-  .chips{max-height:88px;overflow:hidden}
-  .chips-barra.abierta .chips{max-height:none}
-  .chips-mas{display:block}
 }
 .variante-sel{width:100%;padding:8px 9px;border:1.5px solid var(--borde);border-radius:9px;
   background:var(--papel);font:inherit;font-size:13px;color:var(--tinta);cursor:pointer}
@@ -1213,12 +1238,10 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
                 aria-label="Borrar la búsqueda" hidden>&times;</button>
       </label>
     </div>
-    <!-- Categorias de la tienda: las que el administrador deja visibles en
-         Tiendanube, leidas en vivo. Sin ninguna visible no se muestra nada. -->
-    <div class="chips" id="chips" role="group" aria-label="Categorías" hidden></div>
-    <div class="chips chips--sub" id="subchips" role="group" aria-label="Subcategorías" hidden></div>
-    <!-- Solo en celular, y solo si las categorias no entran en dos filas. -->
-    <button class="chips-mas" id="chipsMas" type="button" hidden></button>
+    <!-- Las categorias ya no viven aca: se eligen desde el panel que esta
+         debajo del selector de minorista/mayorista. En la barra pegada quedo
+         solo el buscador, que es lo que hace falta a mano mientras se recorre
+         la grilla. -->
   </div>
 
 
@@ -1248,6 +1271,43 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
     </div>
 
     <div class="seg-activo" id="segActivo"></div>
+  </div>
+
+  <!-- ══ 5 bis · ELEGIR CATEGORIA ══
+       Un boton que dice cual esta puesta y abre un panel con TODAS. El panel
+       tiene alto fijo y se desplaza solo, asi que cuantas ves no depende del
+       ancho de la pantalla: en un celular angosto son una por fila y se baja,
+       en una pantalla ancha son varias por fila. Antes eran una nube de
+       pastillas que se recortaba o empujaba el catalogo hacia abajo.
+
+       Las subcategorias van afuera del panel, debajo del boton: son pocas y
+       sirven para afinar sin volver a abrir nada. -->
+  <div class="wrap cat-elige" id="catElige" hidden>
+    <div class="cat-elige__fila">
+      <button class="cat-abrir" id="catAbrir" type="button"
+              aria-expanded="false" aria-controls="catPanel">
+        <span class="cat-abrir__et">Categoría</span>
+        <b class="cat-abrir__val" id="catAbrirVal">Todas</b>
+        <span class="cat-abrir__flecha" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor"
+            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </button>
+      <button class="cat-quitar" id="catQuitar" type="button" hidden>Quitar filtro</button>
+    </div>
+
+    <div class="cat-panel" id="catPanel" hidden>
+      <label class="cat-panel__buscar">
+        <span aria-hidden="true">🔍</span>
+        <input type="search" id="catFiltro" autocomplete="off"
+               placeholder="Filtrá las categorías..."
+               aria-label="Filtrar la lista de categorías">
+      </label>
+      <div class="chips cat-panel__lista" id="chips" role="group" aria-label="Categorías"></div>
+      <p class="cat-panel__vacio" id="catPanelVacio" hidden>Ninguna categoría con ese nombre.</p>
+    </div>
+
+    <div class="chips chips--sub" id="subchips" role="group" aria-label="Subcategorías" hidden></div>
   </div>
 
   <div class="wrap">
@@ -1767,12 +1827,13 @@ const TIERS_POR_SEGMENTO = {
      mayorista y distribuidor no lo tienen, por eso no figura en sus escaleras
      ni aparece despues en el resumen de compra, que se arma desde aca. */
   minorista: [
-    {min:30000,  nombre:'2 cuotas sin interés',   real:true},
+    /* Los montos los subio el cliente el 25/09/2026. El hito del 6% por
+       transferencia se saco: prometia algo distinto de lo que cobra el
+       checkout -- la tienda da 5% en todo el catalogo y sin minimo -- y quedo
+       reemplazado por las tres cuotas. */
+    {min:50000,  nombre:'2 cuotas sin interés',   real:true},
     {min:60000,  nombre:'Envío gratis',           real:true},
-    /* A CONFIRMAR. Hoy la tienda da 5% por transferencia en todo el catalogo
-       y sin minimo, asi que este hito promete algo distinto de lo que el
-       checkout va a cobrar. Se marca hasta que el cliente lo defina. */
-    {min:90000,  nombre:'6% en transferencia',    real:true, pendiente:true}
+    {min:100000, nombre:'3 cuotas sin interés',   real:true}
   ],
   /* Los dos regalos los entrega un CUPON de la tienda, no la landing: aca
      solo se anuncian. Se probo agregarlos solos al carrito y se descarto,
@@ -2309,8 +2370,11 @@ const track = (event, data) => {
 
 
 /* ---- Carrusel de fondo del hero ----
-   Los cuatro banners del inicio de la tienda. Para agregar o sacar uno,
-   se toca solo este arreglo y el archivo en prototipo/img/. */
+   Esta lista es la BASE: las piezas que viven en prototipo/img/. Dentro de la
+   tienda, bannersVivos (mas abajo) la reemplaza por los banners que el
+   administrador tenga puestos en el panel, asi que agregar uno en Tiendanube
+   alcanza para que aparezca aca. Esto queda como respaldo para la vista previa
+   y para cuando la tienda no conteste. */
 /* `cta` es la llamada de cada pieza. `ir` es una accion de esta pagina;
    `href` es una direccion de la tienda. Una pieza sin `cta` no muestra boton. */
 const FONDOS = [
@@ -2324,56 +2388,18 @@ const FONDOS = [
    cta:{txt:'Ver precios mayoristas', ir:'mayorista'}}
 ];
 
-(function heroCarrusel(){
-  const caja = $('#heroFondos');
-  if (!caja || !FONDOS.length) return;
-
-  FONDOS.forEach((f, i) => {
-    const pic = document.createElement('picture');
-    pic.className = 'hero__slide' + (i === 0 ? ' activa' : '');
-    pic.innerHTML = '<source media="(max-width: 700px)" srcset="' + f.celular + '">' +
-                    '<img src="' + f.escritorio + '" alt="" ' +
-                    (i === 0 ? 'fetchpriority="high"' : 'loading="lazy"') + '>';
-    caja.appendChild(pic);
-  });
-
-  const puntos = document.createElement('div');
-  puntos.className = 'hero__puntos';
-  FONDOS.forEach((_, i) => {
-    const b = document.createElement('button');
-    b.type = 'button'; b.className = 'hero__punto';
-    b.setAttribute('aria-label', 'Ver imagen ' + (i + 1));
-    b.setAttribute('aria-current', i === 0);
-    b.onclick = () => mostrar(i, true);
-    puntos.appendChild(b);
-  });
-  $('.hero').appendChild(puntos);
-
-  /* Flechas, igual que en el catalogo: sin ellas, el banner que ya paso no se
-     puede recuperar salvo esperando toda la vuelta. */
-  const FLECHAS = [
-    ['-1', 'M15 5l-7 7 7 7', 'Ver el banner anterior', 'izq'],
-    ['1',  'M9 5l7 7-7 7',   'Ver el banner siguiente', 'der']
-  ];
-  FLECHAS.forEach(([dir, d, etiqueta, lado]) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'hero__flecha hero__flecha--' + lado;
-    b.setAttribute('aria-label', etiqueta);
-    b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + d + '" fill="none" ' +
-      'stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-    b.onclick = () => mostrar(actual + Number(dir), true);
-    $('.hero').appendChild(b);
-  });
-
-  const slides = [...caja.children];
+/* Se arma con una lista de piezas y se puede volver a armar con otra: es lo
+   que usa bannersVivos cuando la tienda contesta con banners distintos. */
+var heroCarrusel = (function (){
+  const caja = $('#heroFondos'), hero = $('.hero');
+  const boton = $('#heroCta'), enlace = $('#heroEnlace');
+  let piezas = [], slides = [], puntos = null, flechas = [];
   let actual = 0, reloj = null;
 
   /* El boton acompaña al banner que se esta viendo. Es uno solo y cambia,
      en vez de uno por pieza: asi no hay cuatro botones apilados esperando. */
-  const boton = $('#heroCta'), enlace = $('#heroEnlace');
   function ponerCta(i){
-    const c = FONDOS[i] && FONDOS[i].cta;
+    const c = piezas[i] && piezas[i].cta;
     [boton, enlace].forEach(el => {
       if (!el) return;
       el.hidden = !c;
@@ -2389,6 +2415,7 @@ const FONDOS = [
     // donde va: es lo unico que un lector de pantalla puede anunciar.
     enlace.querySelector('span').textContent = c.txt;
   }
+
   const seguirCta = el => e => {
     const ir = el.dataset.ir;
     if (!ir) return;                     // direccion de la tienda: se sigue
@@ -2403,27 +2430,245 @@ const FONDOS = [
   if (enlace) enlace.onclick = seguirCta(enlace);
 
   function mostrar(i, manual){
+    if (!slides.length) return;
     slides[actual].classList.remove('activa');
-    puntos.children[actual].setAttribute('aria-current', 'false');
+    if (puntos) puntos.children[actual].setAttribute('aria-current', 'false');
     actual = (i + slides.length) % slides.length;
     slides[actual].classList.add('activa');
-    puntos.children[actual].setAttribute('aria-current', 'true');
+    if (puntos) puntos.children[actual].setAttribute('aria-current', 'true');
     ponerCta(actual);
     if (manual) arrancar();
   }
-  ponerCta(0);
 
   function arrancar(){
     clearInterval(reloj);
+    if (slides.length < 2) return;
     // Quien pidió menos movimiento ve solo la primera imagen, quieta.
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     reloj = setInterval(() => mostrar(actual + 1), 5500);
   }
-  arrancar();
+
+  /* Flechas, igual que en el catalogo: sin ellas, el banner que ya paso no se
+     puede recuperar salvo esperando toda la vuelta. */
+  const FLECHAS = [
+    ['-1', 'M15 5l-7 7 7 7', 'Ver el banner anterior', 'izq'],
+    ['1',  'M9 5l7 7-7 7',   'Ver el banner siguiente', 'der']
+  ];
+
+  function armar(fondos){
+    if (!caja || !hero || !fondos || !fondos.length) return false;
+    clearInterval(reloj);
+    piezas = fondos;
+    actual = 0;
+
+    caja.innerHTML = '';
+    if (puntos){ puntos.remove(); puntos = null; }
+    flechas.forEach(f => f.remove());
+    flechas = [];
+
+    piezas.forEach((f, i) => {
+      const pic = document.createElement('picture');
+      pic.className = 'hero__slide' + (i === 0 ? ' activa' : '');
+      const fuente = document.createElement('source');
+      fuente.media = '(max-width: 700px)';
+      fuente.srcset = f.celular || f.escritorio;
+      const img = document.createElement('img');
+      img.src = f.escritorio;
+      img.alt = '';
+      if (i === 0) img.setAttribute('fetchpriority', 'high');
+      else img.loading = 'lazy';
+      pic.appendChild(fuente); pic.appendChild(img);
+      caja.appendChild(pic);
+    });
+    slides = [...caja.children];
+
+    /* Con una sola pieza no hay a donde ir: ni puntos ni flechas. */
+    if (piezas.length > 1){
+      puntos = document.createElement('div');
+      puntos.className = 'hero__puntos';
+      piezas.forEach((_, i) => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'hero__punto';
+        b.setAttribute('aria-label', 'Ver imagen ' + (i + 1));
+        b.setAttribute('aria-current', i === 0);
+        b.onclick = () => mostrar(i, true);
+        puntos.appendChild(b);
+      });
+      hero.appendChild(puntos);
+
+      FLECHAS.forEach(([dir, d, etiqueta, lado]) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'hero__flecha hero__flecha--' + lado;
+        b.setAttribute('aria-label', etiqueta);
+        b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + d + '" fill="none" ' +
+          'stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        b.onclick = () => mostrar(actual + Number(dir), true);
+        hero.appendChild(b);
+        flechas.push(b);
+      });
+    }
+
+    ponerCta(0);
+    arrancar();
+    return true;
+  }
+
   // No rotar mientras la pestaña está en segundo plano.
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) clearInterval(reloj); else arrancar();
   });
+
+  armar(FONDOS);
+  return {armar, cuantas: () => piezas.length};
+})();
+
+
+/* ══════════ LOS BANNERS SALEN DEL PANEL ══════════
+   El administrador agrega, saca o reordena banners en el inicio de la tienda y
+   el hero de la landing los toma solo. Antes eran cuatro archivos fijos que
+   habia que bajar del CDN, renombrar y volver a publicar a mano.
+
+   De donde salen. La landing se planta en /catalogos, no en el inicio, asi que
+   el carrusel del theme no esta en esta pagina: hay que ir a buscarlo. Se lee
+   el inicio entero y se saca `section[data-store="home-slider"]`, que trae dos
+   listas -- una de escritorio y una de celular -- emparejadas por posicion.
+
+   La llamada de cada banner. El theme deja poner un enlace por banner desde el
+   panel; si esta, se usa. Si no, la llamada es "Ver el catalogo", que es a
+   donde queremos llevar a todo el mundo. **Para que un banner lleve a otro
+   lado, se le pone el enlace en el panel de Tiendanube y listo.**
+
+   Fuera de la tienda no corre: en la vista previa quedan las piezas de
+   FONDOS. */
+var bannersVivos = (function (){
+  const EN_TIENDA = /(^|\.)habitadnatural\.com$/i.test(location.hostname);
+  const GUARDADO = 'habitad:banners:v1';
+  /* Leer el inicio cuesta medio mega: es la pagina mas pesada de la tienda.
+     Los banners cambian cada varias semanas, asi que no hace falta pedirlo en
+     cada visita. Un visitante nuevo lo ve al dia igual; uno que vuelve, a las
+     seis horas. Para verlo ya: __banners.refrescar(true) en la consola. */
+  const FRESCO = 6 * 60 * 60 * 1000;
+  // Ancho que se le pide a cada version. Pedir el 1920 en celular es tirar
+  // megas a la basura; pedir el 640 en escritorio se ve mal.
+  const ANCHO = {escritorio: 1920, celular: 1024};
+
+  let ultimo = 0, enCurso = null;
+  const api = {enTienda: EN_TIENDA, informe: null, aplicarGuardado, refrescar};
+
+  function absoluta(u){
+    u = String(u || '');
+    if (!u) return '';
+    if (u.indexOf('//') === 0) return 'https:' + u;
+    return u;
+  }
+
+  /* De un srcset, la version mas chica que llegue al ancho pedido; si ninguna
+     llega, la mas grande que haya. */
+  function mejorImagen(img, tope){
+    const set = img.getAttribute('data-srcset') || img.getAttribute('srcset') || '';
+    const cands = [];
+    set.split(',').forEach(x => {
+      const m = /(\S+)\s+(\d+)w/.exec(x.trim());
+      if (m) cands.push({u: m[1], w: +m[2]});
+    });
+    if (cands.length){
+      cands.sort((a, b) => a.w - b.w);
+      const justa = cands.find(c => c.w >= tope) || cands[cands.length - 1];
+      return absoluta(justa.u);
+    }
+    const suelta = img.getAttribute('data-src') || img.getAttribute('src') || '';
+    return suelta.indexOf('data:') === 0 ? '' : absoluta(suelta);
+  }
+
+  function enlaceDe(slide){
+    if (!slide) return '';
+    const a = slide.querySelector('a[href]');
+    if (!a) return '';
+    const h = a.getAttribute('href') || '';
+    // Los <use href="#arrow-long"> de los iconos no son enlaces.
+    return h && h.charAt(0) !== '#' ? h : '';
+  }
+
+  function leerInicio(html){
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const sec = doc.querySelector('section[data-store="home-slider"]');
+    if (!sec) return [];
+    const cajas = [...sec.querySelectorAll('.js-home-slider-container')];
+    let escritorio = [], celular = [];
+    cajas.forEach(c => {
+      const slides = [...c.querySelectorAll('.swiper-slide')];
+      if (c.classList.contains('d-md-none')) celular = slides;
+      else escritorio = slides;
+    });
+    const cuantos = Math.max(escritorio.length, celular.length);
+    const piezas = [];
+    for (let i = 0; i < cuantos; i++){
+      const se = escritorio[i], sc = celular[i];
+      const ie = se && se.querySelector('img');
+      const ic = sc && sc.querySelector('img');
+      const de = ie ? mejorImagen(ie, ANCHO.escritorio) : '';
+      const dc = ic ? mejorImagen(ic, ANCHO.celular) : '';
+      // Sin ninguna de las dos no hay pieza. Con una sola, esa va a los dos.
+      if (!de && !dc) continue;
+      const href = enlaceDe(se) || enlaceDe(sc);
+      piezas.push({
+        escritorio: de || dc,
+        celular: dc || de,
+        cta: href ? {txt: 'Ver más', href: absoluta(href)}
+                  : {txt: 'Ver el catálogo', ir: 'catalogo'}
+      });
+    }
+    return piezas;
+  }
+
+  function guardar(piezas){
+    try { localStorage.setItem(GUARDADO, JSON.stringify({t: Date.now(), piezas})); }
+    catch (e) { /* sin lugar o bloqueado: la proxima vez se lee de nuevo */ }
+  }
+
+  /* Lo de la visita anterior, antes de pedir nada: el banner sale al dia desde
+     el primer pintado en vez de cambiar a los dos segundos. */
+  function aplicarGuardado(){
+    if (!EN_TIENDA) return false;
+    let g = null;
+    try { g = JSON.parse(localStorage.getItem(GUARDADO) || 'null'); } catch (e) { return false; }
+    if (!g || !Array.isArray(g.piezas) || !g.piezas.length) return false;
+    ultimo = g.t || 0;
+    const puesto = heroCarrusel.armar(g.piezas);
+    api.informe = {origen: 'guardado', t: ultimo, banners: g.piezas.length};
+    return puesto;
+  }
+
+  function refrescar(forzar){
+    if (!EN_TIENDA) return Promise.resolve(null);
+    if (enCurso) return enCurso;
+    if (!forzar && Date.now() - ultimo < FRESCO) return Promise.resolve(null);
+    const t0 = Date.now();
+    enCurso = fetch('/', {credentials: 'same-origin'})
+      .then(r => { if (!r.ok) throw new Error('el inicio respondio ' + r.status); return r.text(); })
+      .then(html => {
+        const piezas = leerInicio(html);
+        /* Cero banners es un error de lectura -- el theme cambio, la pagina
+           vino a medias --, no una tienda sin banners. Se deja lo que hay. */
+        if (!piezas.length) throw new Error('no se encontro ningun banner en el inicio');
+        ultimo = Date.now();
+        guardar(piezas);
+        heroCarrusel.armar(piezas);
+        api.informe = {origen: 'tienda', t: ultimo, ms: ultimo - t0, banners: piezas.length};
+        return piezas;
+      })
+      .catch(err => {
+        if (window.console) console.warn('[banners] no se pudo leer el inicio:', err);
+        return null;
+      })
+      .then(r => { enCurso = null; return r; });
+    return enCurso;
+  }
+
+  // Para mirar desde la consola: __banners.informe
+  window.__banners = api;
+  return api;
 })();
 
 /* Preguntas frecuentes. Las respuestas salen de las páginas reales de la
@@ -6237,10 +6482,10 @@ var categoriasVivas = (function () {
     if (intro) intro.textContent = visibles.length ? TEXTO_CON : TEXTO_SIN;
 
     if (!visibles.length){
-      caja.hidden = sub.hidden = true;
       caja.innerHTML = sub.innerHTML = '';
+      sub.hidden = true;
       firmaChips = firmaSub = '';
-      ajustarBoton();
+      ajustarElige(false, null);
       return elegida;
     }
 
@@ -6249,10 +6494,11 @@ var categoriasVivas = (function () {
     if (firma !== firmaChips){
       firmaChips = firma;
       caja.innerHTML = '';
-      caja.appendChild(boton('', 'Todos', delSegmento.length));
+      caja.appendChild(boton('', 'Todas', delSegmento.length));
       visibles.forEach(x => caja.appendChild(boton(x.c.ruta, x.c.n, x.productos.length)));
+      // La lista se rehizo: si habia algo escrito en el filtro, se vuelve a aplicar.
+      filtrarPanel();
     }
-    caja.hidden = false;
     const padre = !buscando && activa ? raizDe(activa) : null;
     const marcada = buscando ? null : (padre ? padre.ruta : '');
     caja.querySelectorAll('.chip').forEach(b =>
@@ -6275,7 +6521,7 @@ var categoriasVivas = (function () {
       sub.querySelectorAll('.chip').forEach(b =>
         b.setAttribute('aria-pressed', String(b.dataset.ruta === activa)));
     }
-    ajustarBoton();
+    ajustarElige(true, elegida);
     return elegida;
   }
 
@@ -6296,6 +6542,7 @@ var categoriasVivas = (function () {
 
   function elegir(ruta, nombre){
     activa = ruta;
+    cerrarPanel();
     // La categoria y la busqueda no se mezclan: elegir una borra lo escrito.
     if (busqueda){
       busqueda = '';
@@ -6306,26 +6553,79 @@ var categoriasVivas = (function () {
     if (ruta) track('select_category', {content_type: 'category', content_id: ruta,
                                         category_name: nombre});
     pintar();
+    /* El panel esta arriba del catalogo: despues de elegir hay que bajar, o el
+       cliente no ve que la grilla cambio. */
+    if (typeof irAlCatalogo === 'function') setTimeout(irAlCatalogo, 120);
   }
 
   // Al escribir en el buscador se vuelve a "Todos".
   function soltar(){ activa = ''; }
 
-  /* El boton de celular solo tiene sentido si de verdad hay categorias
-     tapadas. */
-  function ajustarBoton(){
-    const caja = $('#chips'), b = $('#chipsMas'), barra = $('#chipsBarra');
-    if (!caja || !b || !barra) return;
-    if (caja.hidden){ b.hidden = true; barra.classList.remove('abierta'); return; }
-    const abierta = barra.classList.contains('abierta');
-    const tapadas = !abierta && caja.scrollHeight > caja.clientHeight + 2;
-    b.hidden = !(tapadas || abierta);
-    b.textContent = abierta ? 'Ver menos' : 'Ver todas las categorías';
+  /* ── El boton y el panel ──
+     El panel se abre, se filtra y se cierra. Todo lo que muestra lo pinta
+     pintarChips; esto solo lo gobierna. */
+  const sinTildes = s => String(s || '').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  function panelAbierto(){
+    const p = $('#catPanel');
+    return !!p && !p.hidden;
   }
+
+  function abrirPanel(){
+    const p = $('#catPanel'), b = $('#catAbrir'), f = $('#catFiltro');
+    if (!p || !b) return;
+    p.hidden = false;
+    b.setAttribute('aria-expanded', 'true');
+    if (f){ f.value = ''; filtrarPanel(); }
+    /* El foco al filtro solo en pantalla grande: en un celular abriria el
+       teclado y taparia la mitad de la lista que se acaba de abrir. */
+    if (f && innerWidth > 700) f.focus();
+  }
+
+  function cerrarPanel(){
+    const p = $('#catPanel'), b = $('#catAbrir');
+    if (!p || !b || p.hidden) return;
+    p.hidden = true;
+    b.setAttribute('aria-expanded', 'false');
+  }
+
+  function filtrarPanel(){
+    const campo = $('#catFiltro'), lista = $('#chips'), vacio = $('#catPanelVacio');
+    if (!campo || !lista) return;
+    const q = sinTildes(campo.value.trim());
+    let hay = 0;
+    lista.querySelectorAll('.chip').forEach(b => {
+      const ok = !q || sinTildes(b.textContent).indexOf(q) !== -1;
+      b.hidden = !ok;
+      if (ok) hay++;
+    });
+    if (vacio) vacio.hidden = hay > 0;
+  }
+
+  /* El boton dice que categoria esta puesta; "Quitar filtro" aparece solo
+     cuando hay una. Sin categorias visibles en la tienda no se muestra nada. */
+  function ajustarElige(hay, elegida){
+    const caja = $('#catElige'), val = $('#catAbrirVal'), quitar = $('#catQuitar');
+    if (!caja) return;
+    caja.hidden = !hay;
+    if (!hay) return cerrarPanel();
+    if (val) val.textContent = elegida ? elegida.n : 'Todas';
+    if (quitar) quitar.hidden = !elegida;
+  }
+
   {
-    const b = $('#chipsMas'), barra = $('#chipsBarra');
-    if (b && barra) b.onclick = () => { barra.classList.toggle('abierta'); ajustarBoton(); };
-    addEventListener('resize', ajustarBoton);
+    const b = $('#catAbrir'), f = $('#catFiltro'), q = $('#catQuitar');
+    if (b) b.onclick = () => (panelAbierto() ? cerrarPanel() : abrirPanel());
+    if (f) f.addEventListener('input', filtrarPanel);
+    if (q) q.onclick = () => { cerrarPanel(); elegir('', ''); };
+    // Un clic afuera y la tecla Escape cierran, como cualquier desplegable.
+    document.addEventListener('click', e => {
+      if (!panelAbierto()) return;
+      const caja = $('#catElige');
+      if (caja && !caja.contains(e.target)) cerrarPanel();
+    });
+    addEventListener('keydown', e => { if (e.key === 'Escape') cerrarPanel(); });
   }
 
   /* Sin la tienda: carga una lista y sus ids a mano y repinta. */
@@ -6613,6 +6913,8 @@ window.__habitadAbrirProducto = function (mango){
    navegador lo tiene: la primera imagen ya sale al dia. Despues, sin apuro,
    se vuelve a leer la tienda. */
 catalogoVivo.aplicarGuardado();
+// Los banners de la visita anterior, antes de pintar: el hero sale al dia.
+bannersVivos.aplicarGuardado();
 // Lo ultimo de Nubea, si este navegador lo tiene, tambien antes de pintar.
 if (nubea.aplicarGuardado() && segmento === 'minorista') TIERS = TIERS_POR_SEGMENTO.minorista;
 /* El carrito de la visita anterior, tambien antes de pintar: la barra, los
@@ -6641,6 +6943,10 @@ setTimeout(() => {
   // Segundo y ultimo intento del producto del anuncio, ya con la tienda leida.
   if (productoDelAnuncio) leyendo.then(() => abrirProductoDelAnuncio(true));
 }, 400);
+/* Los banners del panel, mas tarde y aparte: leer el inicio es medio mega y el
+   catalogo son siete paginas. Pedirlos juntos hace que las dos cosas tarden
+   mas, y el hero ya esta mostrando lo guardado. */
+setTimeout(() => bannersVivos.refrescar(), 1800);
 /* Y la configuracion de Nubea al dia. Si cambio algo, se repinta todo lo que
    la usa: tarjetas, carrusel, barra y la ficha si esta abierta. */
 setTimeout(() => nubea.refrescar().then(cambio => {
