@@ -632,17 +632,26 @@ PRODUCTOS.forEach(p => {
 
 const ars = n => '$' + Math.round(n).toLocaleString('es-AR');
 const $ = s => document.querySelector(s);
+
+/* `a ?? b` escrito a mano. NO es `a || b`: eso tambien se caeria a b con 0 o
+   con '', y aca hay precios e indices de variante donde 0 es un valor bueno.
+
+   Se escribe asi porque `??` y `?.` son de ES2020 (marzo de 2020) y en un
+   telefono anterior son un ERROR DE SINTAXIS, que se detecta al parsear y tira
+   abajo el archivo entero -- guardia de ruta incluido. Como /catalogos no
+   tiene contenido propio en el admin, eso deja la pagina en blanco. */
+const siNula = (a, b) => (a === null || a === undefined) ? b : a;
 const limpio = n => n.split(/\/\//)[0].trim();
 // El precio es el REAL de la publicacion de ese segmento. Antes se simulaba
 // con un multiplicador; ahora los tres salen de la tienda y son verificables.
 const varElegida = new Map();
 const precioDe = p => {
-  if (p.vars){ const v = p.vars[varElegida.get(p.n) ?? 0]; if (v && v.p) return v.p; }
+  if (p.vars){ const v = p.vars[siNula(varElegida.get(p.n), 0)]; if (v && v.p) return v.p; }
   /* Si la tienda no publica el producto en este segmento se cae al precio de
      lista. Sin esto devolvia undefined, el subtotal quedaba en NaN y la barra
      desaparecia para siempre: era el motivo de que al pasar a mayorista no se
      viera nada aunque siguieras agregando. */
-  return p.pr[segmento] ?? p.pr.minorista ?? 0;
+  return siNula(siNula(p.pr[segmento], p.pr.minorista), 0);
 };
 // Un producto existe en un segmento solo si la tienda lo publica para ese
 // segmento. Eso es lo que hace que la grilla cambie de verdad al elegir.
@@ -666,10 +675,10 @@ const ESCALA = ['minorista', 'mayorista', 'distribuidor'];
 function precioEn(i, seg){
   const p = i.prod;
   if (p.vars){
-    const v = p.vars[i.vi ?? varElegida.get(p.n) ?? 0];
+    const v = p.vars[siNula(siNula(i.vi, varElegida.get(p.n)), 0)];
     if (v && v.p) return v.p;
   }
-  return p.pr[seg] ?? p.pr.minorista ?? 0;
+  return siNula(siNula(p.pr[seg], p.pr.minorista), 0);
 }
 const precioItem = i => precioEn(i, i.seg || segmento);
 const totalCarrito = () => Object.values(carrito)
@@ -749,10 +758,10 @@ const EVENTOS = {
 function idParaMeta(p, seg, vi){
   const donde = seg || segmento;
   if (p.vars){
-    const v = p.vars[vi ?? varElegida.get(p.n) ?? 0];
+    const v = p.vars[siNula(siNula(vi, varElegida.get(p.n)), 0)];
     if (v && v.id) return String(v.id);
   }
-  const vid = p.vids && (p.vids[donde] ?? p.vids.minorista);
+  const vid = p.vids && siNula(p.vids[donde], p.vids.minorista);
   return vid ? String(vid) : null;
 }
 
@@ -2561,8 +2570,8 @@ const campoCantidad = (valor, etiqueta) =>
 
 function agregar(p, key, cant, boton, seg){
   const donde = seg || segmento;
-  carrito[key] = {prod:p, cant:(carrito[key]?.cant || 0) + cant,
-                  seg: donde, vi: varElegida.get(p.n) ?? 0};
+  carrito[key] = {prod:p, cant:((carrito[key] || {}).cant || 0) + cant,
+                  seg: donde, vi: siNula(varElegida.get(p.n), 0)};
   track('add_to_cart', {item_name:p.n, value:precioEn(carrito[key], donde)*cant,
                         segment:donde, items: itemsGA([carrito[key]])});
   if (boton){
@@ -3412,7 +3421,7 @@ const CARRITO_TIENDA = '/comprar/';
 function idParaLaTienda(p, seg, vi){
   const donde = seg || segmento;
   if (p.vars){
-    const v = p.vars[vi ?? varElegida.get(p.n) ?? 0];
+    const v = p.vars[siNula(siNula(vi, varElegida.get(p.n)), 0)];
     if (v && v.id) return v.id;
   }
   /* La publicacion del segmento con el que se cargo la linea, que es la que
@@ -3558,11 +3567,12 @@ const CARRITO_GUARDADO = 'habitad:carrito:v1';
 const CARRITO_DURA = 30 * 24 * 3600 * 1000;
 
 function lineaParaGuardar(k, i){
-  const p = i.prod, v = p.vars && p.vars[i.vi ?? 0];
+  const p = i.prod, v = p.vars && p.vars[siNula(i.vi, 0)];
   return {k, n: p.n, seg: i.seg || segmento, cant: i.cant,
           vid: v && v.id != null ? v.id : null,
-          ids: {minorista: p.ids.minorista ?? null, mayorista: p.ids.mayorista ?? null,
-                distribuidor: p.ids.distribuidor ?? null}};
+          ids: {minorista: siNula(p.ids.minorista, null),
+                mayorista: siNula(p.ids.mayorista, null),
+                distribuidor: siNula(p.ids.distribuidor, null)}};
 }
 
 function estadoCarrito(){
@@ -3789,7 +3799,7 @@ window.pruebaDeCarrito = function(){
       cantidad: i.cant,
       precio_landing: precioDe(i.prod),
       variante: i.prod.vars
-        ? (i.prod.vars[varElegida.get(i.prod.n) ?? 0] || {}).n || '(la primera)'
+        ? (i.prod.vars[siNula(varElegida.get(i.prod.n), 0)] || {}).n || '(la primera)'
         : '—',
       stock: i.prod.st[seg] === false ? 'SIN STOCK' : 'ok'
     }));
@@ -5390,9 +5400,9 @@ function mangosDe(p){
 // El que le toca a este producto en el segmento que se esta mirando.
 function mangoDeProducto(p){
   if (!p) return '';
-  const vivo = p.urls && mangoDeUrl(p.urls[segmento] ?? p.urls.minorista);
+  const vivo = p.urls && mangoDeUrl(siNula(p.urls[segmento], p.urls.minorista));
   if (vivo) return vivo;
-  const horneado = p.mangos && (p.mangos[segmento] ?? p.mangos.minorista);
+  const horneado = p.mangos && siNula(p.mangos[segmento], p.mangos.minorista);
   return horneado ? String(horneado).toLowerCase() : '';
 }
 
