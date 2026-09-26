@@ -4510,14 +4510,35 @@ var VIVO = (function () {
   };
 })();
 
+/* ¿La conexion le cuesta plata al cliente? Datos moviles, 2G/3G, o "ahorro de
+   datos" puesto. Lo usan el catalogo y las categorias para leer la tienda
+   menos seguido: en datos, cada lectura son segundos de radio encendida y
+   megas de su plan. Fuera de Chrome/Android casi ningun navegador contesta
+   esto, asi que la respuesta por defecto es "no" -- no se le recorta nada a
+   nadie por las dudas. */
+function conexionCara(){
+  const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if (!c) return false;
+  if (c.saveData) return true;
+  if (c.type === 'cellular') return true;
+  return /2g|3g/.test(c.effectiveType || '');
+}
+
 var catalogoVivo = (function () {
   const EN_TIENDA = /(^|\.)habitadnatural\.com$/i.test(location.hostname);
   const GUARDADO = 'habitad:catalogo-vivo:v1';
-  /* Leer el catalogo son 9 pedidos y 6,8 MB de HTML. Con un minuto, un cliente
-     que entra a tres fichas y vuelve al inicio se lo bajaba cuatro veces. Diez
-     minutos alcanzan de sobra para que un precio cambiado en el panel se vea
-     en la misma sesion, y el que llega despues lo ve de entrada. */
-  const FRESCO = 10 * 60 * 1000;
+  /* Leer el catalogo son 9 pedidos y 6,8 MB de HTML (281 KB por la red). Con
+     un minuto, un cliente que entra a tres fichas y vuelve al inicio se lo
+     bajaba cuatro veces.
+
+     En wifi, diez minutos: alcanza de sobra para que un precio cambiado en el
+     panel se vea en la misma sesion. En datos moviles, seis horas: ahi la
+     conexion ya viene peleada por los ~27 dominios que carga la tienda, y cada
+     lectura son segundos de radio encendida y megas del plan del cliente. No
+     se deja de leer nunca -- la primera visita lee igual --, solo se espacia. */
+  const FRESCO_WIFI  = 10 * 60 * 1000;
+  const FRESCO_DATOS = 6 * 60 * 60 * 1000;
+  const FRESCO = () => conexionCara() ? FRESCO_DATOS : FRESCO_WIFI;
   const TOPE_PAGINAS = 30;       // hoy son 7; el tope es para no girar en vacio
   const DE_A = 3;                // paginas pedidas en paralelo
   const SEGS = ['minorista', 'mayorista', 'distribuidor'];
@@ -4700,7 +4721,7 @@ var catalogoVivo = (function () {
   function refrescar(forzar){
     if (!EN_TIENDA) return Promise.resolve(null);
     if (enCurso) return enCurso;
-    if (!forzar && Date.now() - ultimo < FRESCO) return Promise.resolve(null);
+    if (!forzar && Date.now() - ultimo < FRESCO()) return Promise.resolve(null);
     const t0 = Date.now();
     enCurso = recorrerListado()
       .then(({pubs, completo}) => {
@@ -4729,7 +4750,7 @@ var catalogoVivo = (function () {
     if (!url && enCurso){ await enCurso; url = p.urls && p.urls[s]; }
     if (!url) return;
     let pedido = fichasLeidas.get(url);
-    if (!pedido || Date.now() - pedido.t > FRESCO){
+    if (!pedido || Date.now() - pedido.t > FRESCO()){
       pedido = {t: Date.now(), leida: bajar(url).then(VIVO.leerFicha).catch(() => null)};
       fichasLeidas.set(url, pedido);
     }
@@ -5225,16 +5246,6 @@ var categoriasVivas = (function () {
   function yaLeidas(){
     const todas = aplanar(arbol);
     return todas.length > 0 && todas.every(c => ids.has(c.ruta));
-  }
-
-  /* Datos moviles, 2G/3G o "ahorro de datos" puesto. Bajarle 9,7 MB de fondo,
-     sin que los haya pedido, es gastarle el plan al cliente. */
-  function conexionCara(){
-    const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-    if (!c) return false;
-    if (c.saveData) return true;
-    if (c.type === 'cellular') return true;
-    return /2g|3g/.test(c.effectiveType || '');
   }
 
   /* Las categorias, sueltas y sin apuro. YA NO en el arranque: son 38 pedidos
