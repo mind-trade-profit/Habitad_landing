@@ -2253,6 +2253,23 @@ const PRODUCTOS = [
   {"n": "Varillas 7 Chakras", "img": "https://acdn-us.mitiendanube.com/stores/004/937/911/products/sagrada-madre-varilla-2e99b1f3a0c1eeb6fa17269293501422-640-0.webp", "d": "Varillas 7 chakras\nmuladhara, el chakra raíz\nsua adhisthana, el chakra sacral\nmanipura, el chakra del plexo solar:\nanahata, el chakra corazón:\nvishuddha, el chakra de la garganta:\ngña-akhia, el chakra del tercer ojo:\nsahasrara, el chakra corona\nAnte cualquier duda pueden conectarse con nosotros por la via e-mail en la sección de contacto o por redes o por wap, la idea siempre es acompañarlos con los brazos abiertos\nFormas de pago- este producto se puede pagar con todas las formas de pago", "necs": ["aromas"], "pr": {"minorista": 2600}, "st": {"minorista": false}, "ids": {"minorista": 229337642}, "mangos": {"minorista": "varillas-7-chakras"}},
 ];
 
+/* ══════════ LOS RUBROS QUE NO ENTRAN ══════════
+   Los libros (físicos y digitales), el tarot y los frascos vacíos se venden en
+   la tienda pero no son parte del embudo: la landing guía una compra de
+   fitoterapia, y un libro no tiene lista mayorista, ni categoría de síntoma, ni
+   nada que hacer en el carrusel de combos.
+
+   Esto NO se escribe a mano. Lo escribe `sync_landing.py` en cada corrida,
+   leyendo las categorías que el dueño ya tiene aparte en Tiendanube --
+   Libros-fisicos, Libros Digitales, tarot-holistica, Insumos --, así que el día
+   que publique otro libro queda afuera sin tocar nada acá.
+
+   Lo usa el catálogo vivo para no dar de alta una publicación de esos rubros
+   cuando la lee del panel. Y como una publicación recién hecha puede no estar
+   todavía en esta lista, hay además un control por nombre. */
+const FUERA_DE_RUBRO = new Set([229337700, 229337702, 229337703, 229337707, 229337708, 229337715, 229337717, 229337718, 229337719, 229337720, 229337726, 229337734, 229337735, 229337738, 229337740, 229337742, 229337743, 229337746, 229337750, 229337752, 229337804, 229337807, 229337808, 229337817, 229337821, 229337822, 229337825, 229337826, 229337827, 229337831, 229337833, 229337834, 229337836, 229337837, 229337839, 233301838, 250412388, 253912911, 260859740, 308599768, 341733847]);
+const FUERA_POR_NOMBRE = /\blibros?\b|\btarot\b|\bestamateas\b|\bfrasco\b/;
+
 /* 13 · PACKS con lo que incluyen, explícito */
 // Los packs ya no son una lista aparte: son la necesidad 'packs'.
 
@@ -6468,8 +6485,21 @@ var VIVO = (function () {
   }
 
   /* ── Titulos ── */
+  /* Sin acentos y CON EL MISMO LARGO. El largo importa porque las posiciones
+     de la marca de segmento se buscan sobre el texto pelado y se aplican sobre
+     el titulo de verdad: si se corren, se corta el nombre en el lugar
+     equivocado. Se pela letra por letra y se deja la original cuando el
+     resultado no mide uno, asi un acento que venga ya descompuesto no corre
+     todo lo que sigue. */
   function sinAcentos(t) {
-    return t.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    var s = String(t == null ? '' : t);
+    if (!/[^\u0000-\u007f]/.test(s)) return s;       // puro ASCII: nada que hacer
+    var fuera = '';
+    for (var i = 0; i < s.length; i++) {
+      var base = s.charAt(i).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      fuera += base.length === 1 ? base : s.charAt(i);
+    }
+    return fuera;
   }
 
   // sync_landing.normalizar
@@ -6484,9 +6514,12 @@ var VIVO = (function () {
     return t.replace(/[^a-z0-9]+/g, ' ').trim();
   }
 
-  // sync_landing.titulo_de_tienda: "Aceite de Jojoba – 30 ml// VENTA MINORISTA"
+  /* sync_landing.titulo_de_tienda: "Aceite de Jojoba – 30 ml// VENTA MINORISTA"
+     Primero la cola despues de "//", que es palabreria de deposito, y despues
+     la marca de segmento donde haya quedado. */
   function tituloDeTienda(t) {
-    return String(t || '').split('//')[0].replace(/^[ \-–—\/|]+|[ \-–—\/|]+$/g, '');
+    return sacarMarca(String(t || '').split('//')[0]
+      .replace(/^[ \-–—\/|]+|[ \-–—\/|]+$/g, ''))[1];
   }
 
   // sync_landing.CATEGORIAS, la regla de "packs". Con plural: sin la "s?",
@@ -6495,6 +6528,71 @@ var VIVO = (function () {
   var PACK = /\bcombo|\bpacks?\b|\bkits?\b|\bpromos?\b/;
   function esCombo(titulo) {
     return PACK.test(normalizar(titulo));
+  }
+
+  /* ── El segmento, escrito dentro del propio titulo ──
+     sync_landing._sacar_marca
+
+     El dueño distingue las publicaciones gemelas metiendo el segmento en el
+     titulo, de trece maneras: "//Venta Minorista", "/VENTA MINORISTA",
+     " MAYORISTA", "(Venta Mayorista)", "-PUBLICACION MAYORISTA",
+     "- (solo mayorista)", "MAYORISTA UNICAMENTE",
+     "(mayorista) SOLO SI CUBRE MONTO MAYORISTA", "- (negocios distribuidor)",
+     "DISTRIBUIDOR UNICAMENTE", y tres mal escritas -- MAYOTISTA,
+     DISTRICUIDOR, ditribuidor -- que se entienden igual porque corregirlas es
+     del dueño.
+
+     Sirve para agrupar (la mayorista tiene que parecerse a la minorista del
+     mismo producto, o queda suelta y entra como producto nuevo) y para saber
+     que segmento es sin adivinar por precio: la exfoliante mayorista y la
+     distribuidor salen las dos $6.300.
+
+     NO se corta el titulo en la marca: se le saca la marca y se pega lo que
+     queda a los dos lados. "BRUMA ... -PUBLICACION MAYORISTA x 250cc" tiene el
+     tamaño DESPUES de la marca. */
+  var MARCA_PALABRA = {
+    minorista: 'minoristas?',
+    mayorista: 'ma[yv]o[rt]istas?',
+    distribuidor: 'd[ii]s?tr[ii]?bu[ii]dor(?:es)?|districuidor|ditribuidor'
+  };
+  var MARCA_ANTES = '(?:\\b(?:solo|si|cubre|cubrir|monto|debe|deben|venta|ventas|' +
+    'vender|publicacion|lista|precio|precios|para|pedido|pedidos|uso|unicamente)' +
+    '\\b[\\s\\-–—/.,:]*|a?negocios?\\w*[\\s\\-–—/.,:]*)*';
+  var MARCA_DESPUES = '(?:[\\s\\-–—/.,:]*(?:\\b(?:unicamente|only|solamente)\\b' +
+    '|a?negocios?\\w*))*';
+  var MARCA = new RegExp('\\s*[\\-–—/|,]*\\s*[\\(\\[]?\\s*' + MARCA_ANTES + '(?:' +
+    MARCA_PALABRA.minorista + '|' + MARCA_PALABRA.mayorista + '|' +
+    MARCA_PALABRA.distribuidor + ')' + MARCA_DESPUES + '\\s*[\\)\\]]?', 'gi');
+  var MARCA_CUAL = [
+    ['minorista', new RegExp(MARCA_PALABRA.minorista, 'i')],
+    ['mayorista', new RegExp(MARCA_PALABRA.mayorista, 'i')],
+    ['distribuidor', new RegExp(MARCA_PALABRA.distribuidor, 'i')]
+  ];
+
+  // [segmento o null, titulo sin la marca]. Sin marca no toca nada.
+  function sacarMarca(titulo) {
+    var t = String(titulo || ''), pelado = sinAcentos(t), huecos = [], m, seg = null;
+    MARCA.lastIndex = 0;
+    while ((m = MARCA.exec(pelado))) {
+      if (!m[0]) { MARCA.lastIndex++; continue; }   // no girar en un match vacio
+      huecos.push([m.index, m.index + m[0].length, m[0]]);
+    }
+    for (var i = 0; i < huecos.length && !seg; i++) {
+      for (var k = 0; k < MARCA_CUAL.length; k++) {
+        if (MARCA_CUAL[k][1].test(huecos[i][2])) { seg = MARCA_CUAL[k][0]; break; }
+      }
+    }
+    if (!seg) return [null, t];
+    for (var j = huecos.length - 1; j >= 0; j--) {   // de atras para adelante
+      t = t.slice(0, huecos[j][0]) + ' ' + t.slice(huecos[j][1]);
+    }
+    t = t.replace(/[\(\[]\s*[\)\]]/g, ' ').replace(/\s+/g, ' ').trim();
+    return [seg, t.replace(/^[\s\-–—/|,:]+|[\s\-–—/|,:]+$/g, '')];
+  }
+
+  // sync_landing.segmento_de_titulo
+  function segmentoDeTitulo(t) {
+    return sacarMarca(t)[0];
   }
 
   /* ── Descripciones ── */
@@ -6557,7 +6655,10 @@ var VIVO = (function () {
      Probado contra el catalogo entero: de 212 vinculos se mantienen 211 y se
      rompe 1, justo el que estaba mal. Comparar el titulo completo rompia 26,
      casi todos legitimos ("100 g" contra "100g", "x250cc" contra "x250ml"). */
-  var MEDIDA = /(\d+(?:[.,]\d+)?)\s*(kg|grs|gr|gs|g|mg|ml|cc|lts|lt|ls|l)(?![a-z])/g;
+  /* La "c" suelta esta a proposito: "X 100 C HABITAD NATURAL" aparece en once
+     tinturas y es un cc mal escrito. Sin ella, la mayorista de la pezuña de
+     vaca no se parecia a la minorista y entraba como producto aparte. */
+  var MEDIDA = /(\d+(?:[.,]\d+)?)\s*(kg|grs|gr|gs|g|mg|ml|cc|c|lts|lt|ls|l)(?![a-z])/g;
   function medidasDe(t) {
     var texto = normalizar(String(t || '').split('//')[0]).replace(/,/g, '.');
     var fuera = {}, m;
@@ -6567,7 +6668,7 @@ var VIVO = (function () {
       if (u === 'kg') { n *= 1000; u = 'g'; }
       else if (u === 'mg') { n /= 1000; u = 'g'; }
       else if (u === 'grs' || u === 'gr' || u === 'gs') u = 'g';
-      else if (u === 'cc') u = 'ml';
+      else if (u === 'cc' || u === 'c') u = 'ml';
       else if (u === 'l' || u === 'lt' || u === 'lts' || u === 'ls') { n *= 1000; u = 'ml'; }
       if (n > 0) fuera[n + u] = 1;
     }
@@ -6578,6 +6679,128 @@ var VIVO = (function () {
     if (!ma.length || !mb.length) return false;   // alguno no dice tamaño
     for (var i = 0; i < ma.length; i++) if (mb.indexOf(ma[i]) !== -1) return false;
     return true;
+  }
+
+  /* ── Palabras con peso, para emparejar titulos ──
+     sync_landing.palabras_con_peso
+
+     El dueño escribe la publicacion mayorista de un producto con otro titulo
+     que la minorista: "TINTURA MADRE CARDO MARIANO" contra "Tintura Madre de
+     Cardo Mariano – Proteccion Hepatica". Comparando el titulo entero no se
+     parecen, la mayorista queda suelta, y el mayorista termina viendo el precio
+     de lista.
+
+     Se comparan los conjuntos de palabras. Fuera van las que no distinguen
+     nada -- preposiciones, la marca, el segmento -- y el tamaño, que lo mira
+     `chocanMedidas` y que escrito como palabra ("50g" contra "50grs") partia un
+     producto en dos. */
+  var HUECAS = {de: 1, del: 1, la: 1, el: 1, los: 1, las: 1, un: 1, una: 1,
+    unos: 1, unas: 1, con: 1, sin: 1, para: 1, por: 1, y: 1, o: 1, en: 1, al: 1,
+    su: 1, sus: 1, mas: 1, habitad: 1, natural: 1, naturales: 1, organico: 1,
+    organica: 1, organicos: 1, premium: 1, tipo: 1, linea: 1, producto: 1,
+    productos: 1, publicacion: 1, unidad: 1, unidades: 1, venta: 1, solo: 1,
+    cubre: 1, monto: 1, debe: 1, kg: 1, grs: 1, gr: 1, gs: 1, mg: 1, ml: 1,
+    cc: 1, lt: 1, lts: 1, minorista: 1, mayorista: 1, distribuidor: 1,
+    negocios: 1};
+  var SOLO_MEDIDA = /^\d+(?:kg|grs|gr|gs|g|mg|ml|cc|c|lts|lt|ls|l)?$/;
+
+  /* Se memoriza: `emparejar` compara cada suelta contra los 197 del catalogo, y
+     agrupar cien sueltas serian veinte mil pasadas de regex y split en el
+     telefono del cliente, justo cuando empieza a scrollear. Los titulos son
+     ~560 en total, asi que la tabla es chica y cada uno se calcula una vez. */
+  var memoPalabras = {};
+
+  function palabrasConPeso(nombre) {
+    var clave = '@' + String(nombre == null ? '' : nombre);
+    if (Object.prototype.hasOwnProperty.call(memoPalabras, clave)) {
+      return memoPalabras[clave];
+    }
+    var salida = {}, partes = claveTitulo(tituloDeTienda(nombre)).split(' ');
+    for (var i = 0; i < partes.length; i++) {
+      var w = partes[i];
+      if (w.length > 2 && !HUECAS[w] && !SOLO_MEDIDA.test(w)) salida[w] = 1;
+    }
+    return (memoPalabras[clave] = Object.keys(salida));
+  }
+
+  function entraEn(a, b) {          // todas las de `a` estan en `b`
+    for (var i = 0; i < a.length; i++) if (b.indexOf(a[i]) === -1) return false;
+    return true;
+  }
+
+  /* ── ¿Los dos titulos hablan del MISMO producto? ──
+     Cuantas palabras con peso comparten, o -1 si no hablan del mismo. Una tiene
+     que entrar entera en la otra y los tamaños no pueden chocar. La usan las dos
+     cosas que necesitan la misma regla: colgar una publicacion suelta de un
+     producto que ya esta, y agrupar las sueltas entre si.
+
+     Sin titulo con peso -- "Gestarte" -- se cae al titulo clavado: con una sola
+     palabra, "entra en" haria entrar cualquier cosa en cualquier cosa. */
+  function mismoProducto(a, b) {
+    if (chocanMedidas(a, b)) return -1;
+    var pa = palabrasConPeso(a), pb = palabrasConPeso(b);
+    if (pa.length < 2 || pb.length < 2) {
+      return claveTitulo(tituloDeTienda(a)) === claveTitulo(tituloDeTienda(b)) ? 0 : -1;
+    }
+    if (!entraEn(pa, pb) && !entraEn(pb, pa)) return -1;
+    return cuantasComparten(pa, pb);
+  }
+
+  function cuantasComparten(a, b) {
+    var n = 0;
+    for (var i = 0; i < a.length; i++) if (b.indexOf(a[i]) !== -1) n++;
+    return n;
+  }
+
+  /* sync_landing.emparejar
+     El producto de `productos` que habla de lo mismo que `nombre`. Gana el que
+     comparte mas palabras: la bruma mayorista encaja en "bruma aurica contra la
+     envidia, el enojo y la bronca" (5 palabras) y tambien en un producto
+     llamado apenas "Bruma Aurica" (2). Con empate se devuelve null: ahi ya
+     seria elegir a ojo.
+
+     En Python las palabras se le pasan calculadas; aca alcanza con la tabla de
+     `palabrasConPeso`. */
+  function emparejar(nombre, productos) {
+    // Un titulo de una sola palabra no alcanza para colgarlo de nada. El
+    // encaje exacto ya lo probo quien llama, por clave de titulo.
+    if (palabrasConPeso(nombre).length < 2) return null;
+    var mejor = -1, ganan = [];
+    for (var i = 0; i < productos.length; i++) {
+      var cuantas = mismoProducto(nombre, productos[i].n);
+      if (cuantas < 0) continue;
+      if (cuantas > mejor) { mejor = cuantas; ganan = [productos[i]]; }
+      else if (cuantas === mejor) ganan.push(productos[i]);
+    }
+    return ganan.length === 1 ? ganan[0] : null;
+  }
+
+  /* ── En que estante va un producto que entra solo ──
+     sync_landing.CATEGORIAS, la misma lista y en el mismo orden: gana la
+     primera que coincide. Si las dos no dijeran lo mismo, un producto que entra
+     en vivo cambiaria de categoria en la proxima sincronizacion y el cliente lo
+     veria saltar de estante. */
+  var CATEGORIAS = [
+    ['packs', /\bcombo|\bpacks?\b|\bkits?\b|\bpromos?\b/],
+    ['aromas', /sahum|difusor|hornito|hornillo|esencia|aroma|incien|palo santo|humo|carbon|chakra|llavero|colgante|pulsera|dije|armonizador|lampara de sal|bruma|perfume|vela|defumac/],
+    ['hongos', /hongo|micos|antimicot|u\W?as? de los pies|onico/],
+    ['femenino', /menstrual|menopaus|femenin|intim|vaginal|utero/],
+    ['respiracion', /vick|pecho|respirat|eucalipto|bronqui|tos\b|resfr|gripe|anacahuita|asma/],
+    ['cardiovascular', /circulaci|varice|presion|cardio|colesterol|corazon|piernas cansadas/],
+    ['digestion', /digest|estomac|hepat|higado|intestin|carqueja|boldo|parasit/],
+    ['defensas', /defensa|inmun|propole|equinace|vitamina c|jengibre|plata coloidal|cobre coloidal|oregano|invierno/],
+    ['descanso', /relaj|descanso|dormir|sue\W?o|valeriana|pasionaria|tilo|lavanda|melisa|calma|estres|ansied|sedante|antifaz|almohadilla/],
+    ['piel', /piel|facial|crema|rosa mosqueta|caiendula|calendula|aloe|cabello|shampoo|jabon|labial|exfoli|antiage|anti-age|contorno|dermis|acne|cicatri/],
+    ['dolor', /dolor|arnica|muscular|articul|contractura|masaje|criogen|unguento|calambre|golpe|cannabis|coca\b|balsamo/],
+    ['corporal', /desodorante|corporal|higiene|cuidado diario|talco|sales de ba/]
+  ];
+
+  function categoriaDe(nombre) {
+    var n = normalizar(tituloDeTienda(nombre));
+    for (var i = 0; i < CATEGORIAS.length; i++) {
+      if (CATEGORIAS[i][1].test(n)) return CATEGORIAS[i][0];
+    }
+    return 'corporal';              // el cajon de "cuidado diario"
   }
 
   // sync_landing.a_parrafos
@@ -6728,7 +6951,9 @@ var VIVO = (function () {
     tituloDeTienda: tituloDeTienda, esCombo: esCombo, limpiarHtml: limpiarHtml,
     limpiarDescripcion: limpiarDescripcion, aParrafos: aParrafos,
     leerListado: leerListado, leerFicha: leerFicha, galeria: galeria,
-    medidasDe: medidasDe, chocanMedidas: chocanMedidas
+    medidasDe: medidasDe, chocanMedidas: chocanMedidas,
+    segmentoDeTitulo: segmentoDeTitulo, palabrasConPeso: palabrasConPeso,
+    emparejar: emparejar, mismoProducto: mismoProducto, categoriaDe: categoriaDe
   };
 })();
 
@@ -6868,55 +7093,106 @@ var catalogoVivo = (function () {
     });
     salen.forEach(p => PRODUCTOS.splice(PRODUCTOS.indexOf(p), 1));
 
-    /* Publicaciones sueltas. Primero se intenta pegarlas al producto que ya
-       tiene ese titulo, en el segmento que le falte: casi siempre son la ficha
-       mayorista o distribuidor de algo que ya esta. */
+    /* Publicaciones sueltas. Primero se intenta colgarlas del producto que ya
+       esta: casi siempre son la lista mayorista o distribuidor de algo que la
+       landing ya tiene en minorista.
+
+       El titulo clavado no alcanza -- el dueño escribe la mayorista con otro
+       nombre que la minorista --, asi que si no coincide se empareja por
+       palabras y tamaño. Y el segmento sale de lo que la publicacion declara en
+       su propio nombre: es lo unico que distingue la exfoliante mayorista de la
+       distribuidor, que salen las dos $6.300. */
     const porTitulo = new Map();
     PRODUCTOS.forEach(p => {
       const k = VIVO.claveTitulo(p.n);
       if (k && !porTitulo.has(k)) porTitulo.set(k, p);
     });
-    const huerfanas = [];
-    pubs.forEach(f => {
-      if (usadas.has(f.id)) return;
-      const p = porTitulo.get(VIVO.claveTitulo(tituloLimpio(VIVO.tituloDeTienda(f.n))));
-      // Mismo control que arriba: el titulo coincide pero el tamaño no.
-      if (p && VIVO.chocanMedidas(p.n, f.n)){ huerfanas.push(f); return; }
-      const libres = p ? SEGS.filter(s => !conId(p, s)) : [];
-      if (!libres.length){ huerfanas.push(f); return; }
+
+    // Donde entra esta publicacion dentro de `p`, o '' si no entra en ninguno.
+    const dondeVa = (f, p) => {
+      const libres = SEGS.filter(s => !conId(p, s));
+      if (!libres.length) return '';          // ya tiene los tres: es otra cosa
+      const dice = VIVO.segmentoDeTitulo(f.n);
+      if (dice) return libres.indexOf(dice) !== -1 ? dice : '';
       const caro = Math.max(0, ...SEGS.map(s => p.pr[s] || 0));
-      const s = (f.precio > caro && libres.indexOf('minorista') !== -1) ? 'minorista' : libres[0];
+      return (f.precio > caro && libres.indexOf('minorista') !== -1) ? 'minorista' : libres[0];
+    };
+    const colgar = (p, s, f) => {
       p.ids[s] = f.id; p.pr[s] = f.precio; p.st[s] = f.stock;
       (p.un || (p.un = {}))[s] = f.unidades;
       (p.varsSeg || (p.varsSeg = {}))[s] = f.opciones || null;
       if (f.url) (p.urls || (p.urls = {}))[s] = f.url;
+    };
+
+    const huerfanas = [];
+    pubs.forEach(f => {
+      if (usadas.has(f.id)) return;
+      let p = porTitulo.get(VIVO.claveTitulo(tituloLimpio(VIVO.tituloDeTienda(f.n)))) || null;
+      // El titulo coincide pero el tamaño no: no es este producto.
+      if (p && VIVO.chocanMedidas(p.n, f.n)) p = null;
+      if (!p) p = VIVO.emparejar(f.n, PRODUCTOS);
+      const s = p ? dondeVa(f, p) : '';
+      if (!s){ huerfanas.push(f); return; }
+      colgar(p, s, f);
       usadas.add(f.id);
       cambiados.add(p);
     });
 
-    // Altas: solo combos, y solo con el listado completo.
+    /* ALTAS. Lo que no se pudo colgar de nada es un producto que la landing no
+       tiene: el dueño lo publico en el panel y aparece acá sin esperar la
+       próxima sincronización ni el próximo armado.
+
+       Antes entraban solo los combos. Ahora entra cualquier producto, con tres
+       controles: el rubro (los libros, el tarot y los frascos vacíos no son
+       parte del embudo), el precio (sin precio no hay nada que vender) y el
+       listado completo (con una página a medias no se agrega nada). */
     if (completo){
-      const grupos = new Map();
-      huerfanas.forEach(f => {
-        const titulo = VIVO.tituloDeTienda(f.n);
-        if (!VIVO.esCombo(titulo)) return;
-        const k = VIVO.claveTitulo(titulo);
-        if (!grupos.has(k)) grupos.set(k, []);
-        grupos.get(k).push(f);
-      });
-      grupos.forEach(grupo => {
-        // La mas cara es la minorista, despues mayorista, despues distribuidor.
-        grupo.sort((a, b) => (b.precio || 0) - (a.precio || 0));
-        const nuevo = {n: tituloLimpio(VIVO.tituloDeTienda(grupo[0].n)), img: grupo[0].img,
-                       d: descripcionLimpia(''), necs: ['packs'],
-                       pr: {}, st: {}, un: {}, varsSeg: {}, ids: {}, urls: {}, vivo: true};
-        grupo.slice(0, SEGS.length).forEach((f, k) => {
-          nuevo.ids[SEGS[k]] = f.id; nuevo.pr[SEGS[k]] = f.precio;
-          nuevo.st[SEGS[k]] = f.stock; nuevo.un[SEGS[k]] = f.unidades;
-          nuevo.varsSeg[SEGS[k]] = f.opciones || null;
-          nuevo.urls[SEGS[k]] = f.url;
+      const entran = huerfanas.filter(f =>
+        f.precio &&
+        !FUERA_DE_RUBRO.has(f.id) &&
+        !FUERA_POR_NOMBRE.test(VIVO.normalizar(f.n)));
+      // La mas cara primero: es la minorista, y la que representa al grupo.
+      entran.sort((a, b) => (b.precio || 0) - (a.precio || 0));
+
+      /* Se agrupan con la misma regla que se usó para colgarlas, y contra el
+         PRIMERO de cada grupo -- el más caro -- y no contra todos: así un grupo
+         no se va agrandando de a poco hasta tragarse algo que no tiene nada que
+         ver. */
+      const grupos = [];
+      entran.forEach(f => {
+        let donde = null, mejor = -1;
+        grupos.forEach(gr => {
+          const cuantas = VIVO.mismoProducto(f.n, gr[0].n);
+          if (cuantas > mejor){ donde = gr; mejor = cuantas; }
         });
-        if (grupo[0].opciones) nuevo.vars = grupo[0].opciones;
+        if (donde) donde.push(f); else grupos.push([f]);
+      });
+
+      grupos.forEach(grupo => {
+        /* El que dice su segmento va a ese; los callados llenan lo que queda,
+           del mas caro al mas barato. */
+        const puestos = {}, callados = [];
+        grupo.forEach(f => {
+          const dice = VIVO.segmentoDeTitulo(f.n);
+          if (dice && !puestos[dice]) puestos[dice] = f; else callados.push(f);
+        });
+        SEGS.filter(s => !puestos[s]).forEach((s, k) => {
+          if (callados[k]) puestos[s] = callados[k];
+        });
+
+        const canon = puestos.minorista || grupo[0];
+        const nombre = tituloLimpio(VIVO.tituloDeTienda(canon.n));
+        const nuevo = {n: nombre, img: canon.img, d: descripcionLimpia(''),
+                       necs: [VIVO.categoriaDe(canon.n)],
+                       pr: {}, st: {}, un: {}, varsSeg: {}, ids: {}, urls: {}, vivo: true};
+        SEGS.forEach(s => {
+          const f = puestos[s];
+          if (!f) return;
+          nuevo.ids[s] = f.id; nuevo.pr[s] = f.precio; nuevo.st[s] = f.stock;
+          nuevo.un[s] = f.unidades; nuevo.varsSeg[s] = f.opciones || null;
+          nuevo.urls[s] = f.url;
+        });
+        if (canon.opciones) nuevo.vars = canon.opciones;
         PRODUCTOS.push(nuevo);
         altas.push(nuevo);
       });
