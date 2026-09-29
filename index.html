@@ -1369,18 +1369,26 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
     <h2 class="tit tit--chico">¿Comprás para vos o para revender?</h2>
     <p class="sub">Si revendés tenés precios diferenciados en todo el catálogo.</p>
 
+    <!-- Cada boton tiene su id para que un anuncio pueda apuntarle. El ancla
+         sola no alcanza -- cuando el navegador la busca, la landing todavia no
+         existe --, asi que la direccion se lee tambien desde el guion, en
+         `segmentoDeLaUrl`. Las cuatro direcciones estan ahi anotadas. -->
     <div class="seg-nivel" id="segN1">
-      <button class="seg-btn" type="button" data-seg="minorista" aria-pressed="false">
+      <button class="seg-btn" type="button" id="seg-minorista"
+              data-seg="minorista" aria-pressed="false">
         <b>MINORISTA</b><span>Precio de lista, sin mínimo</span></button>
-      <button class="seg-btn" type="button" data-abre="mayorista" aria-pressed="false">
+      <button class="seg-btn" type="button" id="seg-revender"
+              data-abre="mayorista" aria-pressed="false">
         <b>MAYORISTA</b><span>Para revender</span></button>
     </div>
 
     <div class="seg-nivel2" id="segN2">
       <div class="seg-nivel">
-        <button class="seg-btn" type="button" data-seg="mayorista" aria-pressed="false">
+        <button class="seg-btn" type="button" id="seg-mayorista"
+                data-seg="mayorista" aria-pressed="false">
           <b>MAYORISTA 20%</b><span>Mínimo $100.000</span></button>
-        <button class="seg-btn" type="button" data-seg="distribuidor" aria-pressed="false">
+        <button class="seg-btn" type="button" id="seg-distribuidor"
+                data-seg="distribuidor" aria-pressed="false">
           <b>DISTRIBUIDOR 30%</b><span>Mínimo $250.000</span></button>
       </div>
     </div>
@@ -8062,6 +8070,92 @@ const varianteDelAnuncio = (function (){
   const v = new URLSearchParams(location.search).get('variant');
   return v && /^\d+$/.test(v) ? String(v) : '';
 })();
+/* ══════════ EL ANUNCIO QUE ELIGE CON QUE PRECIOS ENTRAR ══════════
+   Un anuncio mayorista tiene que caer en el catalogo con los precios de
+   reventa YA puestos, no en el precio de lista con el selector a mitad de
+   pagina. Cada boton del selector tiene su id y su nombre en la direccion:
+
+       /?segmento=minorista      MINORISTA            #seg-minorista
+       /?segmento=revender       MAYORISTA            #seg-revender
+       /?segmento=mayorista      MAYORISTA 20%        #seg-mayorista
+       /?segmento=distribuidor   DISTRIBUIDOR 30%     #seg-distribuidor
+
+   Tambien vale el ancla suelta -- /#mayorista --, y se aceptan los plurales y
+   las formas en que uno escribe esto de memoria (revendedor, reventa,
+   mayorista20, distribuidor30).
+
+   El ancla SOLA no alcanza, y por eso se lee aca: cuando el navegador busca el
+   ancla, la landing todavia no existe -- se planta recien cuando llega
+   home.js --, asi que el salto nativo no encuentra nada a donde ir. */
+const SEGMENTO_EN_URL = {
+  minorista: 'minorista', minoristas: 'minorista', lista: 'minorista',
+  mayorista: 'mayorista', mayoristas: 'mayorista', mayorista20: 'mayorista',
+  distribuidor: 'distribuidor', distribuidores: 'distribuidor',
+  distribuidor30: 'distribuidor',
+  revender: 'revender', revendedor: 'revender', revendedores: 'revender',
+  reventa: 'revender'
+};
+
+function segmentoDeLaUrl(){
+  let v = '';
+  // Se busca sin mirar mayusculas: el que arma el anuncio escribe Segmento=.
+  new URLSearchParams(location.search).forEach((valor, clave) => {
+    if (!v && /^segmentos?$/i.test(clave)) v = valor;
+  });
+  if (!v && location.hash) v = location.hash.slice(1);
+  v = String(v || '').toLowerCase().replace(/^seg-/, '').replace(/[^a-z0-9]/g, '');
+  return Object.prototype.hasOwnProperty.call(SEGMENTO_EN_URL, v)
+    ? SEGMENTO_EN_URL[v] : '';
+}
+
+/* Devuelve true si hay que bajar hasta el selector. */
+function elegirSegmentoDelAnuncio(){
+  const pedido = segmentoDeLaUrl();
+  if (!pedido) return false;
+
+  /* "revender" es el boton que solo abre el segundo nivel: deja 20% y 30% a
+     la vista sin elegir por el cliente, que es lo que hace el boton a mano. */
+  if (pedido === 'revender'){
+    const n2 = $('#segN2');
+    if (n2) n2.classList.add('on');
+    const abre = document.querySelector('#segN1 [data-abre]');
+    if (abre) abre.setAttribute('aria-pressed', 'true');
+    track('segmento_desde_anuncio', {segment: 'revender', aplicado: false});
+    return true;
+  }
+
+  if (pedido === segmento && segmentoElegido) return true;   // ya estaba
+
+  /* Con el carrito cargado no se toca nada. Cambiar de segmento lo vacia, y
+     hacerlo solo porque alguien volvio a entrar por un anuncio es la forma mas
+     cara de perder una compra: se baja hasta el selector y elige el cliente. */
+  if (Object.keys(carrito).length && pedido !== segmento){
+    const n2 = $('#segN2');
+    if (n2 && pedido !== 'minorista') n2.classList.add('on');
+    track('segmento_desde_anuncio',
+          {segment: pedido, aplicado: false, motivo: 'carrito cargado'});
+    return true;
+  }
+
+  segmentoElegido = true;
+  ponerSegmento(pedido);
+  track('segmento_desde_anuncio', {segment: pedido, aplicado: true});
+  track('select_customer_type', {segment: pedido});
+  return true;
+}
+
+/* Hasta el selector, no hasta la grilla: el cliente tiene que VER con que
+   precios entro y que puede cambiarlo. */
+function bajarAlSelector(){
+  const caja = $('#segmento');
+  if (!caja) return;
+  const suave = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  setTimeout(() => {
+    const y = Math.max(0, caja.getBoundingClientRect().top + window.scrollY - 12);
+    window.scrollTo({top: y, behavior: suave ? 'smooth' : 'auto'});
+  }, 220);
+}
+
 let anuncioResuelto = false;
 /* Se prende antes de abrir sola la ficha de ?producto=: si el visitante vino de
    una ficha de la tienda, ese ViewContent ya salio alla. */
@@ -8200,11 +8294,19 @@ try {
 /* Las categorias de la tienda: la lista, del encabezado de esta misma pagina;
    lo que tiene cada una, de lo guardado. Tampoco pide nada. */
 categoriasVivas.iniciar();
+/* El que llega de un anuncio que elige con que precios entrar. Va ANTES del
+   primer pintado a proposito: asi la grilla sale directamente con los precios
+   de reventa, y el cliente no ve los de lista y despues un salto. */
+const bajarAlSeg = elegirSegmentoDelAnuncio();
 pintarHitos();
 pintar(); pintarPacks(); recalcular();
 /* El que viene de un anuncio de catalogo, con su producto ya abierto. Con lo
    guardado suele alcanzar; si no, se reintenta en cuanto conteste la tienda. */
 abrirProductoDelAnuncio(false);
+/* Y recien despues de pintar se baja, porque antes el selector no tiene su
+   alto definitivo. Si el anuncio ademas trae ?producto=, manda la ficha: dos
+   saltos en la misma carga marean. */
+if (bajarAlSeg && !productoDelAnuncio) bajarAlSelector();
 /* Corre fn cuando el navegador no tenga nada mejor que hacer, nunca antes de
    `minimo` ms y nunca despues de `tope`. Sin requestIdleCallback (Safari
    viejo) cae a un setTimeout, que es lo que habia antes. */
