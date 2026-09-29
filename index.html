@@ -3677,6 +3677,9 @@ $('#segN1').addEventListener('click', e => {
   if (b.dataset.abre === 'mayorista'){
     $('#segN2').classList.add('on');              // recién acá aparecen 20% y 30%
     b.setAttribute('aria-pressed','true');
+    /* Todavia no eligio 20% ni 30%, pero abrir la reventa ya es una eleccion:
+       la direccion la guarda para que el anuncio pueda apuntar aca. */
+    ponerSegmentoEnLaDireccion('revender');
     return;
   }
   pedirSegmento('minorista');
@@ -3700,6 +3703,8 @@ function aplicarSegmento(id, conservarCarrito){
   }
   segmentoElegido = true;
   ponerSegmento(id);
+  // Y la barra de direcciones pasa a decirlo: ?segmento=mayorista.
+  ponerSegmentoEnLaDireccion(id);
   track('select_customer_type', {segment:id});
 
   pintar(); pintarPacks(); recalcular();
@@ -7977,6 +7982,43 @@ function direccionConProducto(mango){
   if (mango) u.searchParams.set(FICHA_EN_URL, mango);
   else u.searchParams.delete(FICHA_EN_URL);
   return u.pathname + u.search + u.hash;
+}
+
+/* ── LA LISTA DE PRECIOS TAMBIEN SE VE EN LA DIRECCION ──
+   Al tocar una de las cuatro tarjetas, la barra pasa a decir
+   ?segmento=mayorista. Sirve para tres cosas: el que arma un anuncio copia la
+   direccion de la barra en vez de buscarla en un documento, el cliente puede
+   compartir el catalogo con sus precios, y si recarga la pagina vuelve a donde
+   estaba.
+
+   Va con replaceState y no con pushState: elegir una lista de precios es el
+   estado de la pagina, no una pantalla nueva. Con push, "atras" iria pasando
+   por cada precio que el cliente probo en vez de sacarlo del sitio, que es lo
+   que espera.
+
+   Solo cuando el cliente ELIGE. Al recuperar la visita anterior no se toca la
+   direccion: ahi no eligio nada ahora, y agregarle un parametro a una
+   direccion limpia que alguien podria estar por compartir es meterse donde no
+   nos llaman. */
+const SEGMENTO_EN_LA_URL = 'segmento';
+
+function direccionConSegmento(id){
+  const u = new URL(location.href);
+  if (id) u.searchParams.set(SEGMENTO_EN_LA_URL, id);
+  else u.searchParams.delete(SEGMENTO_EN_LA_URL);
+  /* El ancla se va: si quedo un #seg-mayorista de la direccion con la que
+     entro, contradice al parametro nuevo. */
+  return u.pathname + u.search + (/^#seg-/.test(u.hash) ? '' : u.hash);
+}
+
+function ponerSegmentoEnLaDireccion(id){
+  if (moviendoHistorial) return;
+  const puesto = (new URLSearchParams(location.search).get(SEGMENTO_EN_LA_URL) || '')
+    .toLowerCase();
+  if (puesto === id) return;
+  try {
+    history.replaceState(history.state, '', direccionConSegmento(id));
+  } catch (e) { /* sin history -- un navegador viejo -- la landing sigue igual */ }
 }
 
 function ponerFichaEnLaDireccion(p){
