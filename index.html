@@ -8310,7 +8310,7 @@ function ponerBusqueda(texto, aunqueNoHaya){
 /* Devuelve true cuando ya no queda nada por intentar: o se abrio la ficha, o
    se dejo la busqueda puesta. ultimoIntento se pasa recien con el catalogo ya
    leido de la tienda; antes de eso, no encontrarlo no quiere decir nada. */
-function abrirFichaDeMango(mango, conRespaldo){
+function abrirFichaDeMango(mango, conRespaldo, loEscrito){
   const p = productoPorMango(mango);
   if (p && (p.necs.includes('packs') || hayEn(p, segmento))){
     /* La variante del anuncio, si la conocemos. Se elige ANTES de abrir, asi
@@ -8330,9 +8330,30 @@ function abrirFichaDeMango(mango, conRespaldo){
     return {p, como: 'ficha'};
   }
   if (!conRespaldo) return {p, como: ''};
-  /* Existe pero no se vende a este segmento: la busqueda por nombre lo muestra
-     igual, y la grilla vacia ya avisa que hay que cambiar a Minorista. */
-  if (p) { ponerBusqueda(p.n, true); return {p, como: 'otro-segmento'}; }
+  /* ── EXISTE, PERO NO SE VENDE A ESTA LISTA DE PRECIOS ──
+     Buscar su NOMBRE deja la grilla vacia, porque la busqueda tambien filtra
+     por segmento, y eso es un callejon sin salida. Se vio el 29/09, apenas el
+     buscador del theme empezo a caer aca: el cliente escribio "jarilla", toco
+     la primera sugerencia --que resulto ser la publicacion MAYORISTA-- y se
+     quedo mirando "Nada con «unguento Con Romero, Jarilla, aguAribay, Jengibre
+     y Alcanfor»". Las sugerencias de Brasilia mezclan las tres listas, asi que
+     esto pasa seguido.
+
+     Dos cosas: se le dice en una linea con que lista se vende el que toco, y
+     se busca lo que EL escribio, que casi siempre da algo -- con "jarilla" hay
+     dos productos que si puede comprar. Si no escribio nada (vino de un
+     anuncio) se queda el catalogo entero, que con el aviso al lado ya se
+     entiende. */
+  if (p) {
+    const listas = ESCALA.filter(s => hayEn(p, s)).map(s => SEGMENTOS[s].label);
+    if (listas.length){
+      avisoCarrito('«' + tituloLimpio(p.n) + '» se vende con precios de ' +
+        listas.join(' o ').toLowerCase() + '. Cambiá arriba para verlo.');
+    }
+    if (loEscrito) ponerBusqueda(loEscrito, true);
+    bajarAlSelector();
+    return {p, como: 'otro-segmento'};
+  }
   /* No esta en la landing. Son 94 publicaciones minoristas de la tienda que
      nunca se importaron. Si la busqueda por nombre encuentra algo parecido, se
      muestra; si no, se lo devuelve a la ficha de la tienda, que es adonde
@@ -8376,7 +8397,17 @@ window.__habitadBuscar = function (texto){
   return true;
 };
 window.__habitadAbrirProducto = function (mango){
-  const r = abrirFichaDeMango(String(mango || '').toLowerCase(), true);
+  /* Lo que el cliente escribio en el buscador del theme. Se lee de aca y no se
+     lo pide al cargador a proposito: el cargador esta pegado a mano en el panel
+     y cambiarlo obliga al dueño a pegarlo de nuevo. El campo es del theme y
+     esta en todas las paginas, asi que alcanza con mirarlo.
+
+     Sirve para cuando la publicacion que toco no se vende a su lista de
+     precios: ahi buscar el NOMBRE del producto deja la grilla vacia, y lo que
+     el escribio casi siempre da algo. */
+  const campo = document.querySelector('.js-search-input');
+  const escrito = campo && campo.value ? String(campo.value).trim() : '';
+  const r = abrirFichaDeMango(String(mango || '').toLowerCase(), true, escrito);
   track('producto_desde_buscador', {item_name: r.p ? r.p.n : mango, metodo: r.como});
   return true;
 };
