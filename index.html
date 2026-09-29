@@ -8230,7 +8230,17 @@ function bajarAlSelector(){
     html.style.scrollBehavior = previo;
   };
 
-  const hasta = Date.now() + 3000;
+  /* Tres segundos alcanzan en una carga normal. En una lenta no: medido en la
+     tienda, con el theme todavia sin estilos el selector seguia moviendose
+     despues de que el reloj se acabara, y el salto quedaba a medias. Asi que si
+     la pagina sigue cargando se estira hasta poco despues de `load`, con un
+     tope duro para no quedarse tironeando la pagina si `load` no llega nunca. */
+  let hasta = Date.now() + 3000;
+  const tope = Date.now() + 8000;
+  if (document.readyState !== 'complete'){
+    addEventListener('load', () => { hasta = Date.now() + 800; }, {once: true});
+  }
+
   const intentar = () => {
     const y = Math.max(0, caja.getBoundingClientRect().top + window.scrollY - 12);
     /* Con el selector todavia sin medir, `y` da 0. Eso no es "ya esta puesto":
@@ -8240,7 +8250,7 @@ function bajarAlSelector(){
       if (Math.abs(y - window.scrollY) > 24) saltar(y);
       puesto = true;
     }
-    if (Date.now() < hasta) setTimeout(intentar, 250);
+    if (Date.now() < Math.min(hasta, tope)) setTimeout(intentar, 250);
     else soltar();
   };
   setTimeout(intentar, 200);
