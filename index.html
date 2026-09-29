@@ -7236,6 +7236,11 @@ var catalogoVivo = (function () {
   function repintar(conFicha){
     const grilla = $('#grilla');
     const x = grilla ? grilla.scrollLeft : 0;
+    /* Y donde estaba la PAGINA. Vaciar la grilla y volver a llenarla la achica
+       por un instante, y si el visitante estaba mas abajo que ese alto nuevo el
+       navegador le recorta el scroll a 0 y lo manda arriba de todo. Se guardaba
+       el scroll horizontal del carrusel y no el vertical de la pagina. */
+    const y = window.scrollY;
     pintar();
     if (grilla && x){
       grilla.style.scrollBehavior = 'auto';
@@ -7245,6 +7250,8 @@ var catalogoVivo = (function () {
     }
     pintarPacks();
     recalcular();
+    // Despues de pintar todo, que es cuando el alto ya es el definitivo.
+    if (y && Math.abs(window.scrollY - y) > 2) window.scrollTo(0, y);
     if (conFicha && vista && PRODUCTOS.indexOf(vista.p) !== -1) llenarVista(vista.p);
   }
 
@@ -8158,14 +8165,21 @@ function bajarAlSelector(){
      y un instante despues el contenido de arriba lo corre para abajo. Medido
      en la tienda el 28/09: con un solo intento quedaba en 0 con el selector a
      844 px. */
-  let veces = 0, dondeLoDejamos = -1;
+  /* Se rinde en cuanto el visitante toca algo: desde ahi la pagina es suya.
+     Es mas preciso que mirar si el scroll cambio, porque el scroll tambien lo
+     mueve el navegador solo cuando el documento cambia de alto. */
+  let suelto = false;
+  const rendirse = () => { suelto = true; };
+  const gestos = ['wheel', 'touchstart', 'keydown', 'mousedown'];
+  gestos.forEach(g => addEventListener(g, rendirse, {passive: true, once: true}));
+
+  const hasta = Date.now() + 3000;
   const intentar = () => {
-    // Si el visitante ya se movio por su cuenta, no se le pelea el scroll.
-    if (dondeLoDejamos >= 0 && Math.abs(window.scrollY - dondeLoDejamos) > 8) return;
+    if (suelto) return;
     const y = Math.max(0, caja.getBoundingClientRect().top + window.scrollY - 12);
     if (Math.abs(y - window.scrollY) > 24) window.scrollTo(0, y);
-    dondeLoDejamos = Math.round(window.scrollY);
-    if (++veces < 5) setTimeout(intentar, 350);
+    if (Date.now() < hasta) setTimeout(intentar, 300);
+    else gestos.forEach(g => removeEventListener(g, rendirse));
   };
   setTimeout(intentar, 220);
 }
