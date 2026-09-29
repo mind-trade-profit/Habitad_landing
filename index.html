@@ -7791,7 +7791,60 @@ var categoriasVivas = (function () {
     return s;
   }
 
+  /* ══ LAS CATEGORIAS QUE SON UNA LISTA DE PRECIOS, NO UN RUBRO ══
+     La tienda tiene dos que no dicen QUE es el producto sino A QUIEN se le
+     vende: "Lista mayorista /revendedor -minimo $100.000" y
+     "NEGOCIOS-COMERCIOS-DISTRIBUIDOR".
+
+     Salian como una pastilla mas en el catalogo minorista, prometiendo un
+     descuento que esa vista no aplica: el cliente tocaba "Lista mayorista" y
+     veia 71 productos a precio de lista. Lo trajo el cliente el 29/09/2026. Y
+     en su propia lista tampoco sirven, porque ahi son casi todo el catalogo:
+     la landing ya tiene el selector de precios para eso.
+
+     NO se listan a mano: se miran las publicaciones que tienen. Una categoria
+     de rubro es casi toda minorista -- la mas mezclada es "aceites para piel y
+     cabello", con 1 de 8 --, y estas dos son 71 de 76 mayoristas y 49 de 49
+     distribuidor. Medido contra la tienda el 29/09. Con un piso del 60% no hay
+     forma de confundirlas, y el dia que el dueño arme otra lista de precios
+     como categoria, sale sola.
+
+     Se necesitan al menos cinco publicaciones para juzgar: con dos, una sola
+     mal clasificada daria el 50%. */
+  const PISO_LISTA = 0.6;
+  const MINIMO_PARA_JUZGAR = 5;
+  let rutasDeLista = new Set();
+
+  function clasificarListasDePrecios(){
+    const deQuien = new Map();
+    PRODUCTOS.forEach(p => SEGS.forEach(s => {
+      if (p.ids[s] != null) deQuien.set(+p.ids[s], s);
+    }));
+    const fuera = new Set();
+    aplanar(arbol).forEach(c => {
+      const suyas = ids.get(c.ruta) || [];
+      if (suyas.length < MINIMO_PARA_JUZGAR) return;
+      const cuenta = {minorista: 0, mayorista: 0, distribuidor: 0};
+      let conocidas = 0;
+      suyas.forEach(id => {
+        const s = deQuien.get(+id);
+        if (s){ cuenta[s]++; conocidas++; }
+      });
+      if (!conocidas) return;
+      const reventa = Math.max(cuenta.mayorista, cuenta.distribuidor);
+      if (reventa / conocidas >= PISO_LISTA) fuera.add(c.ruta);
+    });
+    // Y lo que cuelga de una lista de precios es parte de la misma lista.
+    aplanar(arbol).forEach(c => {
+      const raiz = raizDe(c.ruta);
+      if (raiz && fuera.has(raiz.ruta)) fuera.add(c.ruta);
+    });
+    rutasDeLista = fuera;
+    if (fuera.size) api.listasDePrecios = [...fuera];
+  }
+
   function productosDeNodo(c, lista){
+    if (rutasDeLista.has(c.ruta)) return [];
     const s = idsDeNodo(c);
     if (!s.size) return [];
     return lista.filter(p => SEGS.some(g => p.ids[g] != null && s.has(+p.ids[g])));
@@ -7812,10 +7865,17 @@ var categoriasVivas = (function () {
   }
 
   function indexarNombres(){
+    /* Primero se decide cuales son listas de precios, porque el indice del
+       buscador tampoco tiene que llevarlas: con ellas adentro, buscar
+       "mayorista" devolvia 71 productos que no tienen nada que ver entre si. */
+    clasificarListasDePrecios();
     const m = new Map();
-    aplanar(arbol).forEach(c => (ids.get(c.ruta) || []).forEach(id => {
-      m.set(id, m.has(id) ? m.get(id) + ' ' + c.n : c.n);
-    }));
+    aplanar(arbol).forEach(c => {
+      if (rutasDeLista.has(c.ruta)) return;
+      (ids.get(c.ruta) || []).forEach(id => {
+        m.set(id, m.has(id) ? m.get(id) + ' ' + c.n : c.n);
+      });
+    });
     nombresPorPub = m;
   }
 
