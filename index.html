@@ -8154,7 +8154,10 @@ function elegirSegmentoDelAnuncio(){
 /* Hasta el selector, no hasta la grilla: el cliente tiene que VER con que
    precios entro y que puede cambiarlo. */
 function bajarAlSelector(){
+  window.__saltoDbg = window.__saltoDbg || [];
+  window.__saltoDbg.push('entro');
   const caja = $('#segmento');
+  window.__saltoDbg.push('caja=' + (caja ? 'si' : 'NO'));
   if (!caja) return;
   /* De un salto y no con animacion: el que llega de un anuncio tiene que
      APARECER en el selector, no ver la pagina desfilar. Y de paso se puede
@@ -8184,9 +8187,12 @@ function bajarAlSelector(){
     const y = Math.max(0, caja.getBoundingClientRect().top + window.scrollY - 12);
     /* Con el selector todavia sin medir, `y` da 0. Eso no es "ya esta puesto":
        es que la pagina no termino de armarse. */
+    window.__saltoDbg.push('y=' + Math.round(y) + ' sy=' + Math.round(window.scrollY) +
+                           ' suelto=' + suelto + ' puesto=' + puesto);
     if (y > 24){
       if (suelto && puesto) return soltar();
       if (Math.abs(y - window.scrollY) > 24) window.scrollTo(0, y);
+      window.__saltoDbg.push('  -> quedo en ' + Math.round(window.scrollY));
       puesto = true;
     }
     if (Date.now() < hasta) setTimeout(intentar, 250);
@@ -8337,6 +8343,9 @@ categoriasVivas.iniciar();
    primer pintado a proposito: asi la grilla sale directamente con los precios
    de reventa, y el cliente no ve los de lista y despues un salto. */
 const bajarAlSeg = elegirSegmentoDelAnuncio();
+window.__saltoDbg = window.__saltoDbg || [];
+window.__saltoDbg.push('bajarAlSeg=' + bajarAlSeg + ' url=' + location.search +
+                       ' producto=' + JSON.stringify(productoDelAnuncio));
 pintarHitos();
 pintar(); pintarPacks(); recalcular();
 /* El que viene de un anuncio de catalogo, con su producto ya abierto. Con lo
