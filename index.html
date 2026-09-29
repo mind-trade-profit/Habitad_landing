@@ -3500,7 +3500,10 @@ function pintarAviso(o){
 }
 
 function pedirSegmento(id){
-  if (id === segmento){ marcarSegmento(); irAlCatalogo(); return; }
+  /* Tocar la tarjeta que ya estaba puesta no cambia nada, pero la direccion
+     tiene que decirlo igual: el que viene a copiarla para un anuncio toca la
+     que quiere, no la que la landing tenia de antes. */
+  if (id === segmento){ marcarSegmento(); ponerSegmentoEnLaDireccion(id); irAlCatalogo(); return; }
   if (!Object.keys(carrito).length){ aplicarSegmento(id); irAlCatalogo(); return; }
   segPedido = id;
   if (ESCALA.indexOf(id) > ESCALA.indexOf(segmento) || id !== 'minorista')
