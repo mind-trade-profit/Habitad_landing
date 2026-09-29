@@ -741,9 +741,65 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   overflow:hidden;background:var(--crema);cursor:pointer;padding:0}
 .ficha__mini img{width:100%;height:100%;object-fit:contain;display:block}
 .ficha__mini[aria-current="true"]{border-color:var(--verde);box-shadow:0 0 0 2px rgba(20,130,60,.2)}
+/* La foto principal se toca para verla en grande. El cursor y el cartelito lo
+   dicen: sin eso nadie prueba, y la foto de 480 px dentro del popup se ve
+   chica. En celular el cartel queda siempre puesto, porque no hay hover. */
 .ficha__principal{background:var(--crema);border-radius:var(--r);aspect-ratio:1;
-  display:grid;place-items:center;overflow:hidden;min-height:0;width:100%}
+  display:grid;place-items:center;overflow:hidden;min-height:0;width:100%;
+  position:relative;cursor:zoom-in}
 .ficha__principal img{width:100%;height:100%;object-fit:contain}
+.ficha__ampliar{position:absolute;right:10px;bottom:10px;pointer-events:none;
+  display:flex;align-items:center;gap:6px;
+  background:rgba(30,29,26,.72);color:#fff;border-radius:999px;
+  padding:6px 12px;font-size:12.5px;font-weight:700;line-height:1;
+  opacity:0;transition:opacity .18s}
+.ficha__principal:hover .ficha__ampliar,
+.ficha__principal:focus-visible .ficha__ampliar{opacity:1}
+.ficha__ampliar svg{width:14px;height:14px;fill:none;stroke:currentColor;
+  stroke-width:2.4;stroke-linecap:round}
+
+/* ══ LA LUPA ══
+   2100 y no 2000: tiene que quedar ARRIBA del popup de la ficha, que esta en
+   2000 y es de donde se abre. */
+.lupa{position:fixed;inset:0;z-index:2100;background:rgba(20,19,17,.94);
+  display:grid;place-items:center;padding:clamp(8px,2vw,28px);
+  overscroll-behavior:contain;touch-action:none;
+  animation:lupa-entra .16s ease-out}
+.lupa[hidden]{display:none}
+@keyframes lupa-entra{from{opacity:0}to{opacity:1}}
+.lupa__marco{display:grid;place-items:center;max-width:100%;max-height:100%;
+  overflow:hidden;cursor:zoom-in}
+.lupa__marco--cerca{cursor:grab}
+.lupa__marco--cerca:active{cursor:grabbing}
+.lupa__marco img{display:block;max-width:min(1100px,94vw);max-height:86vh;
+  width:auto;height:auto;object-fit:contain;user-select:none;
+  transition:transform .22s cubic-bezier(.2,.9,.25,1);will-change:transform}
+.lupa__marco--cerca img{transition:none}
+.lupa__cerrar{position:absolute;top:clamp(8px,2vw,18px);right:clamp(8px,2vw,18px);
+  width:44px;height:44px;border-radius:50%;border:0;cursor:pointer;
+  background:rgba(255,255,255,.14);color:#fff;font-size:19px;line-height:1;
+  display:grid;place-items:center;transition:background-color .16s}
+.lupa__cerrar:hover{background:rgba(255,255,255,.26)}
+.lupa__flecha{position:absolute;top:50%;transform:translateY(-50%);
+  width:46px;height:64px;border:0;border-radius:10px;cursor:pointer;
+  background:rgba(255,255,255,.12);color:#fff;font-size:30px;line-height:1;
+  display:grid;place-items:center;transition:background-color .16s}
+.lupa__flecha:hover{background:rgba(255,255,255,.26)}
+.lupa__flecha--izq{left:clamp(4px,1.5vw,18px)}
+.lupa__flecha--der{right:clamp(4px,1.5vw,18px)}
+.lupa__flecha[hidden]{display:none}
+.lupa__pie{position:absolute;left:0;right:0;bottom:clamp(8px,2vw,18px);margin:0;
+  text-align:center;color:#fff;font-size:13px;opacity:.85;pointer-events:none}
+@media(max-width:620px){
+  .lupa__marco img{max-width:96vw;max-height:78vh}
+  .lupa__flecha{width:40px;height:54px;font-size:26px;
+    background:rgba(255,255,255,.18)}
+  .ficha__ampliar{opacity:1;right:8px;bottom:8px;padding:5px 10px;font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){
+  .lupa{animation:none}
+  .lupa__marco img{transition:none}
+}
 
 .ficha__cintas{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
 .ficha__cinta{background:var(--verde-suave);color:var(--verde-hondo);font-size:12px;font-weight:700;
@@ -1726,7 +1782,14 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
         <div class="ficha__miniaturas" id="mvMiniaturas"></div>
         <!-- Sin src: un src="" hace que el navegador pida la propia pagina como si
                  fuera una imagen, en cada carga y para nada. Lo llena abrirVista(). -->
-            <div class="ficha__principal"><img id="mvFoto" alt=""></div>
+            <div class="ficha__principal" id="mvPrincipal" role="button" tabindex="0"
+                 aria-label="Ver la foto en grande">
+              <img id="mvFoto" alt="">
+              <span class="ficha__ampliar">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4.2-4.2M11 8v6M8 11h6"></path>
+                </svg>Ampliar</span>
+            </div>
       </div>
 
       <!-- Columna derecha: todo lo que decide la compra, sin scrollear -->
@@ -1843,6 +1906,26 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
       </section>
     </div>
   </div>
+</div>
+
+
+<!-- ══ LA LUPA: LA FOTO DE LA FICHA, EN GRANDE ══
+     La foto de la ficha mide 480 px y en el popup entra todavia mas chica. Un
+     toque y se abre a pantalla completa, con la version de 1024 que la propia
+     tienda usa en sus fichas. Otro toque acerca al doble y se puede arrastrar.
+
+     Va afuera del popup de la ficha, no adentro: asi un clic aca no le llega al
+     manejador de #modal, que cierra la ficha cuando el clic cae en el fondo. -->
+<div class="lupa" id="lupa" hidden>
+  <button class="lupa__cerrar" id="lupaCerrar" type="button" aria-label="Cerrar">✕</button>
+  <button class="lupa__flecha lupa__flecha--izq" id="lupaAnt" type="button"
+          aria-label="Foto anterior">‹</button>
+  <div class="lupa__marco" id="lupaMarco">
+    <img id="lupaFoto" alt="" draggable="false">
+  </div>
+  <button class="lupa__flecha lupa__flecha--der" id="lupaSig" type="button"
+          aria-label="Foto siguiente">›</button>
+  <p class="lupa__pie" id="lupaPie"></p>
 </div>
 
 
@@ -4633,6 +4716,10 @@ function agregar(p, key, cant, boton, seg){
 
 /* ---- 7 · vista rápida ---- */
 let vista = null;
+/* Las fotos de la ficha que esta abierta, y cual se esta mirando. Viven acá
+   afuera porque la lupa se abre desde otro lado y tiene que arrancar en la que
+   el cliente tiene delante, no en la primera. */
+let fotosDeLaFicha = [], fotoDeLaFicha = 0, nombreDeLaFicha = '';
 // Reseñas: se muestran las reales y, cuando no hay, se invita a dejar la
 // primera. El botón abre el formulario de Trusty, la app que ya usa la tienda.
 function astros(n){
@@ -4836,6 +4923,9 @@ function llenarVista(p){
   const fotos = (p.gal && p.gal.length ? p.gal : [p.img]).filter(Boolean);
   const principal = $('#mvFoto');
   principal.src = fotos[0] || ''; principal.alt = p.n;
+  /* Cual se esta mirando, para que la lupa abra en ESA y no siempre en la
+     primera. Se guarda afuera porque la lupa se abre desde otro lado. */
+  fotosDeLaFicha = fotos; fotoDeLaFicha = 0; nombreDeLaFicha = p.n;
   const minis = $('#mvMiniaturas');
   minis.innerHTML = '';
   if (fotos.length > 1){
@@ -4847,6 +4937,7 @@ function llenarVista(p){
       b.innerHTML = '<img src="' + f + '" alt="" loading="lazy">';
       b.onclick = () => {
         principal.src = f;
+        fotoDeLaFicha = i;
         minis.querySelectorAll('.ficha__mini').forEach(x => x.setAttribute('aria-current', 'false'));
         b.setAttribute('aria-current', 'true');
       };
@@ -4951,6 +5042,182 @@ $('#mvVerDesc').onclick = e => {
 /* El contador de la ficha se arma una sola vez: el popup no se vuelve a
    crear, solo se le cambia el contenido. */
 const cuentaFicha = armarContador($('#mvQty'));
+
+/* ══════════ LA LUPA: LA FOTO DE LA FICHA, EN GRANDE ══════════
+   Pedido del cliente: "las imagenes en la ficha estan muy pequeñas, que al
+   hacer click se expandan para verlas mejor".
+
+   La galeria de la landing pide las fotos en 480 px, y dentro del popup entran
+   todavia mas chicas. Un toque y se abre a pantalla completa con la version de
+   **1024**, que es la que la propia tienda usa en sus fichas.
+
+   Sobre los tamaños del CDN: se probaron a mano contra una foto real. Andan
+   `-480-0`, `-640-0` y `-1024-1024`; `-1024-0`, `-1080-0`, `-1200-0`, `-2048-0`
+   y la direccion sin sufijo dan **403**. O sea que el ancho suelto solo existe
+   para una lista corta de tamaños y para agrandar hay que pedir el cuadrado.
+   La ficha del theme usa `-1024-1024` en sus 91 imagenes, asi que ademas suele
+   estar ya en la cache del visitante.
+
+   Un segundo toque acerca al doble y se puede arrastrar. Con varias fotos hay
+   flechas, teclas y deslizar con el dedo. */
+const lupa = (function (){
+  const caja = $('#lupa'), marco = $('#lupaMarco'), foto = $('#lupaFoto');
+  const pie = $('#lupaPie'), ant = $('#lupaAnt'), sig = $('#lupaSig');
+  const cerrarBtn = $('#lupaCerrar');
+  if (!caja || !marco || !foto) return {abrir(){}, abierta(){ return false; }};
+
+  const CERCA = 2.2;               // cuanto acerca el segundo toque
+  let fotos = [], i = 0, nombre = '';
+  let cerca = false, x = 0, y = 0;
+  let agarrado = false, movio = false, desdeX = 0, desdeY = 0, x0 = 0, y0 = 0;
+
+  /* -ANCHO-ALTO es el sufijo con el que el CDN sirve cada tamaño. Si la
+     direccion no lo tiene -- una foto de otro lado -- se deja como esta. */
+  function grande(u){
+    return String(u || '')
+      .replace(/-\d+-\d+(\.(?:webp|jpe?g|png))/i, '-1024-1024$1');
+  }
+
+  function medida(){
+    // clientWidth no cambia con el transform; getBoundingClientRect si.
+    return {w: foto.clientWidth || 1, h: foto.clientHeight || 1};
+  }
+
+  function limitar(){
+    const m = medida();
+    const sobraX = m.w * (CERCA - 1) / 2, sobraY = m.h * (CERCA - 1) / 2;
+    x = Math.max(-sobraX, Math.min(sobraX, x));
+    y = Math.max(-sobraY, Math.min(sobraY, y));
+  }
+
+  function pintar(){
+    foto.style.transform = cerca
+      ? 'translate(' + Math.round(x) + 'px,' + Math.round(y) + 'px) scale(' + CERCA + ')'
+      : '';
+    marco.classList.toggle('lupa__marco--cerca', cerca);
+  }
+
+  function lejos(){ cerca = false; x = y = 0; pintar(); }
+
+  /* Acerca APUNTANDO a donde toco. Sin esto, el cliente toca la etiqueta del
+     frasco y se le agranda el centro de la foto, que no es lo que queria ver.
+
+     La cuenta: un punto que esta a (p - 0,5) del centro queda, despues de
+     escalar, a (p - 0,5)·ancho·escala. Para traerlo al centro hay que correr
+     la foto justo eso, en sentido contrario. */
+  function acercar(ev){
+    if (cerca) return lejos();
+    const r = foto.getBoundingClientRect();
+    const px = ev && r.width ? (ev.clientX - r.left) / r.width : .5;
+    const py = ev && r.height ? (ev.clientY - r.top) / r.height : .5;
+    const m = medida();
+    cerca = true;
+    x = (0.5 - px) * m.w * CERCA;
+    y = (0.5 - py) * m.h * CERCA;
+    limitar();
+    pintar();
+    track('foto_acercada', {item_name: nombre, sinMeta: true});
+  }
+
+  function poner(k, comoLlego){
+    if (!fotos.length) return;
+    i = (k + fotos.length) % fotos.length;
+    lejos();
+    foto.src = grande(fotos[i]);
+    foto.alt = nombre;
+    const varias = fotos.length > 1;
+    ant.hidden = sig.hidden = !varias;
+    pie.textContent = varias ? (i + 1) + ' de ' + fotos.length : '';
+    // La siguiente, bajandose sola: pasar de foto no tiene que parpadear.
+    if (varias){
+      const prox = new Image();
+      prox.src = grande(fotos[(i + 1) % fotos.length]);
+    }
+    if (comoLlego) track('foto_cambiada', {item_name: nombre, metodo: comoLlego,
+                                           sinMeta: true});
+  }
+
+  function abrir(lista, desde, deQuien){
+    fotos = (lista || []).filter(Boolean);
+    if (!fotos.length) return;
+    nombre = deQuien || '';
+    caja.hidden = false;
+    poner(desde || 0);
+    cerrarBtn.focus({preventScroll: true});
+    track('foto_ampliada', {item_name: nombre, fotos: fotos.length, sinMeta: true});
+  }
+
+  function cerrar(){
+    if (caja.hidden) return;
+    caja.hidden = true;
+    lejos();
+    foto.removeAttribute('src');      // que no quede pidiendo nada de fondo
+    const p = $('#mvPrincipal');
+    if (p) p.focus({preventScroll: true});
+  }
+
+  const abierta = () => !caja.hidden;
+
+  /* ── Gestos ── */
+  marco.addEventListener('pointerdown', ev => {
+    agarrado = true; movio = false;
+    desdeX = ev.clientX; desdeY = ev.clientY; x0 = x; y0 = y;
+    try { marco.setPointerCapture(ev.pointerId); } catch (e) {}
+  });
+  marco.addEventListener('pointermove', ev => {
+    if (!agarrado) return;
+    const dx = ev.clientX - desdeX, dy = ev.clientY - desdeY;
+    if (Math.abs(dx) > 6 || Math.abs(dy) > 6) movio = true;
+    if (!cerca) return;               // sin acercar, arrastrar es pasar de foto
+    x = x0 + dx; y = y0 + dy;
+    limitar();
+    pintar();
+  });
+  marco.addEventListener('pointerup', ev => {
+    if (!agarrado) return;
+    agarrado = false;
+    const dx = ev.clientX - desdeX;
+    // Deslizar de costado, con la foto lejos: pasa a la que sigue.
+    if (!cerca && movio && Math.abs(dx) > 50 && fotos.length > 1){
+      poner(i + (dx < 0 ? 1 : -1), 'deslizar');
+      return;
+    }
+    if (!movio) acercar(ev);          // un toque limpio: acerca o aleja
+  });
+  marco.addEventListener('pointercancel', () => { agarrado = false; });
+
+  ant.onclick = () => poner(i - 1, 'flecha');
+  sig.onclick = () => poner(i + 1, 'flecha');
+  cerrarBtn.onclick = cerrar;
+  // Un clic en el fondo cierra; en la foto o en los botones, no.
+  caja.addEventListener('click', ev => { if (ev.target === caja) cerrar(); });
+  // La rueda no tiene que mover la pagina de atras.
+  caja.addEventListener('wheel', ev => ev.preventDefault(), {passive: false});
+
+  /* Con captura y cortando la propagacion: mas abajo hay dos oyentes de Escape
+     que cierran la ficha y la historia. Sin esto, Escape cerraba la lupa Y la
+     ficha de una sola vez, y el cliente perdia el producto que estaba mirando. */
+  addEventListener('keydown', ev => {
+    if (!abierta()) return;
+    if (ev.key === 'Escape'){ ev.stopPropagation(); cerrar(); return; }
+    if (ev.key === 'ArrowLeft' && fotos.length > 1){ ev.stopPropagation(); poner(i - 1, 'teclado'); }
+    else if (ev.key === 'ArrowRight' && fotos.length > 1){ ev.stopPropagation(); poner(i + 1, 'teclado'); }
+  }, true);
+
+  return {abrir, cerrar, abierta};
+})();
+
+/* La foto de la ficha abre la lupa: con el mouse, con el dedo y con el teclado
+   -- el div tiene role="button" y tabindex, asi que Enter y Espacio valen. */
+(function abrirLaLupa(){
+  const principal = $('#mvPrincipal');
+  if (!principal) return;
+  const abrir = () => lupa.abrir(fotosDeLaFicha, fotoDeLaFicha, nombreDeLaFicha);
+  principal.addEventListener('click', abrir);
+  principal.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); abrir(); }
+  });
+})();
 
 $('#modalCerrar').onclick = () => cerrarModal('modal');
 $('#modal').onclick = e => { if (e.target.id === 'modal') cerrarModal('modal'); };
