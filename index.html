@@ -5196,12 +5196,18 @@ const lupa = (function (){
 
   /* Con captura y cortando la propagacion: mas abajo hay dos oyentes de Escape
      que cierran la ficha y la historia. Sin esto, Escape cerraba la lupa Y la
-     ficha de una sola vez, y el cliente perdia el producto que estaba mirando. */
+     ficha de una sola vez, y el cliente perdia el producto que estaba mirando.
+
+     Va `stopImmediatePropagation` y no `stopPropagation`: los otros dos oyentes
+     estan en el MISMO nodo (window), y stopPropagation solo frena el salto al
+     siguiente nodo -- los del mismo nodo corren igual. Medido: con
+     stopPropagation, un Escape cerraba las dos cosas. */
   addEventListener('keydown', ev => {
     if (!abierta()) return;
-    if (ev.key === 'Escape'){ ev.stopPropagation(); cerrar(); return; }
-    if (ev.key === 'ArrowLeft' && fotos.length > 1){ ev.stopPropagation(); poner(i - 1, 'teclado'); }
-    else if (ev.key === 'ArrowRight' && fotos.length > 1){ ev.stopPropagation(); poner(i + 1, 'teclado'); }
+    if (ev.key === 'Escape'){ ev.stopImmediatePropagation(); cerrar(); return; }
+    if (fotos.length < 2) return;
+    if (ev.key === 'ArrowLeft'){ ev.stopImmediatePropagation(); poner(i - 1, 'teclado'); }
+    else if (ev.key === 'ArrowRight'){ ev.stopImmediatePropagation(); poner(i + 1, 'teclado'); }
   }, true);
 
   return {abrir, cerrar, abierta};
