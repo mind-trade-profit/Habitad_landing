@@ -8251,22 +8251,13 @@ function bajarAlSelector(){
     const y = Math.max(0, caja.getBoundingClientRect().top + window.scrollY - 12);
     /* Con el selector todavia sin medir, `y` da 0. Eso no es "ya esta puesto":
        es que la pagina no termino de armarse. */
-    const D = (window.__dbg = window.__dbg || []);
-    D.push('y=' + Math.round(y) + ' sy=' + Math.round(window.scrollY) +
-           ' suelto=' + suelto + ' puesto=' + puesto +
-           ' alto=' + document.documentElement.scrollHeight +
-           ' vent=' + window.innerHeight + ' ready=' + document.readyState);
     if (y > 24){
-      if (suelto && puesto) { D.push('  SUELTA'); return soltar(); }
-      if (Math.abs(y - window.scrollY) > 24) {
-        saltarA(y);
-        D.push('  salto -> ' + Math.round(window.scrollY) +
-               ' (sb=' + getComputedStyle(document.documentElement).scrollBehavior + ')');
-      }
+      if (suelto && puesto) return soltar();
+      if (Math.abs(y - window.scrollY) > 24) saltarA(y);
       puesto = true;
     }
     if (Date.now() < Math.min(hasta, tope)) setTimeout(intentar, 250);
-    else { D.push('  se acabo el reloj'); soltar(); }
+    else soltar();
   };
   setTimeout(intentar, 200);
 }
