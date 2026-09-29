@@ -8165,23 +8165,34 @@ function bajarAlSelector(){
      y un instante despues el contenido de arriba lo corre para abajo. Medido
      en la tienda el 28/09: con un solo intento quedaba en 0 con el selector a
      844 px. */
-  /* Se rinde en cuanto el visitante toca algo: desde ahi la pagina es suya.
-     Es mas preciso que mirar si el scroll cambio, porque el scroll tambien lo
-     mueve el navegador solo cuando el documento cambia de alto. */
-  let suelto = false;
+  /* Se insiste mientras la pagina se acomoda: arriba del selector hay banners
+     y fotos que todavia no midieron, asi que la primera vez se baja hasta donde
+     el selector ESTA y un instante despues el contenido de arriba lo corre.
+
+     Y se suelta en cuanto el visitante hace un gesto de scroll de verdad
+     --rueda o dedo--, no con cualquier clic: un clic no quiere decir "quiero
+     quedarme aca". Tampoco se suelta antes de haberlo puesto una vez, o un
+     gesto suelto durante la carga dejaba el salto sin hacer. */
+  let suelto = false, puesto = false;
   const rendirse = () => { suelto = true; };
-  const gestos = ['wheel', 'touchstart', 'keydown', 'mousedown'];
-  gestos.forEach(g => addEventListener(g, rendirse, {passive: true, once: true}));
+  const gestos = ['wheel', 'touchstart'];
+  const soltar = () => gestos.forEach(g => removeEventListener(g, rendirse));
+  gestos.forEach(g => addEventListener(g, rendirse, {passive: true}));
 
   const hasta = Date.now() + 3000;
   const intentar = () => {
-    if (suelto) return;
     const y = Math.max(0, caja.getBoundingClientRect().top + window.scrollY - 12);
-    if (Math.abs(y - window.scrollY) > 24) window.scrollTo(0, y);
-    if (Date.now() < hasta) setTimeout(intentar, 300);
-    else gestos.forEach(g => removeEventListener(g, rendirse));
+    /* Con el selector todavia sin medir, `y` da 0. Eso no es "ya esta puesto":
+       es que la pagina no termino de armarse. */
+    if (y > 24){
+      if (suelto && puesto) return soltar();
+      if (Math.abs(y - window.scrollY) > 24) window.scrollTo(0, y);
+      puesto = true;
+    }
+    if (Date.now() < hasta) setTimeout(intentar, 250);
+    else soltar();
   };
-  setTimeout(intentar, 220);
+  setTimeout(intentar, 200);
 }
 
 let anuncioResuelto = false;
