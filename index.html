@@ -792,8 +792,12 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   text-align:center;color:#fff;font-size:13px;opacity:.85;pointer-events:none}
 @media(max-width:620px){
   .lupa__marco img{max-width:96vw;max-height:78vh}
+  /* En el telefono la foto ocupa casi todo el ancho, asi que las flechas caen
+     ENCIMA de ella. Con el fondo tenue se perdian sobre una foto oscura: van
+     mas opacas y con sombra propia. Igual la forma natural de pasar de foto
+     aca es deslizar. */
   .lupa__flecha{width:40px;height:54px;font-size:26px;
-    background:rgba(255,255,255,.18)}
+    background:rgba(20,19,17,.62);box-shadow:0 2px 12px rgba(0,0,0,.5)}
   .ficha__ampliar{opacity:1;right:8px;bottom:8px;padding:5px 10px;font-size:12px}
 }
 @media(prefers-reduced-motion:reduce){
