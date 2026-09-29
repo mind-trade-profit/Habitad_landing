@@ -780,11 +780,16 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   background:rgba(255,255,255,.14);color:#fff;font-size:19px;line-height:1;
   display:grid;place-items:center;transition:background-color .16s}
 .lupa__cerrar:hover{background:rgba(255,255,255,.26)}
+/* Blancas con la flecha oscura, y con sombra. En el telefono la foto ocupa
+   casi todo el ancho y las flechas le caen encima: cualquier boton tenue
+   desaparece sobre una foto del mismo tono. Blanco sobre sombra se ve sobre
+   una foto clara y sobre una oscura. */
 .lupa__flecha{position:absolute;top:50%;transform:translateY(-50%);
   width:46px;height:64px;border:0;border-radius:10px;cursor:pointer;
-  background:rgba(255,255,255,.12);color:#fff;font-size:30px;line-height:1;
+  background:rgba(255,255,255,.92);color:#1e1d1a;font-size:30px;line-height:1;
+  box-shadow:0 3px 16px rgba(0,0,0,.45);
   display:grid;place-items:center;transition:background-color .16s}
-.lupa__flecha:hover{background:rgba(255,255,255,.26)}
+.lupa__flecha:hover{background:#fff}
 .lupa__flecha--izq{left:clamp(4px,1.5vw,18px)}
 .lupa__flecha--der{right:clamp(4px,1.5vw,18px)}
 .lupa__flecha[hidden]{display:none}
@@ -792,12 +797,9 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   text-align:center;color:#fff;font-size:13px;opacity:.85;pointer-events:none}
 @media(max-width:620px){
   .lupa__marco img{max-width:96vw;max-height:78vh}
-  /* En el telefono la foto ocupa casi todo el ancho, asi que las flechas caen
-     ENCIMA de ella. Con el fondo tenue se perdian sobre una foto oscura: van
-     mas opacas y con sombra propia. Igual la forma natural de pasar de foto
-     aca es deslizar. */
-  .lupa__flecha{width:40px;height:54px;font-size:26px;
-    background:rgba(20,19,17,.62);box-shadow:0 2px 12px rgba(0,0,0,.5)}
+  /* Mas chicas, pero igual de blancas: aca la forma natural de pasar de foto
+     es deslizar, y las flechas son el respaldo. */
+  .lupa__flecha{width:38px;height:52px;font-size:26px}
   .ficha__ampliar{opacity:1;right:8px;bottom:8px;padding:5px 10px;font-size:12px}
 }
 @media(prefers-reduced-motion:reduce){
