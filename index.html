@@ -3390,6 +3390,24 @@ function contarHasta(el, valor, sufijo, prefijo, demora){
 
    Si el cambio vacio el carrito, se espera un momento antes de bajar para que
    alcance a leer el aviso: si no, se lo llevaria por delante sin verlo. */
+/* ══ SALTAR A UN PUNTO DE LA PAGINA, DE VERDAD ══
+   El CSS de la landing tiene `html{scroll-behavior:smooth}`, y con eso puesto
+   TODO scrollTo se convierte en una animacion -- incluso uno pedido como
+   'instant', que se encola detras del suave que haya quedado colgado. Pedirlo
+   dos veces seguidas mientras la pagina se acomoda arranca la animacion de
+   nuevo desde donde esta, asi que no llega nunca: medido el 28/09, doce
+   intentos seguidos pidiendo 717 px con la pagina quieta en 0.
+
+   Para que el salto ocurra hay que apagar el scroll-behavior mientras dura.
+   Esto estaba escrito tres veces en el archivo; ahora esta una. */
+function saltarA(y){
+  const html = document.documentElement;
+  const previo = html.style.scrollBehavior;
+  html.style.scrollBehavior = 'auto';
+  window.scrollTo(0, y);
+  html.style.scrollBehavior = previo;
+}
+
 function irAlCatalogo(){
   /* Se salta a la grilla, no a la barra de categorias: desde que el selector
      de compra quedo debajo de las categorias, saltar a la barra empujaba la
@@ -3415,15 +3433,7 @@ function irAlCatalogo(){
        igual que aquello de lo que venia a proteger. */
     if (suave) setTimeout(() => {
       if (Math.abs(window.scrollY - antes) >= 8) return;   // ya se movio, listo
-      /* Para forzarlo hay que apagar el scroll-behavior:smooth del CSS: si
-         queda puesto, hasta un scroll pedido como 'instant' se encola detras
-         del suave que quedo colgado, y no pasa nada. Se apaga, se salta y se
-         devuelve como estaba. */
-      const html = document.documentElement;
-      const previo = html.style.scrollBehavior;
-      html.style.scrollBehavior = 'auto';
-      window.scrollTo(0, y);
-      html.style.scrollBehavior = previo;
+      saltarA(y);                                          // ver saltarA
     }, 700);
   }, demora);
 }
@@ -7255,8 +7265,12 @@ var catalogoVivo = (function () {
     }
     pintarPacks();
     recalcular();
-    // Despues de pintar todo, que es cuando el alto ya es el definitivo.
-    if (y && Math.abs(window.scrollY - y) > 2) window.scrollTo(0, y);
+    /* Despues de pintar todo, que es cuando el alto ya es el definitivo. Y con
+       `saltarA`, porque el scroll-behavior:smooth del CSS convierte esto en una
+       animacion que se pisa con cualquier otra y deja al cliente a mitad de
+       camino: con `window.scrollTo` pelado, volver a su lugar tardaba lo que
+       durara la animacion y a veces no llegaba. */
+    if (y && Math.abs(window.scrollY - y) > 2) saltarA(y);
     if (conFicha && vista && PRODUCTOS.indexOf(vista.p) !== -1) llenarVista(vista.p);
   }
 
@@ -8213,32 +8227,24 @@ function bajarAlSelector(){
   const soltar = () => gestos.forEach(g => removeEventListener(g, rendirse));
   gestos.forEach(g => addEventListener(g, rendirse, {passive: true}));
 
-  /* De un salto y sin animacion: el que llega de un anuncio tiene que APARECER
-     en el selector, no ver la pagina desfilar.
+  /* De un salto y sin animacion --el que llega de un anuncio tiene que
+     APARECER en el selector, no ver la pagina desfilar--, con `saltarA`, que
+     apaga el scroll-behavior mientras dura. Sin eso no se mueve nunca.
 
-     Y hay que apagar el `scroll-behavior:smooth` del CSS mientras dura. Con el
-     puesto, cada scrollTo arranca una animacion NUEVA desde donde esta, asi que
-     pidiendolo cada 250 ms mientras la pagina se acomoda no llega nunca:
-     medido el 28/09 con una sonda en la pagina, doce intentos seguidos pidiendo
-     717 y la pagina quieta en 0. Es la misma trampa que ya tenia documentada
-     `irAlCatalogo` unos cientos de lineas mas arriba. */
-  const saltar = y => {
-    const html = document.documentElement;
-    const previo = html.style.scrollBehavior;
-    html.style.scrollBehavior = 'auto';
-    window.scrollTo(0, y);
-    html.style.scrollBehavior = previo;
-  };
-
-  /* Tres segundos alcanzan en una carga normal. En una lenta no: medido en la
+     Tres segundos alcanzan en una carga normal. En una lenta no: medido en la
      tienda, con el theme todavia sin estilos el selector seguia moviendose
-     despues de que el reloj se acabara, y el salto quedaba a medias. Asi que si
-     la pagina sigue cargando se estira hasta poco despues de `load`, con un
-     tope duro para no quedarse tironeando la pagina si `load` no llega nunca. */
-  let hasta = Date.now() + 3000;
-  const tope = Date.now() + 8000;
+     despues de que el reloj se acabara. Si la pagina sigue cargando se estira
+     hasta poco despues de `load` --nunca se acorta--, con un tope duro para no
+     quedarse tironeando la pagina si `load` no llega nunca.
+
+     Y hay un tercer corredor: cuando el catalogo vivo termina de leer la tienda
+     (~2,2 s) repinta la grilla. `repintar` se encarga de devolver la pagina a
+     donde estaba, pero por las dudas esta ventana lo cubre. */
+  let hasta = Date.now() + 3500;
+  const tope = Date.now() + 9000;
   if (document.readyState !== 'complete'){
-    addEventListener('load', () => { hasta = Date.now() + 800; }, {once: true});
+    addEventListener('load', () => { hasta = Math.max(hasta, Date.now() + 1200); },
+                     {once: true});
   }
 
   const intentar = () => {
@@ -8247,7 +8253,7 @@ function bajarAlSelector(){
        es que la pagina no termino de armarse. */
     if (y > 24){
       if (suelto && puesto) return soltar();
-      if (Math.abs(y - window.scrollY) > 24) saltar(y);
+      if (Math.abs(y - window.scrollY) > 24) saltarA(y);
       puesto = true;
     }
     if (Date.now() < Math.min(hasta, tope)) setTimeout(intentar, 250);
