@@ -852,6 +852,11 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   font-size:14px;padding:9px 0;border-bottom:1px dashed var(--borde)}
 .ficha__ficha-tecnica dt{font-weight:700}
 .ficha__ficha-tecnica dd{margin:0;color:var(--tinta-suave)}
+/* Las filas son display:grid, que pisa el atributo `hidden`. Sin esto,
+   esconder una fila vacia no hacia nada. Y si no queda ninguna, se va la
+   lista entera en vez de dejar un borde suelto. */
+.ficha__ficha-tecnica > div[hidden],
+.ficha__ficha-tecnica[hidden]{display:none}
 
 @media(max-width:820px){
   .ficha{grid-template-columns:1fr;gap:18px;padding:20px 18px 4px}
@@ -4126,7 +4131,7 @@ function tarjeta(p, key){
       (sinStock ? '<span class="tag tag--bug">sin stock</span>' : '') +
       (nubea ? nubea.stickersHtml(p) : '') + '</div>' +
     '<div class="card-body">' +
-      '<h3>' + p.n + '</h3>' +
+      '<h3>' + nombreCorto(p) + '</h3>' +
       // Hueco donde la app deja las estrellas. Vacio no ocupa lugar.
       estrellasDe(p) +
       /* Con variantes, el desplegable va en el lugar de la descripcion: elegir
@@ -5026,6 +5031,128 @@ function pintarCruce(p){
   caja.appendChild(d);
 }
 
+/* ══════════ A6 · EL NOMBRE QUE SE MUESTRA ══════════
+   65 de los titulos pasan los 55 caracteres -- el mas largo tiene 107 -- y
+   empujan el boton de comprar fuera de la pantalla. El nombre corto se DERIVA
+   del titulo en vez de cargarse a mano: cubre los 65 sin que nadie toque el
+   panel, y si el dueño acorta el titulo de la tienda, mejora solo.
+
+   Se corta en el primer separador fuerte, que es donde el dueño pone el
+   formato y las aclaraciones. El formato no se pierde: pasa a "Presentacion".
+
+   El nombre COMPLETO se sigue usando en el <title>, en el alt de la foto, en
+   el indice de busqueda y en el carrito. Esto es solo presentacion. */
+/* id minorista -> nombre a mano, para cuando el corte automatico lee mal.
+   Estos dos son el mismo aceite en dos presentaciones, y lo que las distingue
+   vive despues del separador: sin esto quedaban con el mismo nombre en la
+   grilla y el cliente no podia elegir. Repasados los 191, son los dos unicos
+   casos. */
+const NOMBRES_CORTOS = {
+  264789003: 'Aceite de Orégano Orgánico 30 ml · pack x 2',
+  229337965: 'Aceite de Orégano Orgánico 30 ml · por unidad'
+};
+const CORTE_TITULO = /\s+[–—]\s+|\s+-\s+|\s*[|/]\s*|\s*\(/;
+const TOPE_NOMBRE = 55;
+
+function nombreCorto(p){
+  const aMano = p && p.ids && NOMBRES_CORTOS[p.ids.minorista];
+  if (aMano) return aMano;
+  const entero = ((p && p.n) || '').trim();
+  if (entero.length <= TOPE_NOMBRE) return entero;
+
+  let corto = entero.split(CORTE_TITULO)[0].trim().replace(/[\s,;:·.\-]+$/, '');
+  /* Un corte demasiado corto no distingue: "Combo Dolores" le queda igual a
+     mas de un combo. Por debajo de 18 vale mas el titulo entero recortado. */
+  if (corto.length < 18) corto = entero;
+
+  /* Si el corte se llevo el formato, vuelve pegado al nombre. En la ficha el
+     formato esta en "Presentacion", pero EN LA GRILLA no hay donde mirarlo, y
+     sin el los dos tamaños del aceite de oregano se veian identicos. */
+  const medida = medidaDelTitulo(entero);
+  const cola = (medida && !medidaDelTitulo(corto)) ? ' · ' + medida : '';
+  const tope = TOPE_NOMBRE - cola.length;
+
+  if (corto.length > tope){
+    const hasta = corto.lastIndexOf(' ', tope - 1);
+    corto = corto.slice(0, hasta > 20 ? hasta : tope - 1)
+                 .replace(/[\s,;:·.\-]+$/, '') + '\u2026';
+  }
+  return corto + cola;
+}
+
+/* ══════════ A5a · LA FICHA TECNICA ══════════
+   "Presentacion" mostraba la cantidad de variantes, que no es lo que el
+   rotulo promete, y "Uso" era un literal escrito a mano. La fila sin dato se
+   esconde entera: un guion o un texto de relleno resta mas de lo que suma.
+
+   El formato sale del propio titulo con la misma tabla del sincronizador. El
+   `c` suelto entra a proposito: en esta tienda "100 C" es un cc mal escrito y
+   aparece en once tinturas. */
+const MEDIDA_TITULO = /(\d+(?:[.,]\d+)?)\s*(kg|grs|gr|gs|mg|ml|cc|lts|lt|g|l|c)(?![a-záéíóúñ])/i;
+const UNIDAD_LINDA = {kg:'kg', grs:'g', gr:'g', gs:'g', g:'g', mg:'mg',
+                      ml:'ml', cc:'ml', c:'ml', lts:'l', lt:'l', l:'l'};
+
+function medidaDelTitulo(t){
+  const m = MEDIDA_TITULO.exec(t || '');
+  if (!m) return '';
+  return m[1].replace(',', '.') + ' ' + (UNIDAD_LINDA[m[2].toLowerCase()] || m[2].toLowerCase());
+}
+
+/* Pone el dato o esconde la fila entera, y se lleva la lista si no quedo
+   ninguna. */
+function filaFicha(sel, valor){
+  const dd = $(sel);
+  if (!dd) return;
+  dd.textContent = valor || '';
+  const fila = dd.closest('div');
+  if (fila) fila.hidden = !valor;
+  const lista = dd.closest('.ficha__ficha-tecnica');
+  if (lista) lista.hidden = ![...lista.children].some(f => !f.hidden);
+}
+
+/* ══════════ A1 · UN SOLO MENSAJE DE ENVIO GRATIS ══════════
+   Medido el 30/09/2026 sobre la ficha viva: tres mensajes distintos apilados
+   arriba del boton -- un badge de la tienda, el nuestro, y el bloque de envio
+   que el dueño cargo en el panel.
+
+   Dos de los tres los escribe el dueño, asi que no se apagan desde el codigo
+   uno por uno: mañana pone el cuarto en otro lado. Se deduplica mirando la
+   ficha ya armada, y SOLO en la zona de decision -- nunca en la descripcion,
+   donde esconder una mencion seria esconder un parrafo del producto.
+
+   Sobrevive el de #mvEnvio, que es el unico pegado al boton. Y si el dueño
+   escribio el suyo, ese texto se muda ahi: el que queda es el de
+   configuracion, no el nuestro. */
+const DICE_ENVIO = /env[ií]os?\s+gratis/i;
+const ZONAS_DE_ENVIO = ['.ficha__datos', '#mvNubeaBadges', '#mvNubeaBloques', '#mvEnvioCaja'];
+
+function dejarUnSoloEnvio(){
+  const propio = $('#mvEnvio');
+  if (!propio) return;
+  const otros = new Set();
+  ZONAS_DE_ENVIO.forEach(z => {
+    const zona = document.querySelector(z);
+    if (!zona) return;
+    zona.querySelectorAll('*').forEach(el => {
+      if (el.children.length || el === propio) return;
+      if (DICE_ENVIO.test(el.textContent || '')) otros.add(el);
+    });
+  });
+  if (!otros.size) return;
+  /* El texto del dueño manda, y se muda arriba del boton. */
+  const delDueno = [...otros].find(el => (el.textContent || '').trim().length > 12);
+  if (delDueno){
+    propio.textContent = (delDueno.textContent || '').replace(/\s+/g, ' ').trim();
+    propio.hidden = false;
+  }
+  otros.forEach(el => {
+    // Se esconde el envoltorio, no solo el texto: si no, queda la pildora vacia.
+    const caja = el.closest('.nb-badge, .nb-bloque__pie, .nb-bloque__fila') || el;
+    caja.hidden = true;
+    caja.style.display = 'none';
+  });
+}
+
 function abrirVista(p, key){
   vista = {p, key};
   llenarVista(p);
@@ -5090,12 +5217,15 @@ function llenarVista(p){
   $('#mvCintas').innerHTML = cintas.map(c => '<span class="ficha__cinta">' + c + '</span>').join('');
 
   $('#mvVendidos').textContent = p.vend ? p.vend.replace(/\s+/g, ' ') : '';
-  $('#mv-nom').textContent = p.n;
+  $('#mv-nom').textContent = nombreCorto(p);
   $('#mvEstrellas').innerHTML = p.rat
     ? '<span class="astros">' + '\u2605'.repeat(Math.round(p.rat.avg)) +
       '\u2606'.repeat(5 - Math.round(p.rat.avg)) + '</span><b>' + p.rat.avg.toFixed(1) +
       '</b><span class="cuenta">(' + p.rat.n + ' reseña' + (p.rat.n > 1 ? 's' : '') + ')</span>'
-    : '<span class="cuenta">Sin reseñas todavía</span>';
+    /* A2 · sin reseñas no se dice nada. Afectaba a 134 de 168 productos, justo
+       debajo del título. La invitación a dejar la primera sigue viva en la
+       sección de reseñas, más abajo, donde no cuesta píxeles de decisión. */
+    : '';
 
   $('#mvLista').textContent = rebaja ? ars(lista) : '';
   $('#mv-precio').textContent = ars(pr);
@@ -5126,11 +5256,15 @@ function llenarVista(p){
     carac.textContent = texto;
     abrir.hidden = true;
   }
-  $('#mv-ideal').textContent = p.necs.map(x => (NECESIDADES.find(n => n.id === x) || {}).label).join(' · ');
-  const opcionesFicha = variantesDe(p, segmento);
-  $('#mv-pres').textContent = opcionesFicha
-    ? opcionesFicha.length + ' variantes disponibles' : '\u2014';
-  $('#mv-uso').textContent = 'Según indicaciones del producto.';
+  /* A5a · la fila sin dato se esconde entera, en vez de mostrar un guion o un
+     texto de relleno. Ver `filaFicha` y `medidaDelTitulo`. */
+  filaFicha('#mv-ideal', p.necs.map(x => (NECESIDADES.find(n => n.id === x) || {}).label).join(' · '));
+  /* "Presentación" mostraba la cantidad de variantes, que no es el formato que
+     el rótulo promete. El formato real está en el título. */
+  filaFicha('#mv-pres', medidaDelTitulo(p.n));
+  /* "Uso" era un literal escrito a mano, no un campo: sin dato, no va. Cuando
+     haya de dónde leerlo -- eso es A5b -- se llena acá. */
+  filaFicha('#mv-uso', '');
 
 
   /* Plazos de envio. OJO: los numeros del diseño de referencia ("3 a 5 dias
@@ -5167,6 +5301,8 @@ function llenarVista(p){
      tampoco tiene sentido sin stock. */
   $('#mvRapida').hidden = segmento !== 'minorista' || !hayStock;
   if (nubea) nubea.llenarFicha(p);
+  /* A1 · va al final, con los badges y los bloques de la tienda ya puestos. */
+  dejarUnSoloEnvio();
 }
 
 $('#mvVerDesc').onclick = e => {
@@ -6791,6 +6927,9 @@ var nubea = (function () {
       const envio = $('#mvEnvioCaja');
       if (envio) envio.hidden = propios.some(b => b.type === 'shipping' || (b.design || {}).type === 'shipping');
     }
+    /* A1 · los bloques de la tienda pueden llegar despues de abierta la ficha,
+       asi que se vuelve a deduplicar cuando se plantan. */
+    if (typeof dejarUnSoloEnvio === 'function') dejarUnSoloEnvio();
   }
 
   /* ── Envio gratis ── free-shipping-bar: el umbral mueve el hito minorista, y
