@@ -5139,22 +5139,15 @@ function dejarUnSoloEnvio(){
     });
   });
   if (!otros.size) return;
-  /* El texto del dueño manda, y se muda arriba del boton. Pero no el primero
-     que aparezca: el brief pide "el mas claro", y probado con los dos que la
-     tienda inyecta hoy, el primero es el badge -- "$60 mil" --, que es una
-     pildora hecha para ser corta, no clara. Gana el que trae el monto escrito
-     entero, y a igualdad, el mas explicito. */
-  const claridad = el => {
-    const t = (el.textContent || '').trim();
-    return (/\d[.\s]\d{3}/.test(t) ? 1000 : 0) + t.length;
-  };
-  const delDueno = [...otros]
-    .filter(el => (el.textContent || '').trim().length > 12)
-    .sort((a, b) => claridad(b) - claridad(a))[0];
-  if (delDueno){
-    propio.textContent = (delDueno.textContent || '').replace(/\s+/g, ' ').trim();
-    propio.hidden = false;
-  }
+  /* NO se muda el texto del dueño acá. Se probó, y salía peor: el suyo --
+     "Envío gratis en compras superiores a $60.000 en pedidos minoristas" --
+     ocupa tres renglones a 375 px contra uno del nuestro, y el botón terminaba
+     donde estaba antes (679 px medidos en la tienda, contra 677 de línea base).
+     Sacar el badge y engordar la línea es pagar una cosa con la otra.
+
+     El nuestro ya sale de configuración en lo que importa: el monto lo pone la
+     app de envío gratis de la tienda, y por segmento. El "en pedidos
+     minoristas" sobra, porque un mayorista ve su propio umbral. */
   otros.forEach(el => {
     // Se esconde el envoltorio, no solo el texto: si no, queda la pildora vacia.
     const caja = el.closest('.nb-badge, .nb-bloque__pie, .nb-bloque__fila') || el;
@@ -5290,7 +5283,10 @@ function llenarVista(p){
      que era el unico; la promocion 806521 dice lo contrario. */
   const envio = $('#mvEnvio');
   envio.hidden = false;
-  envio.textContent = 'Envío gratis en compras superiores a ' + ars(umbralEnvioDe(segmento));
+  /* Corto a proposito: esta pegado al boton y cada renglon de mas lo empuja
+     fuera de pantalla. A 375 px, "en compras superiores a" costaba un renglon
+     entero. El monto sigue saliendo de la app de envio de la tienda. */
+  envio.textContent = 'Envío gratis desde ' + ars(umbralEnvioDe(segmento));
 
   /* Sin stock no se compra. La ficha no lo estaba apagando: se podia cargar
      al carrito y recien fallaba del otro lado, en el carrito de Tiendanube,
