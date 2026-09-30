@@ -1043,6 +1043,14 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .cruce__ahora{font-weight:700;color:var(--tinta)}
 .cruce__off{display:inline-block;margin-left:6px;font-size:11px;font-weight:700;
   background:var(--tinta);color:#fff;border-radius:6px;padding:2px 6px}
+/* En el carrito el bloque va mas apretado: es un paso de pago, no una vidriera. */
+.cruce--carrito{margin:2px 0 16px;padding-top:14px}
+.cruce--carrito .mini{flex-wrap:wrap;gap:10px}
+.cruce--carrito .txt{flex:1 1 130px}
+.cruce__qty{flex:0 0 auto}
+.cruce__add{background:var(--tinta);color:#fff;border:0;border-radius:8px;
+  padding:9px 13px;font:inherit;font-weight:700;cursor:pointer;flex:0 0 auto}
+.cruce__add[disabled]{opacity:.55;cursor:default}
 .ficha__faq{margin-top:20px;border-top:1px solid var(--borde);padding-top:16px}
 .ficha__faq h4{font-size:15px;margin:0 0 4px}
 /* En la ficha las preguntas van al ancho de la columna, no centradas. */
@@ -2084,6 +2092,14 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
       <h3 class="carrito__tit" data-anima>Tu compra</h3>
       <ul class="carrito__items" id="checkoutLista" data-anima></ul>
 
+      <!-- n3 · el cruce de la tienda, tambien en el carrito. UNO solo y con
+           contador: ver `pintarCruceCarrito`. -->
+      <div class="cruce cruce--carrito" id="carritoCruceCaja" hidden>
+        <h4>Llevátelo con descuento</h4>
+        <p class="cruce__sub" id="carritoCruceSub"></p>
+        <div id="carritoCruce"></div>
+      </div>
+
       <div class="carrito__cuentas" data-anima>
         <div class="carrito__fila"><span>Subtotal</span><b id="checkoutTotal">$0</b></div>
         <div class="carrito__fila"><span>Envío</span><b id="checkoutEnvio"></b></div>
@@ -2222,13 +2238,24 @@ function pintarCuotas(p){
 }
 
 function textoCuotas(precioDeEste){
-  const con = totalCarrito() + (precioDeEste || 0);
+  const precio = precioDeEste || 0;
+  const con = totalCarrito() + precio;
   const dos = umbralCuotas(2), tres = umbralCuotas(3);
   if (tres && con >= tres) return '<b>3 cuotas sin interés</b>';
   if (dos && con >= dos)   return '<b>2 cuotas sin interés</b>';
   // Sin hito de cuotas no hay nada honesto que decir: la linea se esconde.
   if (!dos) return '';
-  return 'Con <b>' + ars(dos - con) + '</b> más, 2 cuotas sin interés';
+  /* El faltante se cuenta SOBRE EL PRECIO DE ESTE PRODUCTO, no sobre el
+     carrito. La linea vive pegada al precio y ahi se lee como "de este
+     producto": con el carrito adentro daba numeros que el cliente no podia
+     atar a nada de lo que tenia delante -- $15.000 y "con $7.700 mas".
+
+     El numero del carrito no se pierde: la barra de abajo ya dice "Te faltan
+     $X para 2 CUOTAS SIN INTERES" contando lo cargado. Cada uno contesta una
+     pregunta distinta. */
+  const falta = dos - precio;
+  if (falta <= 0) return '<b>2 cuotas sin interés</b>';
+  return 'Con <b>' + ars(falta) + '</b> más, 2 cuotas sin interés';
 }
 
 const ENVIO_GRATIS = {minorista: 60000, mayorista: 150000, distribuidor: 150000};
@@ -4914,9 +4941,13 @@ function agregar(p, key, cant, boton, seg){
                         segment:donde, items: itemsGA([carrito[key]])});
   if (boton){
     const t = boton.textContent;
-    // Si se freno, el boton dice por que: un "✓ Agregado" cuando entraron
-    // tres de las siete que pidio es mentirle en la cara.
-    boton.textContent = frenado ? 'Quedan ' + tope : '\u2713 Agregado';
+    /* Si se freno, el boton dice por que: un "✓ Agregado" cuando entraron
+       tres de las siete que pidio es mentirle en la cara.
+
+       Y dice "Solo hay N", no "Quedan N". Con las 10 unidades ya cargadas y
+       el cliente tocando "+", un "Quedan 10" se lee como que todavia puede
+       sumar otras diez. */
+    boton.textContent = frenado ? 'Solo hay ' + tope : '\u2713 Agregado';
     boton.classList.add('ok');
     /* Cambio 2 · el confeti va acá y no en cada boton: TODO lo que entra al
        carrito pasa por `agregar`, asi que con esto quedan cubiertos la ficha,
@@ -5204,6 +5235,61 @@ function pintarCombos(p){
    cliente decidiendo -- y se cobra en el pase, que es donde se consigue el id
    de promocion. El boton agrega LOS DOS cuando el disparador no esta: sin el,
    el descuento no existe. */
+/* n3 · el cruce dentro del carrito. UNO SOLO, a proposito: el carrito es el
+   paso de pagar y llenarlo de ofertas es la forma mas rapida de perder la que
+   ya estaba hecha. Se ofrece el del primer producto que tenga cruce y cuyo
+   sugerido no este ya sumado, con su contador por si quiere mas de uno. */
+function pintarCruceCarrito(){
+  const caja = $('#carritoCruce'), seccion = $('#carritoCruceCaja'), sub = $('#carritoCruceSub');
+  if (!caja || !seccion) return;
+
+  let c = null;
+  for (const i of Object.values(carrito)){
+    const posible = cruceDe(i.prod);
+    if (!posible) continue;
+    // Si ya lo sumo con el descuento, no se vuelve a ofrecer.
+    if (Object.values(carrito).some(o => o.prod === posible.b && o.cruce)) continue;
+    c = posible;
+    break;
+  }
+  seccion.hidden = !c;
+  if (!c) return;
+
+  const off = Math.round((1 - c.precio / c.lista) * 100);
+  if (sub) sub.textContent = 'Porque llevás ' + nombreCorto(c.a) +
+    ', la tienda te lo deja en ' + ars(c.precio) + '.';
+
+  caja.innerHTML =
+    '<div class="mini">' +
+      '<span class="ico">' + (c.b.img ? '<img src="' + c.b.img + '" alt="" loading="lazy">' : '') + '</span>' +
+      '<div class="txt"><b>' + nombreCorto(c.b) + '</b><div class="pr">' +
+        '<span class="cruce__lista">' + ars(c.lista) + '</span>' +
+        '<span class="cruce__ahora">' + ars(c.precio) + '</span>' +
+        (off > 0 ? '<span class="cruce__off">-' + off + '%</span>' : '') +
+      '</div></div>' +
+      '<span class="citem__qty cruce__qty">' +
+        '<button type="button" data-d="-1" aria-label="Uno menos">-</button>' +
+        campoCantidad(1, 'Cantidad de ' + c.b.n) +
+        '<button type="button" data-d="1" aria-label="Uno más">+</button></span>' +
+      '<button type="button" class="cruce__add">+ Agregar</button>' +
+    '</div>';
+
+  // El contador no puede pedir mas de lo que hay, igual que en la tarjeta.
+  const cuenta = armarContador(caja.querySelector('.cruce__qty'), null,
+                               {tope: topeDe(c.b, 'minorista')});
+
+  caja.querySelector('.cruce__add').onclick = e => {
+    const n = cuenta ? cuenta.leer() : 1;
+    const clave = 'cruce-' + c.b.n;
+    agregar(c.b, clave, n, e.target);
+    if (carrito[clave]) carrito[clave].cruce = {a: c.a.ids.minorista, precio: c.precio, lista: c.lista};
+    track('cross_sell_add', {item_name: c.b.n, source: 'cruce-carrito', value: c.precio,
+                             items: itemsGA([{prod: c.b, cant: n}])});
+    pintarCarrito();
+    recalcular();
+  };
+}
+
 function pintarCruce(p){
   const caja = $('#mvCruce'), seccion = $('#mvCruceCaja'), sub = $('#mvCruceSub');
   if (!caja || !seccion) return;
@@ -6083,6 +6169,8 @@ function pintarCarrito(entrando){
   /* Cambio 3 · las fotos de un producto, para la lupa. Es la misma cuenta que
      hace la ficha al armar la galeria. */
   const fotosDe = p => ((p.gal && p.gal.length ? p.gal : [p.img]) || []).filter(Boolean);
+  // n3 · el cruce del carrito se arma con cada repintado.
+  pintarCruceCarrito();
 
   if (!entradas.length){
     lista.innerHTML = '<li class="carrito__vacio">Tu carrito quedó vacío.</li>';
