@@ -4977,6 +4977,58 @@ var resenasVivas = (function (){
   return {leer, pedir};
 })();
 
+/* ══════════ A3 · LAS RESEÑAS HORNEADAS, PEGADAS A SU PRODUCTO ══════════
+   `p.revs` es un campo que la ficha ya sabia leer y que nadie llenaba: las
+   reseñas por producto llegaban solo de la tienda, 2 o 3 segundos despues de
+   abrir. Para la destacada eso es tarde -- todo el sentido del bloque es que
+   se vea sin buscarla.
+
+   RESENAS trae el nombre del producto tal como lo escribe la tienda, muchas
+   veces cortado a 58 caracteres, y el catalogo guarda el nombre ya limpio: se
+   emparejan por nombre normalizado, exacto o por prefijo.
+
+   LA SALVAGUARDA: si un nombre de reseña le calza a MAS DE UN producto no se
+   le pega a ninguno. Pasa con los dos ungüentos de arnica, que empiezan igual
+   y siguen distinto. Antes de atribuirle a un producto la reseña de otro,
+   mejor no mostrar nada.
+
+   Medido sobre los 197: 12 exactos y 6 por prefijo. */
+function sembrarResenas(){
+  if (typeof RESENAS === 'undefined' || !Array.isArray(RESENAS)) return;
+  const clave = s => String(s || '').normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  const porNombre = new Map();
+  RESENAS.forEach(r => {
+    const k = clave(r.p);
+    if (!k || !r.x) return;
+    if (!porNombre.has(k)) porNombre.set(k, []);
+    porNombre.get(k).push(r);
+  });
+
+  const candidatos = new Map();          // clave de reseña -> productos que le calzan
+  PRODUCTOS.forEach(p => {
+    const n = clave(p.n);
+    if (!n) return;
+    porNombre.forEach((_, k) => {
+      const calza = k === n ||
+        (k.length >= 25 && (k.indexOf(n) === 0 || n.indexOf(k) === 0));
+      if (!calza) return;
+      if (!candidatos.has(k)) candidatos.set(k, []);
+      candidatos.get(k).push({p: p, exacto: k === n});
+    });
+  });
+
+  candidatos.forEach((lista, k) => {
+    const exactos = lista.filter(x => x.exacto);
+    // Sin match exacto, solo vale si es el UNICO que calza.
+    const elegidos = exactos.length ? exactos : (lista.length === 1 ? lista : []);
+    elegidos.forEach(x => {
+      if (!x.p.revs || !x.p.revs.length) x.p.revs = porNombre.get(k);
+    });
+  });
+}
+
 /* ══════════ A3 · LA RESEÑA QUE SE VE SIN BUSCARLA ══════════
    Las reseñas existen y algunas son muy buenas, pero viven a ~2.788 px del
    inicio del modal, despues de la descripcion y de los combos. No llega nadie.
@@ -9385,6 +9437,10 @@ try {
 /* Las categorias de la tienda: la lista, del encabezado de esta misma pagina;
    lo que tiene cada una, de lo guardado. Tampoco pide nada. */
 categoriasVivas.iniciar();
+/* A3 · las reseñas horneadas se pegan a su producto ANTES del primer pintado,
+   para que la destacada exista desde el primer momento y no a los tres
+   segundos. Ver `sembrarResenas`. */
+sembrarResenas();
 /* El que llega de un anuncio que elige con que precios entrar. Va ANTES del
    primer pintado a proposito: asi la grilla sale directamente con los precios
    de reventa, y el cliente no ve los de lista y despues un salto. */
