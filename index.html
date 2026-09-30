@@ -5768,6 +5768,7 @@ function mensajeProgreso(subtotal, falta, proximo, pct){
   msg.classList.remove('festejo');
   if (!proximo){
     msg.textContent = '¡Desbloqueaste todos los beneficios!';
+    escalonAnunciado = null;
   } else {
     /* Para el envio gratis va el texto que el cliente escribio en Nubea. Solo
        en minorista: la barra de Nubea es la promocion de $60.000 y su texto
@@ -5777,7 +5778,18 @@ function mensajeProgreso(subtotal, falta, proximo, pct){
     if (deNubea) msg.textContent = deNubea;
     else msg.innerHTML = (falta < 12000 ? '¡Ya estás cerca! ' : '') +
       'Te faltan <b>' + ars(falta) + '</b> para ' + proximo.nombre.toUpperCase();
-    track('reward_progress', {subtotal, next_tier:proximo.nombre, missing:falta});
+    /* Bloque E · una sola vez por escalon objetivo. Sin este freno salia en
+       cada recalculo -- o sea, una por cada tecla del contador de cantidad --
+       y el informe quedaba ahogado en ruido.
+
+       Van los cuatro campos: el brief pide `proximo_escalon` y `faltante`, y
+       los otros dos ya se venian mandando. Renombrarlos de golpe romperia
+       cualquier exploracion armada en GA4 con los viejos. */
+    if (proximo.nombre !== escalonAnunciado){
+      escalonAnunciado = proximo.nombre;
+      track('reward_progress', {subtotal, next_tier: proximo.nombre, missing: falta,
+                                proximo_escalon: proximo.nombre, faltante: falta});
+    }
   }
 }
 
@@ -5844,19 +5856,6 @@ function recalcular(){
 
   // Celebrar el desbloqueo ANTES de empujar al proximo objetivo: si se salta
   // directo al siguiente, el cliente nunca se entera de que gano algo.
-  /* Bloque E · el progreso hacia el proximo escalon. Se manda solo cuando
-     CAMBIA de escalon objetivo: uno por cada tecla del contador seria ruido
-     que no dice nada. */
-  {
-    const nombreProx = proximo ? proximo.nombre : '';
-    if (subtotal > 0 && nombreProx !== escalonAnunciado){
-      escalonAnunciado = nombreProx;
-      track('reward_progress', {subtotal, proximo_escalon: nombreProx || 'todos',
-                                faltante: proximo ? falta : 0});
-    }
-    if (!subtotal) escalonAnunciado = null;
-  }
-
   const reciente = logrados.length > logradosPrevios;
   logradosPrevios = logrados.length;
   if (reciente){
