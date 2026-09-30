@@ -1000,6 +1000,15 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .ficha__combos h4{font-size:15px;margin:0 0 2px}
 .ficha__combos-sub{margin:0 0 11px;font-size:13px;color:var(--tinta-suave)}
 .ficha__combos-lista{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(275px,1fr))}
+/* El cruce que ofrece la tienda. Los dos precios van a la vista porque el
+   descuento es de Tiendanube y conviene que se note de donde sale. */
+.cruce{margin-top:20px;border-top:1px solid var(--borde);padding-top:16px}
+.cruce h4{font-size:15px;margin:0 0 2px}
+.cruce__sub{margin:0 0 11px;font-size:13px;color:var(--tinta-suave)}
+.cruce__lista{text-decoration:line-through;color:var(--tinta-suave);margin-right:6px}
+.cruce__ahora{font-weight:700;color:var(--tinta)}
+.cruce__off{display:inline-block;margin-left:6px;font-size:11px;font-weight:700;
+  background:var(--tinta);color:#fff;border-radius:6px;padding:2px 6px}
 .ficha__faq{margin-top:20px;border-top:1px solid var(--borde);padding-top:16px}
 .ficha__faq h4{font-size:15px;margin:0 0 4px}
 /* En la ficha las preguntas van al ancho de la columna, no centradas. */
@@ -1886,6 +1895,16 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
     <div class="ficha__descripcion" data-anima>
       <!-- Combos que sirven para lo mismo. Van acá, con el cliente decidiendo,
            para que pueda sumarlos sin volver al inicio. -->
+      <!-- El cruce de la tienda. La promocion de cross-selling de Tiendanube
+           descuenta solo si el producto entra con su id de promocion, y ese id
+           nace en el pedido de agregar: por eso aca se OFRECE y en el pase se
+           cobra. Ver `CRUCES`. -->
+      <section class="cruce" id="mvCruceCaja" hidden>
+        <h4>Llev&#225;telo con descuento</h4>
+        <p class="cruce__sub" id="mvCruceSub"></p>
+        <div class="ficha__combos-lista" id="mvCruce"></div>
+      </section>
+
       <section class="ficha__combos" id="mvCombosCaja" hidden>
         <h4>Combos para lo mismo</h4>
         <p class="ficha__combos-sub">Salen menos que comprar los productos por separado.</p>
@@ -2570,7 +2589,70 @@ function precioEn(i, seg){
   if (v && v.p) return v.p;
   return siNula(siNula(i.prod.pr[seg], i.prod.pr.minorista), 0);
 }
-const precioItem = i => precioEn(i, i.seg || segmento);
+/* ══════════ LOS CRUCES DE LA TIENDA ══════════
+   Tiendanube tiene cuatro promociones de tipo "Cross selling": comprando A, B
+   queda con descuento. La API no las expone -- `get_promotions` devuelve las
+   otras y estas no --, asi que estos pares se leyeron de la propia tienda el
+   30/09/2026, agregando cada A al carrito y mirando lo que contesta.
+
+   Y EL DESCUENTO NO SE APLICA SOLO. Medido ese dia:
+
+       Jojoba + Pepita sueltos                 $17.900 -> $17.900   nada
+       idem con un id de promocion viejo       $17.900 -> $17.900   nada
+       entrando por la promocion de la sesion  $17.900 -> $16.950   -$950
+
+   El `cross_selling_promotion_id` cambia en cada sesion, asi que no se puede
+   hornear: se lee en vivo al agregar A y se le adjunta a B. Aca vive solo el
+   par y el precio, que es lo que hace falta para OFRECERLO.
+
+   Las promociones estan puestas sobre las publicaciones MINORISTAS, asi que el
+   cruce solo se ofrece en esa lista. El otro unguento -- el de calambres,
+   229338002 -- no tiene cruce: la promocion esta solo sobre el de
+   articulaciones.
+
+   Para releerlos: respaldo/cross-selling-que-hay-y-que-se-puede.md */
+const CRUCES = {
+  229337981: {b: 276353878, precio: 8550, lista: 9500},   // Jojoba    -> Pepita de uva
+  229338137: {b: 338877630, precio: 8888, lista: 10100},  // Unguento  -> Jarilla
+  229337992: {b: 229337842, precio: 8280, lista: 9000},   // Calendula -> Gel de aloe
+  229337977: {b: 229337980, precio: 7600, lista: 8000}    // Lavanda   -> Calendula
+};
+
+/* De id de publicacion minorista a producto. Se arma una vez, a pedido. */
+let indicePorId = null;
+function productoPorId(id){
+  if (!indicePorId){
+    indicePorId = new Map();
+    PRODUCTOS.forEach(p => { if (p.ids && p.ids.minorista) indicePorId.set(p.ids.minorista, p); });
+  }
+  return indicePorId.get(Number(id)) || null;
+}
+
+/* El cruce de un producto, solo si se puede ofrecer de verdad: lista
+   minorista, el sugerido existe en el catalogo y tiene stock. */
+function cruceDe(p){
+  if (segmento !== 'minorista') return null;
+  const c = p && p.ids && CRUCES[p.ids.minorista];
+  if (!c) return null;
+  const b = productoPorId(c.b);
+  if (!b || !hayEn(b, 'minorista') || b.st.minorista === false) return null;
+  return {a: p, b: b, precio: c.precio, lista: c.lista};
+}
+
+/* El precio rebajado de una linea vale SOLO si el disparador tambien esta en
+   el carrito: sin A la tienda no arma la promocion y B se cobra a lista.
+   Mostrarlo igual seria prometer un precio que el checkout no va a hacer. */
+function cruceVivo(i){
+  if (!i || !i.cruce) return null;
+  const hayA = Object.values(carrito).some(
+    o => o.prod && o.prod.ids && o.prod.ids.minorista === i.cruce.a);
+  return hayA ? i.cruce : null;
+}
+
+const precioItem = i => {
+  const c = cruceVivo(i);
+  return c ? c.precio : precioEn(i, i.seg || segmento);
+};
 const totalCarrito = () => Object.values(carrito)
   .reduce((a, i) => a + precioItem(i) * i.cant, 0);
 const conStock = p => p.st[segmento] !== false;
@@ -4898,6 +4980,52 @@ function pintarCombos(p){
   combos.slice(0, 4).forEach(c => caja.appendChild(fila(c, 'ficha-combo')));
 }
 
+/* El cruce, en la ficha del producto que lo dispara. Se ofrece aca -- con el
+   cliente decidiendo -- y se cobra en el pase, que es donde se consigue el id
+   de promocion. El boton agrega LOS DOS cuando el disparador no esta: sin el,
+   el descuento no existe. */
+function pintarCruce(p){
+  const caja = $('#mvCruce'), seccion = $('#mvCruceCaja'), sub = $('#mvCruceSub');
+  if (!caja || !seccion) return;
+  const c = cruceDe(p);
+  seccion.hidden = !c;
+  if (!c) return;
+
+  const off = Math.round((1 - c.precio / c.lista) * 100);
+  const estaA = Object.values(carrito).some(i => i.prod === p);
+  const estaB = Object.values(carrito).some(i => i.prod === c.b && i.cruce);
+
+  if (sub) sub.textContent = estaB
+    ? 'Ya está en tu carrito con el descuento puesto.'
+    : 'Sumándolo a este pedido, la tienda te lo deja en ' + ars(c.precio) + '.';
+
+  caja.innerHTML = '';
+  const d = document.createElement('div');
+  d.className = 'mini';
+  d.innerHTML =
+    '<span class="ico">' + (c.b.img ? '<img src="' + c.b.img + '" alt="" loading="lazy">' : '') + '</span>' +
+    '<div class="txt"><b>' + c.b.n + '</b><div class="pr">' +
+      '<span class="cruce__lista">' + ars(c.lista) + '</span>' +
+      '<span class="cruce__ahora">' + ars(c.precio) + '</span>' +
+      (off > 0 ? '<span class="cruce__off">-' + off + '%</span>' : '') +
+    '</div></div>' +
+    '<button type="button"' + (estaB ? ' disabled' : '') + '>' +
+      (estaB ? '\u2713 Sumado' : (estaA ? '+ Agregar' : '+ Agregar los dos')) + '</button>';
+
+  d.querySelector('button').onclick = e => {
+    /* La misma clave que usa el boton grande de la ficha, para no abrir una
+       segunda linea del mismo producto. */
+    if (!Object.values(carrito).some(i => i.prod === p) && vista) agregar(p, vista.key, 1);
+    const clave = 'cruce-' + c.b.n;
+    agregar(c.b, clave, 1, e.target);
+    if (carrito[clave]) carrito[clave].cruce = {a: p.ids.minorista, precio: c.precio, lista: c.lista};
+    track('cross_sell_add', {item_name: c.b.n, source: 'cruce-tienda', value: c.precio,
+                             items: itemsGA([{prod: c.b, cant: 1}])});
+    recalcular();
+  };
+  caja.appendChild(d);
+}
+
 function abrirVista(p, key){
   vista = {p, key};
   llenarVista(p);
@@ -4905,6 +5033,7 @@ function abrirVista(p, key){
   cuentaFicha.fijar(1);
   pintarResenas(p);
   pintarCombos(p);
+  pintarCruce(p);
   abrirModal('modal');
   // La direccion pasa a ser la de este producto.
   ponerFichaEnLaDireccion(p);
@@ -5318,6 +5447,9 @@ function mensajeProgreso(subtotal, falta, proximo, pct){
    del minimo apenas lo cruzaba. */
 function recalcular(){
   guardarCarrito();   // todo cambio del carrito termina aca
+  /* El bloque del cruce mira el carrito -- si ya esta el disparador, si ya
+     esta el sugerido --, asi que se repinta con el resto. */
+  if (typeof vista !== 'undefined' && vista && vista.p) pintarCruce(vista.p);
   const subtotal = totalCarrito();
   const unidades = Object.values(carrito).reduce((a,i) => a + i.cant, 0);
   const lineas = Object.keys(carrito).length;
@@ -5469,6 +5601,7 @@ function pintarCarrito(entrando){
         '<span class="citem__unit">' + ars(unit) + ' c/u' +
         (otroSeg ? ' <span class="citem__seg">precio ' +
                    SEGMENTOS[i.seg].label.toLowerCase() + '</span>' : '') +
+        (cruceVivo(i) ? ' <span class="citem__seg">descuento de la tienda</span>' : '') +
         '</span></span>' +
         '<span class="citem__qty"><button type="button" data-d="-1" aria-label="Quitar uno">-</button>' +
         campoCantidad(i.cant, 'Cantidad de ' + i.prod.n) +
@@ -5824,7 +5957,7 @@ function unidadesEnLaTienda(){
 
 /* Un formulario suelto por producto, igual al que usa la ficha de la tienda:
    method post, action /comprar/ y el id en add_to_cart. */
-function formularioParaLaTienda(p, cant, seg, vi){
+function formularioParaLaTienda(p, cant, seg, vi, promoCruce){
   const f = document.createElement('form');
   f.className = 'js-product-form';
   f.method = 'post';
@@ -5834,9 +5967,26 @@ function formularioParaLaTienda(p, cant, seg, vi){
     i.type = 'hidden'; i.name = n; i.value = v;
     f.appendChild(i);
   });
+  /* El campo del cruce. Es el que la tienda pone en su propio modal y el
+     unico que hace que el descuento exista: sin el, B entra a precio de
+     lista. Probado el 30/09/2026 en los dos sentidos. */
+  if (promoCruce){
+    const i = document.createElement('input');
+    i.type = 'hidden'; i.name = 'cross_selling_promotion_id'; i.value = promoCruce;
+    f.appendChild(i);
+  }
   f.style.display = 'none';
   document.body.appendChild(f);
   return f;
+}
+
+/* El id de promocion que deja cada disparador al entrar, por id minorista.
+   Vive lo que vive la sesion del cliente: no se guarda ni se hornea. */
+const promoDeCruce = new Map();
+function guardarPromoDeCruce(p, html){
+  if (!html || !p || !p.ids || !p.ids.minorista) return;
+  const m = /cross_selling_promotion_id"[^>]*value="([^"]*)"/.exec(html);
+  if (m) promoDeCruce.set(p.ids.minorista, m[1]);
 }
 
 /* Agrega UN formulario al carrito de la tienda y espera a que la tienda
@@ -5856,12 +6006,12 @@ function agregarEnLaTienda(form){
   const antes = unidadesEnLaTienda();
   return new Promise(resolver => {
     let hecho = false;
-    const fin = entro => {
+    const fin = (entro, cruce) => {
       if (hecho) return;
       hecho = true;
       clearTimeout(reloj);
       clearInterval(vigia);
-      resolver(entro);
+      resolver({entro: entro, cruce: cruce || null});
     };
     /* Se mira el carrito de la tienda cada 300 ms. Si las unidades subieron,
        el producto entro -- avisen o no. Esto es lo que salva el caso de la
@@ -5877,9 +6027,12 @@ function agregarEnLaTienda(form){
       fin(antes !== null && ahora !== null && ahora > antes);
     }, 8000);
     try {
+      /* Al sexto argumento la plataforma lo llama con DOS datos --
+         `n(a, s)` en su fuente --: los productos relacionados y el HTML del
+         cross-selling. El segundo trae el id de promocion de esta sesion. */
       Promise.resolve(LS.addToCartEnhanced(form, '', '', '', true,
-        () => fin(true),          // entro
-        () => fin(false)))        // la tienda lo rechazo
+        (rel, cruce) => fin(true, cruce),   // entro
+        () => fin(false)))                  // la tienda lo rechazo
         .catch(() => fin(false));
     } catch (err) {
       fin(false);
@@ -5932,9 +6085,15 @@ async function mandarALaTienda(items, boton, textoOriginal){
       fallaron.push(it); hechos++; avisarProgreso();
       return;
     }
-    const f = formularioParaLaTienda(it.prod, it.cant, it.seg, it.vi);
-    const entro = await agregarEnLaTienda(f);
+    /* Si esta linea es un cruce, se manda con el id de promocion que dejo su
+       disparador. Si no llego -- la promocion se apago en el panel --, entra
+       igual a precio de lista y queda medido. */
+    const promo = it.cruce ? promoDeCruce.get(it.cruce.a) : null;
+    if (it.cruce && !promo) track('cruce_sin_promocion', {item_name: it.prod.n});
+    const f = formularioParaLaTienda(it.prod, it.cant, it.seg, it.vi, promo);
+    const {entro, cruce} = await agregarEnLaTienda(f);
     f.remove();
+    guardarPromoDeCruce(it.prod, cruce);
     hechos++; avisarProgreso();
     if (!entro){ fallaron.push(it); return; }
     /* Ya esta en el carrito de la tienda: sale del de la landing. Si el
@@ -5952,11 +6111,20 @@ async function mandarALaTienda(items, boton, textoOriginal){
      entraron en 2,1 s contra los 10,8 que habrian tardado de a uno. Antes se
      mandaban todos de a uno y quince lineas eran treinta segundos con el
      boton en "Redirigiendo..."; el cliente no espera treinta segundos. */
-  await pasarUno(items[0]);
-  const DE_A = 4;
-  for (let i = 1; i < items.length; i += DE_A){
-    await Promise.all(items.slice(i, i + DE_A).map(pasarUno));
+  /* Los cruces van ULTIMOS y de a uno. El descuento solo existe si el
+     producto entra con el id de promocion que la tienda entrega al agregar su
+     disparador, asi que A tiene que haber contestado antes que B. */
+  const cruces  = items.filter(it => it.cruce);
+  const sueltos = items.filter(it => !it.cruce);
+
+  if (sueltos.length){
+    await pasarUno(sueltos[0]);
+    const DE_A = 4;
+    for (let i = 1; i < sueltos.length; i += DE_A){
+      await Promise.all(sueltos.slice(i, i + DE_A).map(pasarUno));
+    }
   }
+  for (const it of cruces) await pasarUno(it);
 
   if (!fallaron.length){ location.href = CARRITO_TIENDA; return; }
 
