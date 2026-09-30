@@ -5256,8 +5256,10 @@ function pintarCruceCarrito(){
   if (!c) return;
 
   const off = Math.round((1 - c.precio / c.lista) * 100);
-  if (sub) sub.textContent = 'Porque llevás ' + nombreCorto(c.a) +
-    ', la tienda te lo deja en ' + ars(c.precio) + '.';
+  /* Se aclara el "una unidad": el descuento de la tienda es plano, y es mas
+     barato decirlo acá que explicarlo en el checkout. */
+  if (sub) sub.textContent = 'Porque llevás ' + nombreCorto(c.a) + ', la tienda te deja ' +
+    'una unidad en ' + ars(c.precio) + '. Si sumás más, van a precio de lista.';
 
   caja.innerHTML =
     '<div class="mini">' +
@@ -5280,9 +5282,16 @@ function pintarCruceCarrito(){
 
   caja.querySelector('.cruce__add').onclick = e => {
     const n = cuenta ? cuenta.leer() : 1;
+    /* EL DESCUENTO ES POR UNA UNIDAD. Medido contra la tienda mandando el
+       mismo id de promocion con distinta cantidad: x1, x2 y x3 descuentan los
+       mismos $950. Asi que lo que entra se parte -- una con descuento y el
+       resto a lista, en su propia linea --, que es exactamente lo que va a
+       cobrar el checkout. Con el contador en 2 la landing prometia $8.280 x 2
+       y la tienda iba a cobrar $9.000 + $8.280. */
     const clave = 'cruce-' + c.b.n;
-    agregar(c.b, clave, n, e.target);
+    agregar(c.b, clave, 1, e.target);
     if (carrito[clave]) carrito[clave].cruce = {a: c.a.ids.minorista, precio: c.precio, lista: c.lista};
+    if (n > 1) agregar(c.b, 'extra-' + c.b.n, n - 1);
     track('cross_sell_add', {item_name: c.b.n, source: 'cruce-carrito', value: c.precio,
                              items: itemsGA([{prod: c.b, cant: n}])});
     pintarCarrito();
@@ -5303,7 +5312,7 @@ function pintarCruce(p){
 
   if (sub) sub.textContent = estaB
     ? 'Ya está en tu carrito con el descuento puesto.'
-    : 'Sumándolo a este pedido, la tienda te lo deja en ' + ars(c.precio) + '.';
+    : 'Sumándolo a este pedido, la tienda te deja una unidad en ' + ars(c.precio) + '.';
 
   caja.innerHTML = '';
   const d = document.createElement('div');
@@ -6232,8 +6241,11 @@ function pintarCarrito(entrando){
         // Bajar de uno saca el producto: es lo que espera cualquiera que
         // aprieta el menos con un solo item.
         alBajarDeUno: () => { delete carrito[clave]; pintarCarrito(); recalcular(); },
-        // Lo mismo que en la tarjeta: no se puede pedir mas de lo que hay.
-        tope: topeDe(i.prod, i.seg || segmento, i.vi)
+        /* Lo mismo que en la tarjeta: no se puede pedir mas de lo que hay. Y
+           la linea del cruce queda topeada en 1, porque el descuento de la
+           tienda es por UNA unidad: si se pudiera subir con el contador,
+           volveria el mismo problema por otra puerta. */
+        tope: i.cruce ? 1 : topeDe(i.prod, i.seg || segmento, i.vi)
       });
       li.querySelector('.citem__quitar').onclick = () => {
         track('remove_from_cart', {item_name:i.prod.n});
