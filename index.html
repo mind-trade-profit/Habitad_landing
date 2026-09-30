@@ -2184,6 +2184,15 @@ const CUOTAS = {dos: 30000, tres: 60000};
    tiene en el carrito. Por debajo del primer umbral no hay cuotas, y ahí el
    brief pide -- con razón -- convertir la falta en incentivo de ticket en vez
    de prometer algo que el checkout no cumple. */
+/* Se repinta con el carrito, no solo al abrir la ficha: el texto dice cuanto
+   FALTA, y eso cambia con cada cosa que el cliente agrega. */
+function pintarCuotas(p){
+  const caja = document.getElementById('mvCuotas');
+  if (!caja || !p) return;
+  caja.innerHTML = textoCuotas(precioDe(p));
+  caja.hidden = false;
+}
+
 function textoCuotas(precioDeEste){
   const con = totalCarrito() + (precioDeEste || 0);
   if (con >= CUOTAS.tres) return '<b>3 cuotas sin interés</b>';
@@ -5413,11 +5422,7 @@ function llenarVista(p){
   envio.textContent = 'Envío gratis desde ' + ars(umbralEnvioDe(segmento));
 
   /* A4 · las cuotas que el checkout da DE VERDAD para este importe. */
-  const cuotas = $('#mvCuotas');
-  if (cuotas){
-    cuotas.innerHTML = textoCuotas(pr);
-    cuotas.hidden = false;
-  }
+  pintarCuotas(p);
 
   /* Sin stock no se compra. La ficha no lo estaba apagando: se podia cargar
      al carrito y recien fallaba del otro lado, en el carrito de Tiendanube,
@@ -5733,7 +5738,10 @@ function recalcular(){
   guardarCarrito();   // todo cambio del carrito termina aca
   /* El bloque del cruce mira el carrito -- si ya esta el disparador, si ya
      esta el sugerido --, asi que se repinta con el resto. */
-  if (typeof vista !== 'undefined' && vista && vista.p) pintarCruce(vista.p);
+  if (typeof vista !== 'undefined' && vista && vista.p){
+    pintarCruce(vista.p);
+    pintarCuotas(vista.p);
+  }
   const subtotal = totalCarrito();
   const unidades = Object.values(carrito).reduce((a,i) => a + i.cant, 0);
   const lineas = Object.keys(carrito).length;
