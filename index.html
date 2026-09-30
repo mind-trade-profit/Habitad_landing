@@ -1021,11 +1021,19 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 /* Cambio 3 · la foto del carrito se agranda como la de la ficha. */
 .citem--lupa{cursor:zoom-in}
 /* Cambio 2 · confeti y corazones. Encima de todo y sin recibir clics: el
-   festejo nunca tiene que estorbar al boton que lo disparo. */
-.festejo{position:fixed;inset:0;z-index:2200;pointer-events:none;overflow:hidden}
-.festejo i{position:absolute;display:block;will-change:transform,opacity}
-.festejo .papelito{width:8px;height:12px;border-radius:2px}
-.festejo .corazon{font-style:normal;font-size:18px;line-height:1}
+   festejo nunca tiene que estorbar al boton que lo disparo.
+
+   OJO CON EL NOMBRE: `festejo` a secas ya esta tomado -- lo usa el mensaje de
+   la barra, ver `.bf-msg.festejo` mas arriba --, y una regla de clase suelta
+   con ese nombre le caia encima y lo mandaba a la esquina de la pagina.
+
+   Y estas reglas solo valen en la vista previa: dentro de la tienda el CSS
+   va acotado a `.landing-habitad` y esta capa cuelga del body, que esta
+   afuera. Lo que la hace verse de verdad son los estilos inline del guion. */
+.hb-festejo{position:fixed;inset:0;z-index:2200;pointer-events:none;overflow:hidden}
+.hb-festejo i{position:absolute;display:block;will-change:transform,opacity}
+.hb-festejo .hb-papelito{width:8px;height:12px;border-radius:2px}
+.hb-festejo .hb-corazon{font-style:normal;font-size:18px;line-height:1}
 /* El cruce que ofrece la tienda. Los dos precios van a la vista porque el
    descuento es de Tiendanube y conviene que se note de donde sale. */
 .cruce{margin-top:20px;border-top:1px solid var(--borde);padding-top:16px}
@@ -2138,9 +2146,15 @@ const TIERS_POR_SEGMENTO = {
        `envio:true` para que el hito se siga encontrando aunque cambie el
        nombre -- antes se lo buscaba por el texto, en tres lugares. */
     {min:30000,  nombre:'2 cuotas sin interés',   real:true},
-    {min:60000,  nombre:'Envío gratis y 3 cuotas', real:true, envio:true}
-    /* Arriba de $60.000 no queda escalon: no se le inventa un beneficio a la
-       tienda. Cuando el dueño defina uno, va acá. */
+    {min:60000,  nombre:'Envío gratis',           real:true, envio:true},
+    /* El cliente pidio dejar este escalon (30/09/2026). Medido: arriba de
+       $60.000 no aparece ninguna cuota sin interes nueva -- hasta $175.250 el
+       maximo sigue siendo 3 --, asi que no hay un beneficio nuevo que ponerle
+       y vuelve tal como estaba.
+
+       QUEDA DICHO: la tienda da las 3 cuotas desde ~$60.000, asi que este
+       escalon promete de menos. Se deja asi porque lo pidio el cliente. */
+    {min:100000, nombre:'3 cuotas sin interés',   real:true}
   ],
   /* Los dos regalos los entrega un CUPON de la tienda, no la landing: aca
      solo se anuncian. Se probo agregarlos solos al carrito y se descarto,
@@ -5950,11 +5964,17 @@ const festejo = (function (){
   const COLORES = ['#e8467c', '#f6b93b', '#2fa36b', '#4a8fe7', '#b06ab3'];
   let capa = null;
 
+  /* Los estilos van INLINE y no por hoja: dentro de la tienda el CSS del
+     paquete se acota a `.landing-habitad`, y esta capa cuelga del body, que
+     queda afuera de ese alcance. Con la hoja sola, los papelitos existian y
+     eran invisibles. */
   function lienzo(){
     if (capa && capa.isConnected) return capa;
     capa = document.createElement('div');
-    capa.className = 'festejo';
+    capa.className = 'hb-festejo';
     capa.setAttribute('aria-hidden', 'true');
+    capa.style.cssText = 'position:fixed;left:0;top:0;right:0;bottom:0;' +
+                         'z-index:2200;pointer-events:none;overflow:hidden';
     document.body.appendChild(capa);
     return capa;
   }
@@ -5988,8 +6008,10 @@ const festejo = (function (){
   function confeti(boton){
     soltar(boton, 16, n => {
       const e = document.createElement('i');
-      e.className = 'papelito';
-      e.style.background = COLORES[n % COLORES.length];
+      e.className = 'hb-papelito';
+      e.style.cssText = 'position:absolute;display:block;width:8px;height:12px;' +
+                        'border-radius:2px;will-change:transform,opacity;background:' +
+                        COLORES[n % COLORES.length];
       return e;
     }, () => {
       const ang = Math.random() * Math.PI - Math.PI;      // hacia arriba
@@ -6008,9 +6030,11 @@ const festejo = (function (){
   function corazones(boton){
     soltar(boton, 9, () => {
       const e = document.createElement('i');
-      e.className = 'corazon';
+      e.className = 'hb-corazon';
       e.textContent = '\u2665';
-      e.style.color = COLORES[Math.floor(Math.random() * 2)];
+      e.style.cssText = 'position:absolute;display:block;font-style:normal;' +
+                        'font-size:18px;line-height:1;will-change:transform,opacity;color:' +
+                        COLORES[Math.floor(Math.random() * 2)];
       return e;
     }, () => {
       const dx = (Math.random() - 0.5) * 120;
