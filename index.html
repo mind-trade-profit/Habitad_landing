@@ -2145,16 +2145,21 @@ const TIERS_POR_SEGMENTO = {
        El de $60.000 junta las dos cosas porque las dos caen ahi. Se marca con
        `envio:true` para que el hito se siga encontrando aunque cambie el
        nombre -- antes se lo buscaba por el texto, en tres lugares. */
-    {min:30000,  nombre:'2 cuotas sin interés',   real:true},
+    /* `cuotas: N` marca el hito y ADEMAS es de donde la ficha saca el umbral
+       para su linea de "con $X mas". Antes eran dos numeros en dos lugares y
+       terminaron discrepando: la barra decia $50.000 y la ficha calculaba
+       contra $30.000. Uno solo, acá. */
+    {min:50000,  nombre:'2 cuotas sin interés',   real:true, cuotas:2},
     {min:60000,  nombre:'Envío gratis',           real:true, envio:true},
     /* El cliente pidio dejar este escalon (30/09/2026). Medido: arriba de
        $60.000 no aparece ninguna cuota sin interes nueva -- hasta $175.250 el
        maximo sigue siendo 3 --, asi que no hay un beneficio nuevo que ponerle
        y vuelve tal como estaba.
 
-       QUEDA DICHO: la tienda da las 3 cuotas desde ~$60.000, asi que este
-       escalon promete de menos. Se deja asi porque lo pidio el cliente. */
-    {min:100000, nombre:'3 cuotas sin interés',   real:true}
+       QUEDA DICHO: la tienda da las 3 cuotas desde ~$60.000 y las 2 desde
+       ~$30.000, asi que estos dos escalones prometen de menos. Se dejan asi
+       porque lo pidio el dueño, que es quien conoce su panel de cobros. */
+    {min:100000, nombre:'3 cuotas sin interés',   real:true, cuotas:3}
   ],
   /* Los dos regalos los entrega un CUPON de la tienda, no la landing: aca
      solo se anuncian. Se probo agregarlos solos al carrito y se descarto,
@@ -2181,18 +2186,26 @@ const TIERS_POR_SEGMENTO = {
    (su barra de envio gratis es la promocion 765333); los otros dos salen de la
    promocion 806521, que la landing no puede leer sola porque la API publica no
    la expone. Si el cliente cambia esos montos en el panel, se cambian aca. */
-/* A4 · DESDE CUANTO FINANCIA EL CHECKOUT, SIN INTERES.
-   No se adivina: se leyo `best_installments_data` de la respuesta del carrito
-   el 30/09/2026, armando carritos de distinto monto contra la tienda viva.
+/* A4 · DESDE CUANTO SE ANUNCIAN LAS CUOTAS SIN INTERES.
+   El umbral NO vive acá: se lee de los escalones, del hito marcado con
+   `cuotas: N`. Antes eran dos numeros en dos lugares distintos y terminaron
+   discrepando -- la barra decia $50.000 y la ficha calculaba contra $30.000,
+   asi que a un producto de $9.100 le ofrecia "con $20.900 mas" cuando el
+   escalon pedia $40.900 mas.
 
-       $ 8.400 -> 1     $30.000 -> 2     $62.400 -> 3
-       $23.400 -> 1     $54.000 -> 2     $95.190 -> 3
-       $26.300 -> 1
+   LO QUE DICE LA MEDICION, para cuando se quiera revisar: leyendo
+   `best_installments_data` del carrito el 30/09/2026 --
 
-   El de 2 cuotas esta entre $26.300 y $30.000, y el de 3 entre $54.000 y
-   $62.400: los redondos de esa franja. Si el dueño los cambia en el panel de
-   cobros, se cambian acá. */
-const CUOTAS = {dos: 30000, tres: 60000};
+       $26.300 -> 1 cuota      $54.000 -> 2 cuotas
+       $30.000 -> 2 cuotas     $62.400 -> 3 cuotas
+
+   -- la tienda da las 2 cuotas desde ~$30.000 y las 3 desde ~$60.000. Con los
+   escalones en $50.000 y $100.000 se promete de menos: el cliente ya tiene el
+   beneficio antes de que se lo anuncien. Queda asi por decision del dueño. */
+function umbralCuotas(n){
+  const t = (TIERS_POR_SEGMENTO.minorista || []).find(x => x.cuotas === n);
+  return t ? t.min : null;
+}
 
 /* Lo que se le puede prometer a alguien que suma ESTE producto a lo que ya
    tiene en el carrito. Por debajo del primer umbral no hay cuotas, y ahí el
@@ -2203,15 +2216,19 @@ const CUOTAS = {dos: 30000, tres: 60000};
 function pintarCuotas(p){
   const caja = document.getElementById('mvCuotas');
   if (!caja || !p) return;
-  caja.innerHTML = textoCuotas(precioDe(p));
-  caja.hidden = false;
+  const texto = textoCuotas(precioDe(p));
+  caja.innerHTML = texto;
+  caja.hidden = !texto;
 }
 
 function textoCuotas(precioDeEste){
   const con = totalCarrito() + (precioDeEste || 0);
-  if (con >= CUOTAS.tres) return '<b>3 cuotas sin interés</b>';
-  if (con >= CUOTAS.dos)  return '<b>2 cuotas sin interés</b>';
-  return 'Con <b>' + ars(CUOTAS.dos - con) + '</b> más, 2 cuotas sin interés';
+  const dos = umbralCuotas(2), tres = umbralCuotas(3);
+  if (tres && con >= tres) return '<b>3 cuotas sin interés</b>';
+  if (dos && con >= dos)   return '<b>2 cuotas sin interés</b>';
+  // Sin hito de cuotas no hay nada honesto que decir: la linea se esconde.
+  if (!dos) return '';
+  return 'Con <b>' + ars(dos - con) + '</b> más, 2 cuotas sin interés';
 }
 
 const ENVIO_GRATIS = {minorista: 60000, mayorista: 150000, distribuidor: 150000};
