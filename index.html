@@ -5139,8 +5139,18 @@ function dejarUnSoloEnvio(){
     });
   });
   if (!otros.size) return;
-  /* El texto del dueño manda, y se muda arriba del boton. */
-  const delDueno = [...otros].find(el => (el.textContent || '').trim().length > 12);
+  /* El texto del dueño manda, y se muda arriba del boton. Pero no el primero
+     que aparezca: el brief pide "el mas claro", y probado con los dos que la
+     tienda inyecta hoy, el primero es el badge -- "$60 mil" --, que es una
+     pildora hecha para ser corta, no clara. Gana el que trae el monto escrito
+     entero, y a igualdad, el mas explicito. */
+  const claridad = el => {
+    const t = (el.textContent || '').trim();
+    return (/\d[.\s]\d{3}/.test(t) ? 1000 : 0) + t.length;
+  };
+  const delDueno = [...otros]
+    .filter(el => (el.textContent || '').trim().length > 12)
+    .sort((a, b) => claridad(b) - claridad(a))[0];
   if (delDueno){
     propio.textContent = (delDueno.textContent || '').replace(/\s+/g, ' ').trim();
     propio.hidden = false;
