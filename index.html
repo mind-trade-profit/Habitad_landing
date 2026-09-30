@@ -1005,6 +1005,27 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .ficha__combos h4{font-size:15px;margin:0 0 2px}
 .ficha__combos-sub{margin:0 0 11px;font-size:13px;color:var(--tinta-suave)}
 .ficha__combos-lista{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(275px,1fr))}
+/* A4 · las cuotas, pegadas al precio. Una linea, sin caja: arriba del boton
+   cada renglon se paga en pixeles. */
+.ficha__cuotas{margin:4px 0 0;font-size:13px;color:var(--tinta-suave)}
+.ficha__cuotas b{color:var(--tinta)}
+/* A3 · la reseña destacada. Va DEBAJO del boton -- ver el comentario del
+   parche --, asi que puede permitirse una caja. */
+.ficha__resena-top{margin:14px 0 0;padding:12px 14px;border-radius:11px;
+  background:var(--crema);border:1px solid var(--borde);font-size:13.5px}
+.ficha__resena-top .astros{font-size:12px}
+.ficha__resena-top__autor{font-weight:700;margin-left:6px}
+.ficha__resena-top__txt{margin:5px 0 0;line-height:1.45}
+.ficha__resena-top__ver{background:none;border:0;padding:0;margin-top:6px;
+  font:inherit;font-weight:700;color:var(--tinta);text-decoration:underline;cursor:pointer}
+/* Cambio 3 · la foto del carrito se agranda como la de la ficha. */
+.citem--lupa{cursor:zoom-in}
+/* Cambio 2 · confeti y corazones. Encima de todo y sin recibir clics: el
+   festejo nunca tiene que estorbar al boton que lo disparo. */
+.festejo{position:fixed;inset:0;z-index:2200;pointer-events:none;overflow:hidden}
+.festejo i{position:absolute;display:block;will-change:transform,opacity}
+.festejo .papelito{width:8px;height:12px;border-radius:2px}
+.festejo .corazon{font-style:normal;font-size:18px;line-height:1}
 /* El cruce que ofrece la tienda. Los dos precios van a la vista porque el
    descuento es de Tiendanube y conviene que se note de donde sale. */
 .cruce{margin-top:20px;border-top:1px solid var(--borde);padding-top:16px}
@@ -1488,8 +1509,10 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
     <div class="cat-elige__fila">
       <button class="cat-abrir" id="catAbrir" type="button"
               aria-expanded="false" aria-controls="catPanel">
-        <span class="cat-abrir__et">Categoría</span>
-        <b class="cat-abrir__val" id="catAbrirVal">Todas</b>
+        <!-- Cambio 1 · sin categoria elegida el boton invita; con una puesta
+             vuelve a decir "Categoría <cual>". Lo maneja `ajustarElige`. -->
+        <span class="cat-abrir__et" id="catAbrirEt">Elegí tu categoría</span>
+        <b class="cat-abrir__val" id="catAbrirVal" hidden></b>
         <span class="cat-abrir__flecha" aria-hidden="true">
           <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor"
             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1829,6 +1852,9 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
             <span class="ficha__off" id="mvOff"></span>
           </div>
           <p class="ficha__transferencia" id="mvTransferencia"></p>
+          <!-- A4 · lo que el checkout financia DE VERDAD para este importe.
+               Los umbrales estan medidos, ver `CUOTAS`. -->
+          <p class="ficha__cuotas" id="mvCuotas" hidden></p>
         </div>
 
         <!-- Badges de Nubea para la ficha ("junto al precio"). -->
@@ -1857,6 +1883,11 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
           Comprar ahora</button>
 
         <!-- Bloques de Nubea: garantia, envio y los que el cliente sume. -->
+        <!-- A3 · la reseña destacada. Va debajo del boton y no debajo del
+             precio: arriba, cada renglon empuja la compra fuera de pantalla.
+             Ver el comentario del parche. -->
+        <div class="ficha__resena-top" id="mvResenaTop" hidden></div>
+
         <div class="nb-bloques" id="mvNubeaBloques" hidden></div>
 
         <div class="envio-caja" id="mvEnvioCaja">
@@ -2092,9 +2123,24 @@ const TIERS_POR_SEGMENTO = {
        transferencia se saco: prometia algo distinto de lo que cobra el
        checkout -- la tienda da 5% en todo el catalogo y sin minimo -- y quedo
        reemplazado por las tres cuotas. */
-    {min:50000,  nombre:'2 cuotas sin interés',   real:true},
-    {min:60000,  nombre:'Envío gratis',           real:true},
-    {min:100000, nombre:'3 cuotas sin interés',   real:true}
+    /* MEDIDO el 30/09/2026 contra el checkout, leyendo `best_installments_data`
+       de la respuesta del carrito:
+
+           $26.300 -> 1 cuota     $54.000 -> 2 cuotas
+           $30.000 -> 2 cuotas    $62.400 -> 3 cuotas
+
+       Hasta ese dia esta escalera decia 2 cuotas a los $50.000 y 3 a los
+       $100.000: PROMETIA DE MENOS. La tienda ya las daba a los ~$30.000 y
+       ~$60.000 y el cliente no se enteraba. El brief proponia bajar el primero
+       "a algo alrededor de $40.000"; con el numero medido no hay que adivinar.
+
+       El de $60.000 junta las dos cosas porque las dos caen ahi. Se marca con
+       `envio:true` para que el hito se siga encontrando aunque cambie el
+       nombre -- antes se lo buscaba por el texto, en tres lugares. */
+    {min:30000,  nombre:'2 cuotas sin interés',   real:true},
+    {min:60000,  nombre:'Envío gratis y 3 cuotas', real:true, envio:true}
+    /* Arriba de $60.000 no queda escalon: no se le inventa un beneficio a la
+       tienda. Cuando el dueño defina uno, va acá. */
   ],
   /* Los dos regalos los entrega un CUPON de la tienda, no la landing: aca
      solo se anuncian. Se probo agregarlos solos al carrito y se descarto,
@@ -2121,6 +2167,30 @@ const TIERS_POR_SEGMENTO = {
    (su barra de envio gratis es la promocion 765333); los otros dos salen de la
    promocion 806521, que la landing no puede leer sola porque la API publica no
    la expone. Si el cliente cambia esos montos en el panel, se cambian aca. */
+/* A4 · DESDE CUANTO FINANCIA EL CHECKOUT, SIN INTERES.
+   No se adivina: se leyo `best_installments_data` de la respuesta del carrito
+   el 30/09/2026, armando carritos de distinto monto contra la tienda viva.
+
+       $ 8.400 -> 1     $30.000 -> 2     $62.400 -> 3
+       $23.400 -> 1     $54.000 -> 2     $95.190 -> 3
+       $26.300 -> 1
+
+   El de 2 cuotas esta entre $26.300 y $30.000, y el de 3 entre $54.000 y
+   $62.400: los redondos de esa franja. Si el dueño los cambia en el panel de
+   cobros, se cambian acá. */
+const CUOTAS = {dos: 30000, tres: 60000};
+
+/* Lo que se le puede prometer a alguien que suma ESTE producto a lo que ya
+   tiene en el carrito. Por debajo del primer umbral no hay cuotas, y ahí el
+   brief pide -- con razón -- convertir la falta en incentivo de ticket en vez
+   de prometer algo que el checkout no cumple. */
+function textoCuotas(precioDeEste){
+  const con = totalCarrito() + (precioDeEste || 0);
+  if (con >= CUOTAS.tres) return '<b>3 cuotas sin interés</b>';
+  if (con >= CUOTAS.dos)  return '<b>2 cuotas sin interés</b>';
+  return 'Con <b>' + ars(CUOTAS.dos - con) + '</b> más, 2 cuotas sin interés';
+}
+
 const ENVIO_GRATIS = {minorista: 60000, mayorista: 150000, distribuidor: 150000};
 const umbralEnvioDe = seg => seg === 'minorista'
   ? (typeof nubea !== 'undefined' && nubea ? nubea.umbralEnvio() : ENVIO_GRATIS.minorista)
@@ -2748,6 +2818,10 @@ const EVENTOS = {
   view_item:            {ga4: 'view_item',        meta: 'ViewContent'},
   add_to_cart:          {ga4: 'add_to_cart',      meta: 'AddToCart'},
   cross_sell_add:       {ga4: 'add_to_cart',      meta: 'AddToCart'},
+  /* Bloque E del brief. `reward_unlocked` ya existia y no se duplica. */
+  reward_progress:      {ga4: 'reward_progress'},
+  cart_suggestion_add:  {ga4: 'add_to_cart',      meta: 'AddToCart'},
+  review_expand:        {ga4: 'review_expand'},
   remove_from_cart:     {ga4: 'remove_from_cart'},
   view_cart:            {ga4: 'view_cart'},
   begin_checkout:       {ga4: 'begin_checkout',   meta: 'InitiateCheckout'},
@@ -4804,6 +4878,11 @@ function agregar(p, key, cant, boton, seg){
     // tres de las siete que pidio es mentirle en la cara.
     boton.textContent = frenado ? 'Quedan ' + tope : '\u2713 Agregado';
     boton.classList.add('ok');
+    /* Cambio 2 · el confeti va acá y no en cada boton: TODO lo que entra al
+       carrito pasa por `agregar`, asi que con esto quedan cubiertos la ficha,
+       la grilla, las mini tarjetas y el cruce de la tienda. Si se freno por
+       stock no se festeja: seria festejar una mala noticia. */
+    if (!frenado && typeof festejo !== 'undefined') festejo.confeti(boton);
     setTimeout(() => { boton.textContent = t; boton.classList.remove('ok'); },
                frenado ? 2200 : 1400);
   }
@@ -4889,6 +4968,48 @@ var resenasVivas = (function (){
   return {leer, pedir};
 })();
 
+/* ══════════ A3 · LA RESEÑA QUE SE VE SIN BUSCARLA ══════════
+   Las reseñas existen y algunas son muy buenas, pero viven a ~2.788 px del
+   inicio del modal, despues de la descripcion y de los combos. No llega nadie.
+
+   Criterio del brief: la de 5 estrellas con MAS texto. Las largas son las
+   especificas, y las especificas son las que persuaden. */
+function resenaDestacada(p){
+  const vivo = resenasVivas.leer(p.ids.minorista || p.ids.mayorista || p.ids.distribuidor);
+  const lista = (vivo && vivo.resenas && vivo.resenas.length) ? vivo.resenas
+              : (p.revs && p.revs.length ? p.revs : []);
+  const buenas = lista.filter(r => (r.r || 0) >= 5 && r.x);
+  const entre = buenas.length ? buenas : lista.filter(r => r.x);
+  if (!entre.length) return null;
+  return entre.slice().sort((a, b) => (b.x || '').length - (a.x || '').length)[0];
+}
+
+const TOPE_RESENA_TOP = 180;
+
+function pintarResenaTop(p){
+  const caja = $('#mvResenaTop');
+  if (!caja) return;
+  const r = resenaDestacada(p);
+  caja.hidden = !r;
+  if (!r) return;
+  let txt = String(r.x || '').replace(/\s+/g, ' ').trim();
+  const largo = txt.length > TOPE_RESENA_TOP;
+  if (largo){
+    const corte = txt.lastIndexOf(' ', TOPE_RESENA_TOP);
+    txt = txt.slice(0, corte > 60 ? corte : TOPE_RESENA_TOP).replace(/[\s,;:.]+$/, '') + '\u2026';
+  }
+  caja.innerHTML =
+    '<span class="astros">' + astros(r.r) + '</span>' +
+    '<span class="ficha__resena-top__autor">' + escCombo(r.a || '') + '</span>' +
+    '<p class="ficha__resena-top__txt">' + escCombo(txt) + '</p>' +
+    '<button type="button" class="ficha__resena-top__ver">Ver todas las reseñas</button>';
+  caja.querySelector('button').onclick = () => {
+    const destino = $('#mvResenas');
+    if (destino) destino.scrollIntoView({behavior: 'smooth', block: 'start'});
+    track('review_expand', {product_id: p.ids.minorista || null, item_name: p.n});
+  };
+}
+
 function pintarResenas(p){
   const caja = $('#mvResenas');
   const idPub = p.ids.minorista || p.ids.mayorista || p.ids.distribuidor;
@@ -4958,7 +5079,9 @@ function pintarResenas(p){
      cerrado o cambiado mientras tanto. */
   if (!vivo){
     resenasVivas.pedir(idPub).then(d => {
-      if (d && vista && vista.p === p) pintarResenas(p);
+      /* Cuando llegan las de la tienda se repinta tambien la destacada: la
+         horneada puede no ser la mejor que hay. */
+      if (d && vista && vista.p === p){ pintarResenas(p); pintarResenaTop(p); }
     });
   }
 }
@@ -5164,6 +5287,7 @@ function abrirVista(p, key){
   pintarResenas(p);
   pintarCombos(p);
   pintarCruce(p);
+  pintarResenaTop(p);
   abrirModal('modal');
   // La direccion pasa a ser la de este producto.
   ponerFichaEnLaDireccion(p);
@@ -5287,6 +5411,13 @@ function llenarVista(p){
      fuera de pantalla. A 375 px, "en compras superiores a" costaba un renglon
      entero. El monto sigue saliendo de la app de envio de la tienda. */
   envio.textContent = 'Envío gratis desde ' + ars(umbralEnvioDe(segmento));
+
+  /* A4 · las cuotas que el checkout da DE VERDAD para este importe. */
+  const cuotas = $('#mvCuotas');
+  if (cuotas){
+    cuotas.innerHTML = textoCuotas(pr);
+    cuotas.hidden = false;
+  }
 
   /* Sin stock no se compra. La ficha no lo estaba apagando: se podia cargar
      al carrito y recien fallaba del otro lado, en el carrito de Tiendanube,
@@ -5505,6 +5636,15 @@ const lupa = (function (){
   });
 })();
 
+/* Cambio 2 · corazones en las dos puertas de salida. Van con `capture` para
+   que salgan aunque el manejador de abajo navegue o cierre algo. */
+['#bfIr', '#checkoutIr'].forEach(sel => {
+  const b = $(sel);
+  if (b) b.addEventListener('click', () => {
+    if (typeof festejo !== 'undefined') festejo.corazones(b);
+  }, true);
+});
+
 $('#modalCerrar').onclick = () => cerrarModal('modal');
 $('#modal').onclick = e => { if (e.target.id === 'modal') cerrarModal('modal'); };
 addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal('modal'); });
@@ -5561,6 +5701,8 @@ function pintarHitos(){
 pintarHitos();
 
 let logradosPrevios = 0, festejoTimer = null;
+/* Cual escalon se anuncio ultimo, para no repetir `reward_progress`. */
+let escalonAnunciado = null;
 
 /* 10 · Mensaje dinamico segun cuanto falta para el proximo beneficio.
    Vive dentro de la barra fija, que es el unico lugar donde se muestra. */
@@ -5573,7 +5715,7 @@ function mensajeProgreso(subtotal, falta, proximo, pct){
     /* Para el envio gratis va el texto que el cliente escribio en Nubea. Solo
        en minorista: la barra de Nubea es la promocion de $60.000 y su texto
        habla de ese umbral, no del de $150.000 del mayorista. */
-    const deNubea = proximo.nombre === 'Envío gratis' && segmento === 'minorista' &&
+    const deNubea = proximo.envio && segmento === 'minorista' &&
                     nubea && nubea.textoEnvio('falta', falta);
     if (deNubea) msg.textContent = deNubea;
     else msg.innerHTML = (falta < 12000 ? '¡Ya estás cerca! ' : '') +
@@ -5642,12 +5784,25 @@ function recalcular(){
 
   // Celebrar el desbloqueo ANTES de empujar al proximo objetivo: si se salta
   // directo al siguiente, el cliente nunca se entera de que gano algo.
+  /* Bloque E · el progreso hacia el proximo escalon. Se manda solo cuando
+     CAMBIA de escalon objetivo: uno por cada tecla del contador seria ruido
+     que no dice nada. */
+  {
+    const nombreProx = proximo ? proximo.nombre : '';
+    if (subtotal > 0 && nombreProx !== escalonAnunciado){
+      escalonAnunciado = nombreProx;
+      track('reward_progress', {subtotal, proximo_escalon: nombreProx || 'todos',
+                                faltante: proximo ? falta : 0});
+    }
+    if (!subtotal) escalonAnunciado = null;
+  }
+
   const reciente = logrados.length > logradosPrevios;
   logradosPrevios = logrados.length;
   if (reciente){
     const t = logrados[logrados.length-1];
     const msg = $('#bfMsg');
-    msg.textContent = (t.nombre === 'Envío gratis' && segmento === 'minorista' &&
+    msg.textContent = (t.envio && segmento === 'minorista' &&
                        nubea && nubea.textoEnvio('logrado')) ||
                       '¡' + t.nombre.toUpperCase() + ' DESBLOQUEADO!';
     msg.classList.add('festejo');
@@ -5683,9 +5838,19 @@ function fila(p, origen){
     '<div class="txt"><b>' + p.n + '</b><div class="pr">' + ars(precioDe(p)) + '</div></div>' +
     '<button type="button">+ Agregar</button>';
   d.querySelector('button').onclick = e => {
+    /* El faltante de ANTES de agregar: despues ya cambio, y lo que el brief
+       quiere medir es desde que distancia la sugerencia convence. */
+    const subAntes = totalCarrito();
+    const sigue = TIERS.find(t => t.min > subAntes);
     agregar(p, origen + '-' + p.n, 1, e.target);
     track('cross_sell_add', {item_name:p.n, source:origen, value:precioDe(p),
                              items: itemsGA([{prod:p, cant:1}])});
+    /* Bloque E · las sugerencias que completan el faltante son las del bloque
+       #m9; el resto de los origenes son otra cosa. */
+    if (String(origen).indexOf('m9') === 0){
+      track('cart_suggestion_add', {product_id: p.ids.minorista || null, item_name: p.n,
+                                    faltante_previo: sigue ? sigue.min - subAntes : 0});
+    }
   };
   return d;
 }
@@ -5710,6 +5875,97 @@ function sugerir(subtotal, falta, proximo){
   // el muro de resenas, asi que ese bloque ya no existe.
 }
 
+/* ══════════ CAMBIO 2 · EL FESTEJO ══════════
+   Confeti al agregar y corazones al pasar al carrito y al finalizar.
+
+   Se dibuja con elementos sueltos y la API de animaciones del navegador, sin
+   traer ninguna libreria: son veinte nodos que viven un segundo y medio.
+
+   Dos recaudos:
+     - `prefers-reduced-motion`: quien pidio menos animacion no ve nada. No es
+       decoracion opcional, es una preferencia de accesibilidad.
+     - la capa no recibe clics (`pointer-events:none`): el festejo nunca puede
+       taparle al cliente el boton que acaba de tocar. */
+const festejo = (function (){
+  const QUIETO = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COLORES = ['#e8467c', '#f6b93b', '#2fa36b', '#4a8fe7', '#b06ab3'];
+  let capa = null;
+
+  function lienzo(){
+    if (capa && capa.isConnected) return capa;
+    capa = document.createElement('div');
+    capa.className = 'festejo';
+    capa.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(capa);
+    return capa;
+  }
+
+  /* Desde donde salen: el centro del boton que lo disparo. */
+  function centro(boton){
+    if (!boton || !boton.getBoundingClientRect) return {x: innerWidth / 2, y: innerHeight / 2};
+    const r = boton.getBoundingClientRect();
+    if (!r.width && !r.height) return {x: innerWidth / 2, y: innerHeight / 2};
+    return {x: r.left + r.width / 2, y: r.top + r.height / 2};
+  }
+
+  function soltar(boton, cuantos, arma, marcos, duracion){
+    if (QUIETO()) return;
+    const c = lienzo(), p = centro(boton), vivos = [];
+    for (let n = 0; n < cuantos; n++){
+      const e = arma(n);
+      e.style.left = p.x + 'px';
+      e.style.top = p.y + 'px';
+      c.appendChild(e);
+      vivos.push(e);
+      const an = e.animate(marcos(n), {duration: duracion + Math.random() * 300,
+                                       easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards'});
+      an.onfinish = () => e.remove();
+    }
+    /* Red de seguridad: si la animacion no termina -- pestaña en segundo
+       plano --, igual se limpian. */
+    setTimeout(() => vivos.forEach(e => e.remove()), duracion + 900);
+  }
+
+  function confeti(boton){
+    soltar(boton, 16, n => {
+      const e = document.createElement('i');
+      e.className = 'papelito';
+      e.style.background = COLORES[n % COLORES.length];
+      return e;
+    }, () => {
+      const ang = Math.random() * Math.PI - Math.PI;      // hacia arriba
+      const dist = 60 + Math.random() * 90;
+      const dx = Math.cos(ang) * dist, dy = Math.sin(ang) * dist;
+      return [
+        {transform: 'translate(-50%,-50%) rotate(0deg)', opacity: 1},
+        {transform: 'translate(calc(-50% + ' + dx + 'px), calc(-50% + ' + dy + 'px)) rotate(' +
+                    (Math.random() * 540 - 270) + 'deg)', opacity: 1, offset: 0.55},
+        {transform: 'translate(calc(-50% + ' + dx * 1.15 + 'px), calc(-50% + ' + (dy + 120) + 'px)) rotate(' +
+                    (Math.random() * 720 - 360) + 'deg)', opacity: 0}
+      ];
+    }, 1100);
+  }
+
+  function corazones(boton){
+    soltar(boton, 9, () => {
+      const e = document.createElement('i');
+      e.className = 'corazon';
+      e.textContent = '\u2665';
+      e.style.color = COLORES[Math.floor(Math.random() * 2)];
+      return e;
+    }, () => {
+      const dx = (Math.random() - 0.5) * 120;
+      return [
+        {transform: 'translate(-50%,-50%) scale(.5)', opacity: 0},
+        {transform: 'translate(calc(-50% + ' + dx * 0.4 + 'px), -110%) scale(1)', opacity: 1, offset: 0.3},
+        {transform: 'translate(calc(-50% + ' + dx + 'px), -320%) scale(.85)', opacity: 0}
+      ];
+    }, 1300);
+  }
+
+  return {confeti, corazones};
+})();
+
 /* ---- Traspaso al carrito de Tiendanube ----------------------------------
    El embudo junta la seleccion y este boton la manda al carrito real. De ahi
    en adelante manda la plataforma: envio, medios de pago y checkout.
@@ -5724,6 +5980,9 @@ function sugerir(subtotal, falta, proximo){
 function pintarCarrito(entrando){
   const entradas = Object.entries(carrito);
   const lista = $('#checkoutLista');
+  /* Cambio 3 · las fotos de un producto, para la lupa. Es la misma cuenta que
+     hace la ficha al armar la galeria. */
+  const fotosDe = p => ((p.gal && p.gal.length ? p.gal : [p.img]) || []).filter(Boolean);
 
   if (!entradas.length){
     lista.innerHTML = '<li class="carrito__vacio">Tu carrito quedó vacío.</li>';
@@ -5751,6 +6010,27 @@ function pintarCarrito(entrando){
         '<b class="citem__sub">' + ars(sub) + '</b>' +
         '<button class="citem__quitar" type="button" aria-label="Sacar ' + i.prod.n +
         ' del carrito">\u00d7</button>';
+
+      /* Cambio 3 · la foto del carrito se agranda igual que la de la ficha,
+         desde la imagen y desde el bloque de texto. Los botones de cantidad y
+         el de quitar quedan afuera a proposito: son otra accion. */
+      {
+        const fotos = fotosDe(i.prod);
+        if (fotos.length && typeof lupa !== 'undefined'){
+          const abrir = ev => { ev.preventDefault(); lupa.abrir(fotos, 0, i.prod.n); };
+          [li.querySelector('.citem__foto'), li.querySelector('.citem__txt')].forEach(el => {
+            if (!el) return;
+            el.classList.add('citem--lupa');
+            el.setAttribute('role', 'button');
+            el.setAttribute('tabindex', '0');
+            el.setAttribute('aria-label', 'Ver la foto de ' + i.prod.n + ' en grande');
+            el.addEventListener('click', abrir);
+            el.addEventListener('keydown', ev => {
+              if (ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); abrir(ev); }
+            });
+          });
+        }
+      }
 
       armarContador(li.querySelector('.citem__qty'), n => {
         carrito[clave].cant = n;
@@ -6952,7 +7232,7 @@ var nubea = (function () {
     return String(t).replace(/\{\{\s*amount\s*\}\}/g, monto);
   }
   function moverHito(){
-    const hito = TIERS_POR_SEGMENTO.minorista.find(t => t.nombre === 'Envío gratis');
+    const hito = TIERS_POR_SEGMENTO.minorista.find(t => t.envio);
     if (!hito) return;
     hito.min = umbralEnvio();
     TIERS_POR_SEGMENTO.minorista.sort((a, b) => a.min - b.min);
@@ -8549,7 +8829,15 @@ var categoriasVivas = (function () {
     if (!caja) return;
     caja.hidden = !hay;
     if (!hay) return cerrarPanel();
-    if (val) val.textContent = elegida ? elegida.n : 'Todas';
+    /* Cambio 1 · sin categoria elegida el boton INVITA en vez de informar que
+       estan todas, que es algo que el cliente ya ve. Con una puesta vuelve a
+       decir "Categoría <cual>". */
+    const et = $('#catAbrirEt');
+    if (et) et.textContent = elegida ? 'Categoría' : 'Elegí tu categoría';
+    if (val){
+      val.textContent = elegida ? elegida.n : '';
+      val.hidden = !elegida;
+    }
     if (quitar) quitar.hidden = !elegida;
   }
 
