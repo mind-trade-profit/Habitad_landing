@@ -467,14 +467,23 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   /* Apagada mientras no haya barra. La barra se esconde con un translateY, y
      la flecha va por encima de ella: bajaba con la barra y quedaba dentro de
      la pantalla igual. */
-  opacity:0;transition:opacity .22s ease;
-  animation:bf-baja 1.5s ease-in-out infinite}
+  opacity:0;transition:opacity .22s ease}
 .barra-fija.visible .bf-flecha{opacity:1}
+/* LO QUE SE MUEVE ES LA FLECHA, NO EL CARTEL.
+   Antes bajaba y subia el cartel entero, texto incluido, en loop: un texto que
+   no esta quieto no se puede leer, y en un telefono con la tipografia sobre
+   una capa animada se veia como si titilara. Ahora el texto no se mueve nunca
+   y solo la flecha hace el gesto de "apretá acá".
+
+   Va en pausa mientras la barra no se ve: el cartel existe con opacity:0 y no
+   tiene sentido gastar cuadros animando algo invisible. */
 .bf-flecha svg{width:24px;height:24px;flex:0 0 auto;fill:none;stroke:currentColor;
-  stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+  stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round;
+  animation:bf-baja 1.5s ease-in-out infinite;animation-play-state:paused}
+.barra-fija.visible .bf-flecha svg{animation-play-state:running}
 @keyframes bf-baja{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(8px)}
+  0%,100%{transform:translateY(-2px)}
+  50%{transform:translateY(4px)}
 }
 /* el timeline dentro de la barra oscura invierte los colores de la pista */
 .barra-fija .tl-pista{background:rgba(255,255,255,.18);margin:0;height:8px}
@@ -526,7 +535,13 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 }
 @media(prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
-  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+  /* OJO con el iteration-count. Con duracion de 0,01 ms y una animacion
+     `infinite`, sin el :1 no se frena: se repite cien mil veces por segundo y
+     cada cuadro la agarra en una fase al azar. Eso no es una pausa, es un
+     titileo -- y le pasaba justo a quien pidio MENOS movimiento. */
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important}
+  .bf-flecha svg{animation:none}
 }
 
 /* ---- HERO CON CARRUSEL DE FONDO ----
@@ -945,8 +960,12 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   display:flex;align-items:center;overflow:hidden}
 .card-medio .desc{flex:1}
 .card-medio .variante-sel{margin:0}
-/* Los badges de Nubea en una franja fija de dos renglones de pastilla. */
-.card .nb-badges{height:40px;overflow:hidden;align-content:flex-start}
+/* Los badges de Nubea en una franja de DOS renglones de pastilla como minimo.
+   Era `height:40px;overflow:hidden`: con tarjetas de 190-199 px (una tablet en
+   vertical o en horizontal) el texto da tres renglones y la ultima linea salia
+   cortada a la mitad. Con min-height la franja crece sola cuando hace falta, y
+   como la pastilla es la misma en todas las tarjetas, todas crecen igual. */
+.card .nb-badges{min-height:40px;align-content:flex-start}
 /* Sin stock no hay cantidad que elegir: el contador se va y "Sin stock" usa la
    fila entera. En celular no entraban juntos, el boton se partia en dos
    renglones y esas tarjetas quedaban 21px mas altas. */
@@ -1372,10 +1391,10 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   .carrusel-cat .grilla::-webkit-scrollbar{display:none}
   .carrusel-cat .card{display:grid;padding:11px;column-gap:11px;row-gap:3px;
     grid-template-columns:clamp(74px,24vw,100px) minmax(0,1fr);
-    grid-template-rows:auto auto auto auto auto 1fr auto;align-items:start;
+    grid-template-rows:auto auto auto auto auto auto 1fr auto;align-items:start;
     scroll-snap-align:start}
   .carrusel-cat .card:hover{transform:none}
-  .carrusel-cat .card .foto{grid-column:1;grid-row:1 / 7;border-radius:10px}
+  .carrusel-cat .card .foto{grid-column:1;grid-row:1 / 8;border-radius:10px}
   .carrusel-cat .card .card-body{display:contents}
   .carrusel-cat .card h3{grid-column:2;grid-row:1;font-size:14px;line-height:1.3;
     -webkit-line-clamp:3;min-height:0}
@@ -1385,12 +1404,19 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   .carrusel-cat .card .card-medio .desc{display:none}
   .carrusel-cat .card .precios{grid-column:2;grid-row:4;margin-top:2px}
   .carrusel-cat .card .precio{font-size:17.5px}
-  .carrusel-cat .card .nb-badges{grid-column:2;grid-row:5;height:auto;max-height:44px;margin-top:1px}
-  .carrusel-cat .card .vermas{grid-column:2;grid-row:6;justify-self:start;align-self:start;border:0;
-    background:none;color:var(--verde);padding:2px 0;font-size:13px;
-    text-decoration:underline;text-underline-offset:3px}
-  .carrusel-cat .card .vermas:hover{background:none;color:var(--verde-hondo)}
-  .carrusel-cat .card .acciones{grid-column:1 / -1;grid-row:7;margin-top:8px;gap:9px}
+  /* "Quedan N": fila propia, debajo del precio. Sin esto no tenia lugar y la
+     grilla la mandaba debajo de los botones. */
+  .carrusel-cat .card .card-quedan{grid-column:2;grid-row:5;margin:0}
+  /* Sin max-height: en un telefono angosto el texto de la pastilla da tres
+     renglones, y con un tope de 44 px la ultima linea salia cortada. */
+  .carrusel-cat .card .nb-badges{grid-column:2;grid-row:6;height:auto;margin-top:1px}
+  /* "Ver detalles" es un BOTON, igual que en escritorio: borde, fondo y texto
+     vienen de la regla base `.vermas`. Aca solo cambia el lugar y la medida.
+     Era un enlace subrayado de 13 px y 24 px de alto: ni se veia como boton ni
+     se podia tocar con comodidad. */
+  .carrusel-cat .card .vermas{grid-column:2;grid-row:7;justify-self:stretch;align-self:start;
+    min-height:38px;padding:8px 12px;font-size:14px}
+  .carrusel-cat .card .acciones{grid-column:1 / -1;grid-row:8;margin-top:8px;gap:9px}
   .carrusel-cat .card .qty{flex:0 0 auto}
   .carrusel-cat .card .qty button{width:40px;height:42px;font-size:19px}
   .carrusel-cat .card .qty-campo{width:42px;font-size:16px}
@@ -6622,10 +6648,23 @@ function guardarPromoDeCruce(p, html){
    Lo que si avisa son sus dos ultimos argumentos: al sexto lo llama
    LS.updateCartEnhanced cuando el producto entro -- en lugar de abrir la
    gaveta --, y al septimo el manejador de errores cuando la tienda lo
-   rechaza. Si en 12 segundos no llamo a ninguno se da por no confirmado: la
-   linea se queda en la landing, que es mejor que perderla. */
+   rechaza. Leyendo la fuente de la plataforma el 04/10/2026, TODOS los
+   caminos llaman a uno de los dos, incluida la compuerta que veta
+   (`await gate ? ... : p && p()`). Si en 8 segundos no llamo a ninguno se da
+   por no confirmado: la linea se queda en la landing, que es mejor que
+   perderla. */
+
+/* Las unidades que ya se dieron por entradas, sumando todos los pedidos que
+   terminaron bien. Sirve para que el control del carrito (abajo) no le
+   atribuya a un pedido lo que entro por otro. */
+let unidadesAvisadas = 0;
+
 function agregarEnLaTienda(form){
   const antes = unidadesEnLaTienda();
+  const avisadasAlSalir = unidadesAvisadas;
+  /* Cuantas unidades manda ESTE pedido: las lleva el campo `quantity`. */
+  const campo = form && form.querySelector ? form.querySelector('[name="quantity"]') : null;
+  const mias = Math.max(1, Number(campo && campo.value) || 1);
   return new Promise(resolver => {
     let hecho = false;
     const fin = (entro, cruce) => {
@@ -6633,21 +6672,38 @@ function agregarEnLaTienda(form){
       hecho = true;
       clearTimeout(reloj);
       clearInterval(vigia);
+      if (entro) unidadesAvisadas += mias;
       resolver({entro: entro, cruce: cruce || null});
     };
-    /* Se mira el carrito de la tienda cada 300 ms. Si las unidades subieron,
-       el producto entro -- avisen o no. Esto es lo que salva el caso de la
-       compuerta que corta sin llamar a ningun callback. */
-    const vigia = setInterval(() => {
+    /* ¿Entro el MIO? Es el respaldo por si la plataforma cambia y deja de
+       avisar. El total del carrito es de TODOS los pedidos, asi que se le
+       descuenta lo que ya entro por los otros desde que este salio.
+
+       Antes se comparaba el total contra el que se habia visto al salir, sin
+       mas: salian cuatro a la vez, el primero que contestaba subia el total y
+       las cuatro llamadas lo tomaban como propio. Se resolvian de golpe, la
+       pagina navegaba a /comprar/ y la navegacion cortaba los pedidos que
+       seguian en viaje -- el cliente veia un carrito a medio armar, y por eso
+       "con envio" aunque hubiera pasado los $60.000. Al recargar ya estaba
+       completo, y "se corregia solo".
+
+       Medido con esta funcion contra una tienda falsa de 250-1400 ms por
+       pedido: 30 de 30 pases navegaban con pedidos sin terminar. Y descontar
+       de a poco no alcanza: con tres entrados el cuarto queda "solo en el
+       aire" pero el total ya subio por los otros.
+
+       Es exacto porque la plataforma SUMA cada alta a LS.cart en la misma
+       tarea en que llama al callback del pedido; no pisa el carrito con la
+       foto de cada respuesta. */
+    const entroElMio = () => {
       const ahora = unidadesEnLaTienda();
-      if (antes !== null && ahora !== null && ahora > antes) fin(true);
-    }, 300);
-    /* Antes eran 12 segundos y se daba por perdido sin mirar nada. Ahora son
-       8 y, al vencer, se mira el carrito una ultima vez. */
-    const reloj = setTimeout(() => {
-      const ahora = unidadesEnLaTienda();
-      fin(antes !== null && ahora !== null && ahora > antes);
-    }, 8000);
+      if (antes === null || ahora === null) return false;
+      const deOtros = unidadesAvisadas - avisadasAlSalir;
+      return ahora - antes - deOtros >= mias;
+    };
+    /* Se mira cada 300 ms, y una ultima vez al vencer los 8 segundos. */
+    const vigia = setInterval(() => { if (entroElMio()) fin(true); }, 300);
+    const reloj = setTimeout(() => fin(entroElMio()), 8000);
     try {
       /* Al sexto argumento la plataforma lo llama con DOS datos --
          `n(a, s)` en su fuente --: los productos relacionados y el HTML del
