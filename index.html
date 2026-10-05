@@ -1333,6 +1333,13 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .seg-aviso__botones{display:grid;gap:9px}
 @media(min-width:460px){.seg-aviso__botones{grid-template-columns:1fr 1fr}}
 
+/* Sacar el ultimo producto: el que se queda va primero y mas grande. */
+.sacar{text-align:center}
+.sacar .carrito__tit{font-size:21px;margin:0 0 4px}
+.sacar .seg-aviso__txt{margin:8px 0 20px}
+.sacar__botones{display:grid;gap:9px}
+.sacar .carrito__ir{padding:14px 10px;font-size:15.5px}
+
 /* El selector de compra, ya embebido en la seccion del catalogo. */
 .seg-caja{padding-top:26px;padding-bottom:4px}
 .tit--chico{font-size:clamp(19px,2.2vw,25px)}
@@ -2146,6 +2153,24 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   </div>
 </div>
 
+<!-- Sacar el ULTIMO producto es vaciar el carrito, o sea perder la compra: ahi
+     se frena y se pregunta, con la razon para quedarse. Ver `pedirSacar`.
+     Va despues de modalCheckout a proposito: los dos tienen el mismo z-index y
+     el ultimo del documento queda arriba. -->
+<div class="modal modal--chico" id="modalSacar">
+  <div class="modal-caja sacar" role="alertdialog" aria-modal="true"
+       aria-labelledby="sacarTit" aria-describedby="sacarTxt">
+    <div class="modal-cuerpo">
+      <h3 class="carrito__tit" id="sacarTit">¿Seguro que querés eliminar tu carrito?</h3>
+      <p class="seg-aviso__txt" id="sacarTxt">Manteniendo tu carrito aplicás con los descuentos que ya tenés en el producto. Si hay un cambio, permanecen.</p>
+      <div class="sacar__botones">
+        <button type="button" class="carrito__ir" id="sacarMantener">Mantener</button>
+        <button type="button" class="carrito__seguir" id="sacarEliminar">Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- anime.js va servido desde el propio sitio, no desde un CDN: una landing
      de venta no puede quedar colgada de que responda un tercero. Son 17 KB.
      Si aun asi no cargara, el codigo de abajo lo detecta y todo funciona sin
@@ -2916,6 +2941,11 @@ const EVENTOS = {
   cart_suggestion_add:  {ga4: 'add_to_cart',      meta: 'AddToCart'},
   review_expand:        {ga4: 'review_expand'},
   remove_from_cart:     {ga4: 'remove_from_cart'},
+  /* El popup de "Seguro que queres eliminar tu carrito?": cuantos lo ven,
+     cuantos se quedan y cuantos igual lo vacian. Solo GA4: no son productos. */
+  cart_clear_prompt:    {ga4: 'cart_clear_prompt'},
+  cart_clear_keep:      {ga4: 'cart_clear_keep'},
+  cart_clear_confirm:   {ga4: 'cart_clear_confirm'},
   view_cart:            {ga4: 'view_cart'},
   begin_checkout:       {ga4: 'begin_checkout',   meta: 'InitiateCheckout'},
   quick_buy:            {ga4: 'begin_checkout',   meta: 'InitiateCheckout'},
@@ -6266,24 +6296,31 @@ function pintarCarrito(entrando){
       }, {
         // Bajar de uno saca el producto: es lo que espera cualquiera que
         // aprieta el menos con un solo item.
-        alBajarDeUno: () => { delete carrito[clave]; pintarCarrito(); recalcular(); },
+        alBajarDeUno: () => pedirSacar(
+          () => { delete carrito[clave]; pintarCarrito(); recalcular(); },
+          li.querySelector('.citem__quitar')),
         /* Lo mismo que en la tarjeta: no se puede pedir mas de lo que hay. Y
            la linea del cruce queda topeada en 1, porque el descuento de la
            tienda es por UNA unidad: si se pudiera subir con el contador,
            volveria el mismo problema por otra puerta. */
         tope: i.cruce ? 1 : topeDe(i.prod, i.seg || segmento, i.vi)
       });
-      li.querySelector('.citem__quitar').onclick = () => {
-        track('remove_from_cart', {item_name:i.prod.n});
-        const borrar = () => { delete carrito[clave]; pintarCarrito(); recalcular(); };
-        // La fila se va antes de desaparecer del objeto: si se borra de una,
-        // la lista pega un salto y no se entiende cual se saco.
-        if (!ANIM.activo) return borrar();
-        // Red: si la salida no termina, el producto nunca se sacaria.
-        const fin = pase(borrar, 480);
-        anime({targets: li, opacity: 0, translateX: 26, height: 0,
-               paddingTop: 0, paddingBottom: 0,
-               duration: 260, easing: 'easeInQuad', complete: fin});
+      li.querySelector('.citem__quitar').onclick = ev => {
+        const sacar = () => {
+          track('remove_from_cart', {item_name:i.prod.n});
+          const borrar = () => { delete carrito[clave]; pintarCarrito(); recalcular(); };
+          // La fila se va antes de desaparecer del objeto: si se borra de una,
+          // la lista pega un salto y no se entiende cual se saco.
+          if (!ANIM.activo) return borrar();
+          // Red: si la salida no termina, el producto nunca se sacaria.
+          const fin = pase(borrar, 480);
+          anime({targets: li, opacity: 0, translateX: 26, height: 0,
+                 paddingTop: 0, paddingBottom: 0,
+                 duration: 260, easing: 'easeInQuad', complete: fin});
+        };
+        /* Si es el ULTIMO producto, antes se pregunta: ver `pedirSacar`. El
+           aviso de `remove_from_cart` sale recien cuando se saca de verdad. */
+        pedirSacar(sacar, ev.currentTarget);
       };
       lista.appendChild(li);
     });
@@ -6369,6 +6406,83 @@ $('#bfIr').onclick = () => {
 $('#checkoutSeguir').onclick = () => cerrarModal('modalCheckout');
 $('#checkoutCerrar').onclick = () => cerrarModal('modalCheckout');
 $('#modalCheckout').onclick = e => { if (e.target.id === 'modalCheckout') cerrarModal('modalCheckout'); };
+
+/* ══════════ SACAR EL ULTIMO PRODUCTO ══════════
+   Sacar uno de varios es un gesto chico y no pregunta nada. Sacar el ULTIMO es
+   vaciar el carrito, que es perder la compra: ahi se frena y se pregunta, con
+   la razon para quedarse.
+
+   Frena solo lo que el cliente HACE: la cruz de la fila, el menos con una sola
+   unidad, o dejar el contador en cero. Lo que el codigo saca por su cuenta
+   (cambiar de segmento, pasar el carrito a la tienda, recuperar el de otra
+   pestaña) no pasa por aca y no pregunta nada.
+
+   `borrar` es lo que se hace SI el cliente confirma. Hasta entonces el carrito
+   no se toca: si se queda, todo sigue como estaba. */
+let sacarHacer = null;      // lo que se hace si confirma
+let sacarDesde = null;      // el boton del que viene el foco
+
+function pedirSacar(borrar, desde){
+  // Con mas de una linea queda carrito: no se pregunta.
+  if (Object.keys(carrito).length > 1) return borrar();
+  // El contador puede pedirlo dos veces seguidas (la tecla y despues el blur).
+  if ($('#modalSacar').classList.contains('on')) return;
+  sacarHacer = borrar;
+  sacarDesde = desde || null;
+  track('cart_clear_prompt', {value: totalCarrito(),
+                              items: itemsGA(Object.values(carrito))});
+  abrirModal('modalSacar');
+  $('#sacarMantener').focus();     // lo seguro va seleccionado: Enter se queda
+}
+
+/* Cerrar el aviso sin hacer nada: la cruz, Escape o tocar afuera. Se queda
+   donde estaba, en el carrito. El repintado le devuelve la cantidad a un
+   contador que el cliente habia dejado en blanco o en cero, y el foco vuelve a
+   la cruz, que es de donde salio. */
+function soltarSacar(via){
+  sacarHacer = null;
+  track('cart_clear_keep', {value: totalCarrito(), via: via});
+  cerrarModal('modalSacar');
+  pintarCarrito();
+  const cruz = $('#checkoutLista .citem__quitar');
+  if (cruz) cruz.focus();
+}
+
+/* MANTENER: se queda con el carrito y vuelve al catalogo de donde estaba
+   eligiendo. El segmento vigente (minorista, mayorista o distribuidor) es el
+   que tiene puesto, y es el que muestra `irAlCatalogo`. */
+$('#sacarMantener').onclick = () => {
+  sacarHacer = null;
+  track('cart_clear_keep', {value: totalCarrito(), via: 'mantener'});
+  cerrarModal('modalSacar');
+  cerrarModal('modalCheckout');
+  pintarCarrito();
+  irAlCatalogo();
+};
+$('#sacarEliminar').onclick = () => {
+  const hacer = sacarHacer;
+  sacarHacer = null;
+  track('cart_clear_confirm', {value: totalCarrito()});
+  cerrarModal('modalSacar');
+  if (hacer) hacer();
+};
+$('#modalSacar').onclick = e => { if (e.target.id === 'modalSacar') soltarSacar('afuera'); };
+/* Escape cierra SOLO este aviso: va en captura y corta la propagacion, o el
+   mismo Escape cerraria tambien lo que haya abierto debajo. */
+addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || !$('#modalSacar').classList.contains('on')) return;
+  e.stopImmediatePropagation();
+  soltarSacar('escape');
+}, true);
+/* El foco no se escapa a la pagina que quedo atras: con dos botones, Tab da la
+   vuelta entre ellos. */
+$('#modalSacar').addEventListener('keydown', e => {
+  if (e.key !== 'Tab') return;
+  const bs = [$('#sacarMantener'), $('#sacarEliminar')];
+  const i = bs.indexOf(document.activeElement);
+  if (e.shiftKey && i <= 0){ e.preventDefault(); bs[1].focus(); }
+  else if (!e.shiftKey && i === 1){ e.preventDefault(); bs[0].focus(); }
+});
 /* ══════════ BUSCADOR ══════════
    Filtra la grilla en el momento, sobre todo el catalogo del segmento: al
    escribir se suelta la categoria elegida, y al elegir una se borra lo
