@@ -4083,6 +4083,8 @@ $('#segN2').addEventListener('click', e => {
    antes no tiene sentido. El ascenso automatico de mas abajo es la excepcion,
    porque ahi la compra es la misma. */
 function aplicarSegmento(id, conservarCarrito){
+  // Otros precios, otros minimos: lo que se habia sacado ya no es de este carrito.
+  vaciarPapelera();
   const habia = Object.keys(carrito).length;
   if (!conservarCarrito && habia && id !== segmento){
     Object.keys(carrito).forEach(k => delete carrito[k]);
@@ -4241,6 +4243,13 @@ addEventListener('resize', apartarPie);
 
 /* ---- 6 · catálogo ---- */
 const carrito = {};
+
+/* Lo que el cliente fue sacando del carrito, en el orden en que lo saco. Ver
+   `devolverLoSacado`. Va aca, junto al carrito, y no mas abajo: lo vacian
+   funciones que corren antes de que el resto del archivo termine de
+   declararse. */
+const PAPELERA_VIDA = 30 * 60 * 1000;
+const papelera = [];     // [{clave, linea, pos, t}]
 
 /* ══ El renglon de la tarjeta ══
    La descripcion completa vive en la ficha y no se toca. Para las dos lineas
@@ -4983,6 +4992,8 @@ const campoCantidad = (valor, etiqueta) =>
   'value="' + valor + '" aria-label="' + etiqueta + '">';
 
 function agregar(p, key, cant, boton, seg){
+  // Volvio a sumar: dejo de estar sacando, lo anterior ya no se devuelve.
+  vaciarPapelera();
   const donde = seg || segmento;
   const vi = siNula(varElegida.get(p.n), 0);
   /* Ultimo freno antes del carrito. Agregar de a poco -- tres, y despues otros
@@ -6297,6 +6308,7 @@ function pintarCarrito(entrando){
         // Bajar de uno saca el producto: es lo que espera cualquiera que
         // aprieta el menos con un solo item.
         alBajarDeUno: () => pedirSacar(
+          clave,
           () => { delete carrito[clave]; pintarCarrito(); recalcular(); },
           li.querySelector('.citem__quitar')),
         /* Lo mismo que en la tarjeta: no se puede pedir mas de lo que hay. Y
@@ -6320,7 +6332,7 @@ function pintarCarrito(entrando){
         };
         /* Si es el ULTIMO producto, antes se pregunta: ver `pedirSacar`. El
            aviso de `remove_from_cart` sale recien cuando se saca de verdad. */
-        pedirSacar(sacar, ev.currentTarget);
+        pedirSacar(clave, sacar, ev.currentTarget);
       };
       lista.appendChild(li);
     });
@@ -6422,9 +6434,78 @@ $('#modalCheckout').onclick = e => { if (e.target.id === 'modalCheckout') cerrar
 let sacarHacer = null;      // lo que se hace si confirma
 let sacarDesde = null;      // el boton del que viene el foco
 
-function pedirSacar(borrar, desde){
-  // Con mas de una linea queda carrito: no se pregunta.
-  if (Object.keys(carrito).length > 1) return borrar();
+/* LO QUE EL CLIENTE FUE SACANDO.
+   Si llega a sacar el ultimo y se arrepiente -- "Mantener" --, no vuelve solo
+   ese: vuelve todo lo que habia ido sacando para llegar ahi, cada cosa en su
+   lugar y con su cantidad. Es lo que significa quedarse con el carrito.
+
+   Se anota cada vez que el cliente saca una linea y queda carrito. Se vacia
+   cuando deja de estar sacando -- vuelve a sumar algo --, cuando cambia de
+   segmento o el carrito se reemplaza desde afuera, cuando se pasa a la tienda
+   y cuando confirma que lo quiere vacio. Vive en memoria: si recarga la
+   pagina empieza de cero. Y se vence a la media hora, para que un carrito que
+   quedo abierto toda la tarde no resucite cosas que nadie recuerda haber
+   sacado. */
+function guardarEnPapelera(clave){
+  const linea = carrito[clave];
+  // Si ya esta, es un segundo toque sobre la fila que todavia se esta yendo.
+  if (!linea || papelera.some(e => e.clave === clave)) return;
+  papelera.push({clave, linea, pos: Object.keys(carrito).indexOf(clave), t: Date.now()});
+}
+
+function vaciarPapelera(){ papelera.length = 0; }
+
+/* Devuelve lo sacado. Dice cuantas lineas volvieron y cuantas no se pudieron.
+
+   Se deshace AL REVES de como se saco, cada linea en la posicion que tenia en
+   ese momento: asi el carrito queda en el mismo orden en que estaba. Lo que ya
+   no se puede comprar -- sin stock o fuera de esa lista de precios -- se deja
+   afuera: devolver algo que la tienda va a rechazar es peor que no devolverlo.
+   Y la cantidad se acota a lo que hay. */
+function devolverLoSacado(){
+  const ahora = Date.now();
+  const sacadas = papelera.filter(e => ahora - e.t < PAPELERA_VIDA && !carrito[e.clave]);
+  vaciarPapelera();
+  const lineas = Object.entries(carrito);
+  let vuelven = 0, afuera = 0;
+  sacadas.reverse().forEach(e => {
+    const l = e.linea, seg = l.seg || segmento;
+    const tope = topeDe(l.prod, seg, l.vi);
+    if (!hayEn(l.prod, seg) || conStockElegido(l.prod, seg, l.vi) === false || tope < 1){
+      afuera++;
+      return;
+    }
+    l.cant = Math.min(l.cant, tope);
+    lineas.splice(Math.min(e.pos, lineas.length), 0, [e.clave, l]);
+    vuelven++;
+  });
+  if (vuelven){
+    Object.keys(carrito).forEach(k => delete carrito[k]);
+    lineas.forEach(([k, l]) => { carrito[k] = l; });
+  }
+  return {vuelven: vuelven, afuera: afuera};
+}
+
+/* Un aviso corto donde el cliente mira mientras compra: la barra de abajo. El
+   de arriba del catalogo (`avisoCarrito`) queda fuera de pantalla justo despues
+   de volver, que es cuando hay que decirlo. Se va solo y la barra vuelve a lo
+   suyo. */
+function avisarEnLaBarra(texto, ms){
+  const msg = $('#bfMsg');
+  if (!msg) return;
+  clearTimeout(festejoTimer);
+  msg.textContent = texto;
+  msg.classList.add('festejo');
+  festejoTimer = setTimeout(recalcular, ms || 3800);
+}
+
+function pedirSacar(clave, borrar, desde){
+  /* Con mas de una linea queda carrito: no se pregunta, pero se anota lo que se
+     saca por si despues se arrepiente. */
+  if (Object.keys(carrito).length > 1){
+    guardarEnPapelera(clave);
+    return borrar();
+  }
   // El contador puede pedirlo dos veces seguidas (la tecla y despues el blur).
   if ($('#modalSacar').classList.contains('on')) return;
   sacarHacer = borrar;
@@ -6448,20 +6529,33 @@ function soltarSacar(via){
   if (cruz) cruz.focus();
 }
 
-/* MANTENER: se queda con el carrito y vuelve al catalogo de donde estaba
+/* MANTENER: se queda con el carrito y el carrito es TODO lo que fue sacando:
+   vuelve cada cosa a su lugar, y despues vuelve al catalogo de donde estaba
    eligiendo. El segmento vigente (minorista, mayorista o distribuidor) es el
    que tiene puesto, y es el que muestra `irAlCatalogo`. */
 $('#sacarMantener').onclick = () => {
   sacarHacer = null;
-  track('cart_clear_keep', {value: totalCarrito(), via: 'mantener'});
+  const r = devolverLoSacado();
+  track('cart_clear_keep', {value: totalCarrito(), via: 'mantener',
+                            restored: r.vuelven, not_restored: r.afuera});
   cerrarModal('modalSacar');
   cerrarModal('modalCheckout');
+  if (r.vuelven){
+    // Lo que vuelve ya estaba ganado: no se festeja como un hito nuevo.
+    logradosPrevios = TIERS.filter(t => t.min <= totalCarrito()).length;
+    recalcular();
+    avisarEnLaBarra(r.afuera ? '\u2713 Volvió lo que se pudo'
+                             : '\u2713 Tu carrito volvió completo');
+  }
   pintarCarrito();
   irAlCatalogo();
 };
 $('#sacarEliminar').onclick = () => {
   const hacer = sacarHacer;
   sacarHacer = null;
+  /* Lo quiere vacio: nada de lo anterior tiene que resucitar despues, cuando
+     arme otro carrito y se arrepienta de otra cosa. */
+  vaciarPapelera();
   track('cart_clear_confirm', {value: totalCarrito()});
   cerrarModal('modalSacar');
   if (hacer) hacer();
@@ -6837,6 +6931,8 @@ function agregarEnLaTienda(form){
    todo el carrito, y "Compra rapida", que manda un solo producto. */
 async function mandarALaTienda(items, boton, textoOriginal){
   if (!items.length) return;
+  // Va a la tienda: lo que habia sacado antes ya no tiene a donde volver.
+  vaciarPapelera();
 
   const enLaTienda = typeof LS !== 'undefined' && typeof LS.addToCartEnhanced === 'function';
   boton.disabled = true;
@@ -7115,6 +7211,8 @@ function unirPendientes(){
 
 // Arma el carrito con lo guardado, sin pintar ni medir.
 function recuperarCarrito(d){
+  // El carrito se reemplaza entero (otra pestaña, "atras" desde la tienda).
+  vaciarPapelera();
   Object.keys(carrito).forEach(k => delete carrito[k]);
   carritoPendientes = [];
   ((d && d.lineas) || []).forEach(l => {
