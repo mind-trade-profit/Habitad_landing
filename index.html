@@ -250,6 +250,21 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .cf-carta--fuera{opacity:0;pointer-events:none}
 .cf-quieta .cf-carta{transition:none}
 .cf-arriba{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:38px}
+/* El numero de orden: el lugar del combo en el carrusel, el mismo que dice
+   «Combo 7 de 35» abajo. Va en un circulo blanco con el color de la carta, al medio de la
+   barra de arriba. Las cartas de costado quedan tapadas a medias por la del frente, y el
+   medio de las dos mas alejadas cae justo en el borde de lo que se ve: por eso se corre
+   hacia afuera (--cf-lado, que pone ubicarCombos(): -1 a la izquierda, 1 a la derecha, 0
+   al frente) y las cinco lo muestran entero. Si el combo esta sin stock, el cartel va a
+   su lado y se corren juntos. */
+.cf-centro{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;
+  transform:translateX(calc(var(--cf-lado,0) * 28px));
+  transition:transform .55s cubic-bezier(.2,.9,.25,1)}
+.cf-quieta .cf-centro{transition:none}
+.cf-orden{flex:0 0 auto;display:grid;place-items:center;min-width:30px;height:30px;padding:0 8px;
+  border-radius:99px;background:#fff;color:var(--cf-color,var(--fucsia));font-size:15px;
+  font-weight:800;line-height:1;font-variant-numeric:tabular-nums;
+  box-shadow:0 6px 12px -6px rgba(0,0,0,.5)}
 .cf-ico{flex:0 0 auto;width:38px;height:38px;padding:0;border:0;border-radius:50%;
   background:transparent;color:#fff;display:grid;place-items:center;cursor:pointer;
   transition:background .15s,transform .15s}
@@ -297,7 +312,7 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
   .cf-precio{font-size:17px}
 }
 @media(prefers-reduced-motion:reduce){
-  .cf-carta,.cf-aviso{transition:none}
+  .cf-carta,.cf-aviso,.cf-centro{transition:none}
 }
 
 /* ══ NUBEA ══
@@ -4612,7 +4627,12 @@ function cartaCombo(p, i, total){
       '<button type="button" class="cf-ico cf-fav" aria-pressed="' +
         favoritos.has(String(idCombo(p))) + '" aria-label="Guardar en favoritos">' +
         ICONO_CORAZON + '</button>' +
-      (sinStock ? '<span class="cf-estado">Sin stock</span>' : '') +
+      /* El numero repite lo que ya dice el aria-label de la carta: se esconde del lector. */
+      '<span class="cf-centro">' +
+        '<b class="cf-orden" aria-hidden="true" title="Combo ' + (i + 1) + ' de ' + total + '">' +
+          (i + 1) + '</b>' +
+        (sinStock ? '<span class="cf-estado">Sin stock</span>' : '') +
+      '</span>' +
       '<button type="button" class="cf-ico cf-compartir" aria-label="Compartir este combo">' +
         ICONO_COMPARTIR + '</button>' +
     '</div>' +
@@ -4729,6 +4749,7 @@ function ubicarCombos(){
     const escala = visible ? ESCALA[a] : ESCALA[ESCALA.length - 1] * .9;
     carta.style.transform = 'translateX(' + (lado * paso * ancho).toFixed(1) + 'px) scale(' + escala + ')';
     carta.style.zIndex = String(20 - Math.min(a, 19));
+    carta.style.setProperty('--cf-lado', String(lado || 0));
     carta.classList.toggle('cf-carta--frente', d === 0);
     carta.classList.toggle('cf-carta--fuera', !visible);
     carta.setAttribute('aria-hidden', String(d !== 0));
