@@ -1355,6 +1355,59 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
 .sacar__botones{display:grid;gap:9px}
 .sacar .carrito__ir{padding:14px 10px;font-size:15.5px}
 
+/* ══ EL PASE AL CARRITO DE LA TIENDA ══
+   Pasar los productos a Tiendanube lleva unos segundos --un pedido por producto--
+   y antes lo unico que cambiaba era el texto de un boton: parecia que no habia
+   pasado nada y el cliente volvia a apretar. Este popup tapa todo mientras dura,
+   asi no hay nada que apretar de nuevo, y cuenta lo que pasa con un carrito
+   andando: las ruedas giran, el camino corre para atras y los productos caen al
+   canasto. Va por encima de los demas popups (2000). */
+.pase{z-index:2100;background:rgba(30,29,26,.62)}
+.pase .modal-caja{max-width:380px;overflow:hidden;text-align:center;outline:none}
+.pase.on .modal-caja{animation:pase-entra .22s ease-out both}
+.pase .modal-cuerpo{padding:26px 24px 26px}
+.pase__escena{position:relative;height:108px;margin:0 0 14px}
+.pase__carrito{display:block;width:160px;height:98px;margin:0 auto;overflow:visible;
+  animation:pase-rodar 1.3s ease-in-out infinite}
+.pase__rueda{transform-box:fill-box;transform-origin:center;animation:pase-girar .75s linear infinite}
+.pase__prod{opacity:0;animation:pase-caer 2.1s cubic-bezier(.3,.7,.35,1) infinite}
+.pase__prod--2{animation-delay:.5s}
+.pase__prod--3{animation-delay:1s}
+.pase__camino{position:absolute;left:50%;bottom:0;width:216px;height:4px;margin-left:-108px;
+  border-radius:99px;background:repeating-linear-gradient(90deg,#d9d6c9 0 18px,transparent 18px 34px);
+  animation:pase-camino .55s linear infinite}
+.pase__ok{position:absolute;top:0;left:50%;margin-left:42px;width:46px;height:46px;border-radius:50%;
+  background:var(--verde);color:#fff;display:grid;place-items:center;transform:scale(0);
+  box-shadow:0 8px 18px -8px rgba(14,95,43,.7);transition:transform .38s cubic-bezier(.2,1.5,.4,1)}
+.pase__ok svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:3.4;
+  stroke-linecap:round;stroke-linejoin:round}
+.pase.listo .pase__ok{transform:scale(1)}
+.pase.listo .pase__carrito,.pase.listo .pase__rueda,.pase.listo .pase__camino{animation-play-state:paused}
+.pase.listo .pase__prod{animation:none;opacity:1}
+.pase__tit{font-size:21px;margin:0}
+.pase .seg-aviso__txt{margin:8px 0 0}
+.pase__barra{height:6px;max-width:250px;margin:16px auto 8px;border-radius:99px;
+  background:var(--verde-suave);overflow:hidden}
+.pase__barra i{display:block;height:100%;width:8%;border-radius:99px;background:var(--verde);
+  transition:width .4s ease-out}
+.pase__cuenta{margin:0;min-height:1.5em;font-size:13px;color:var(--tinta-suave)}
+.pase__cuenta:empty{display:none}
+.pase__link{display:inline-block;margin-top:12px;font-size:13.5px;font-weight:700;color:var(--verde);
+  text-decoration:underline}
+@keyframes pase-entra{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes pase-rodar{0%,100%{transform:translate(-5px,0)}25%{transform:translate(0,-2px)}
+  50%{transform:translate(5px,0)}75%{transform:translate(0,-2px)}}
+@keyframes pase-girar{to{transform:rotate(360deg)}}
+@keyframes pase-caer{0%{transform:translateY(-38px);opacity:0}12%{opacity:1}
+  40%{transform:translateY(0);opacity:1}82%{transform:translateY(0);opacity:1}
+  94%,100%{transform:translateY(0);opacity:0}}
+@keyframes pase-camino{to{background-position-x:-34px}}
+@media(prefers-reduced-motion:reduce){
+  .pase.on .modal-caja,.pase__carrito,.pase__rueda,.pase__camino{animation:none}
+  .pase__prod{animation:none;opacity:1}
+  .pase__barra i,.pase__ok{transition:none}
+}
+
 /* El selector de compra, ya embebido en la seccion del catalogo. */
 .seg-caja{padding-top:26px;padding-bottom:4px}
 .tit--chico{font-size:clamp(19px,2.2vw,25px)}
@@ -2182,6 +2235,57 @@ h1,h2,h3{font-family:Lora,Georgia,serif;margin:0;line-height:1.22}
         <button type="button" class="carrito__ir" id="sacarMantener">Mantener</button>
         <button type="button" class="carrito__seguir" id="sacarEliminar">Sí, eliminar</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- El pase al carrito de la tienda: un carrito andando mientras los productos
+     viajan, para que no parezca que el boton no hizo nada. Ver `mandarALaTienda`.
+     Va ultimo y con z-index propio (2100): queda por encima de los demas popups.
+     Los colores van en el SVG con su valor y no con var(): un atributo de
+     presentacion no siempre los resuelve. -->
+<div class="modal modal--chico pase" id="modalPase" aria-hidden="true">
+  <div class="modal-caja" role="alertdialog" aria-modal="true" tabindex="-1"
+       aria-labelledby="paseTit" aria-describedby="paseSub">
+    <div class="modal-cuerpo">
+      <div class="pase__escena" aria-hidden="true">
+        <svg class="pase__carrito" viewBox="0 0 160 98" focusable="false">
+          <polygon points="29,26 136,26 122,62 36,62" fill="#E9F3EB"/>
+          <path d="M56 26l3 36M84 26v36M112 26l-4 36M33 44h98" fill="none" stroke="#14823C"
+                stroke-opacity=".28" stroke-width="2.5"/>
+          <g class="pase__prod pase__prod--1">
+            <rect x="46" y="29" width="20" height="28" rx="4" fill="#E01560"/>
+            <rect x="52" y="21" width="8" height="10" rx="2" fill="#B70F4D"/>
+          </g>
+          <g class="pase__prod pase__prod--2">
+            <rect x="72" y="37" width="24" height="20" rx="5" fill="#E3B23C"/>
+            <rect x="74" y="32" width="20" height="7" rx="2" fill="#3F3D38"/>
+          </g>
+          <g class="pase__prod pase__prod--3">
+            <rect x="101" y="30" width="21" height="27" rx="4" fill="#0E5F2B"/>
+            <path d="M107 49c1-9 7-12 12-12-1 8-5 12-12 12z" fill="#8CBE32"/>
+          </g>
+          <path d="M6 10H26L36 62H122L136 26H29" fill="none" stroke="#14823C" stroke-width="7"
+                stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M50 62V74M112 62V74" stroke="#3F3D38" stroke-width="4" stroke-linecap="round"/>
+          <g class="pase__rueda">
+            <circle cx="50" cy="83" r="9.5" fill="#3F3D38"/>
+            <path d="M50 75.5v15M42.5 83h15" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+          </g>
+          <g class="pase__rueda">
+            <circle cx="112" cy="83" r="9.5" fill="#3F3D38"/>
+            <path d="M112 75.5v15M104.5 83h15" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+          </g>
+        </svg>
+        <span class="pase__ok"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+        <span class="pase__camino"></span>
+      </div>
+      <h3 class="carrito__tit pase__tit" id="paseTit">Preparando tu carrito…</h3>
+      <p class="seg-aviso__txt" id="paseSub" role="status" aria-live="polite">Estamos pasando tus productos a la tienda. No cierres esta ventana.</p>
+      <div class="pase__barra" aria-hidden="true"><i id="paseBarra"></i></div>
+      <p class="pase__cuenta" id="paseCuenta"></p>
+      <!-- Solo al terminar: si la navegacion se trabara, es la salida. -->
+      <a class="pase__link" id="paseLink" href="/comprar/" hidden>Ir al carrito ahora →</a>
     </div>
   </div>
 </div>
@@ -6472,11 +6576,17 @@ function resumenCarrito(){
       ' que ya tenés en el carrito de la tienda llegás al mínimo ' +
       SEGMENTOS[segmento].label.toLowerCase() + '.';
   }
-  $('#checkoutIr').disabled = !total || !!falta;
+  /* Con un pase en curso el boton NO se rehabilita: este es el lugar por donde se
+     rehabilitaba. Cerrar el carrito y abrirlo de nuevo --o cualquier cosa que lo
+     repintara-- lo dejaba apretable a mitad del pase, y un segundo clic mandaba
+     todo otra vez: el carrito de la tienda terminaba con unidades de mas. */
+  $('#checkoutIr').disabled = !total || !!falta || paseActivo();
 }
 
 $('#bfIr').onclick = () => {
   if (!Object.keys(carrito).length) return;
+  // Con un pase en curso no se vuelve a abrir el carrito: se repintaria debajo del popup.
+  if (paseActivo()) return;
   pintarCarrito(true);
   abrirModal('modalCheckout');
   track('view_cart', {value: totalCarrito(), items: itemsGA(Object.values(carrito))});
@@ -6861,6 +6971,138 @@ function abrirElPase(){
   }, 30000);
 }
 
+/* ══════════ UN PASE A LA VEZ, Y EL POPUP QUE LO CUENTA ══════════
+   El 06/10/2026 el equipo del cliente probo la compra y encontro que el pase al
+   carrito podia dejar unidades de mas: 5 en la landing, 6 en la tienda, $132.900
+   contra $159.480. Reproducido con una tienda simulada de 1,2 s por pedido:
+   con el pase en curso se cerraba el carrito y se lo abria de nuevo con «Pasar
+   al carrito»; ese repintado rehabilitaba «Finalizar compra» (ver
+   resumenCarrito), un segundo clic arrancaba otro pase, y las lineas que todavia
+   no habian salido de la landing se mandaban dos veces. 4 lineas y 5 unidades
+   salieron como 7 pedidos y 8 unidades.
+
+   Dos cosas, las dos necesarias:
+     · un candado a nivel de la funcion --paseEnCurso--, que no depende de que un
+       boton este apagado: un segundo pase no arranca por ninguna puerta;
+     · un popup que tapa la pantalla mientras dura, con un carrito andando. El
+       motivo de fondo era que durante esos segundos nada se veia: el cliente
+       creia que no habia pasado nada y volvia a apretar.
+
+   El popup es ayuda y NUNCA puede trabar la compra: todo lo que hace va en un
+   try, y si algo falla el pase sigue igual. El candado vence a los 90 s --un
+   pase de verdad dura segundos y, en el peor caso, menos de un minuto--, asi que
+   aunque algo raro lo dejara puesto el cliente no se queda sin poder comprar. */
+var paseEnCurso = false;     // var y no let: resumenCarrito() lo lee y puede correr antes de llegar aca
+var paseInicio = 0;
+var paseDesde = null;        // lo que tenia el foco, para devolverselo al cerrar
+const PASE_VENCE_MS = 90000;
+const PASE_LISTO_MS = 800;   // cuanto se ve «Productos agregados» antes de irse a /comprar/
+const esperar = ms => new Promise(listo => setTimeout(listo, ms));
+
+function paseActivo(){
+  return !!paseEnCurso && Date.now() - paseInicio < PASE_VENCE_MS;
+}
+
+/* El teclado no sale del popup mientras dura: Tab y Escape no hacen nada. */
+function paseTeclas(e){
+  if (e.key === 'Tab' || e.key === 'Escape'){ e.preventDefault(); e.stopImmediatePropagation(); }
+}
+
+function paseTexto(titulo, sub){
+  try {
+    const t = $('#paseTit'), s = $('#paseSub');
+    if (t && titulo != null) t.textContent = titulo;
+    if (s && sub != null) s.textContent = sub;
+  } catch (e) {}
+}
+
+function paseProgreso(hechos, total){
+  try {
+    const barra = $('#paseBarra'), cuenta = $('#paseCuenta');
+    if (barra) barra.style.width = Math.max(8, Math.min(100, total ? hechos / total * 100 : 100)) + '%';
+    if (cuenta) cuenta.textContent = total > 1 ? hechos + ' de ' + total + ' productos cargados' : '';
+  } catch (e) {}
+}
+
+function paseMostrar(total){
+  try {
+    const m = $('#modalPase');
+    if (!m) return;
+    m.classList.remove('listo');
+    paseTexto('Preparando tu carrito…',
+              'Estamos pasando tus productos a la tienda. No cierres esta ventana.');
+    const link = $('#paseLink'); if (link) link.hidden = true;
+    paseProgreso(0, total);
+    paseDesde = document.activeElement;
+    m.classList.add('on');
+    m.removeAttribute('aria-hidden');
+    const caja = m.querySelector('.modal-caja');
+    if (caja) caja.focus({preventScroll: true});
+    addEventListener('keydown', paseTeclas, true);
+  } catch (e) {}
+}
+
+function paseListo(){
+  try {
+    const m = $('#modalPase');
+    if (!m) return;
+    m.classList.add('listo');
+    paseTexto('¡Productos agregados correctamente!',
+              'Te llevamos al carrito de la tienda para seguir con el pago.');
+    paseProgreso(1, 1);
+    const link = $('#paseLink'); if (link){ link.href = CARRITO_TIENDA; link.hidden = false; }
+  } catch (e) {}
+}
+
+function paseOcultar(){
+  try {
+    removeEventListener('keydown', paseTeclas, true);
+    const m = $('#modalPase');
+    if (!m) return;
+    m.classList.remove('on', 'listo');
+    m.setAttribute('aria-hidden', 'true');
+    if (paseDesde && document.contains(paseDesde) && paseDesde.focus) paseDesde.focus({preventScroll: true});
+    paseDesde = null;
+  } catch (e) {}
+}
+
+/* ══════════ EL POPUP DE LA PORTADA ES DEL THEME, NO NUESTRO ══════════
+   «+ envio gratis!», con el mail y la foto de los aceites nuevos: lo arma la
+   plataforma con LS.homePopup({timeout: 10000}). Sale a los 10 s de la PRIMERA
+   visita --la cookie `newsletter-popup` dura 15 dias--, tambien en celular, y va
+   con z-index 20000: queda por encima de todos nuestros popups -- el carrito
+   (2000), el pase (2100) -- y su fondo se come el primer toque. El equipo del
+   cliente lo vio tapar el catalogo y no dejar apretar «Agregar».
+
+   Lo que se hace aca es lo minimo y no toca su configuracion: mientras haya un
+   popup NUESTRO abierto --ficha, carrito, aviso o el pase-- el del theme se
+   esconde, y aparece cuando se cierran. Se esconde con CSS y una clase en <html>,
+   sin sacarlo del documento: si algo de esto fallara, el popup se comporta como
+   siempre. Lo que pasa cuando sale sobre el catalogo, con el carrito vacio, es
+   del panel del theme: ahi se apaga o se cambia. */
+(function retenerPopupDelTheme(){
+  const nuestros = ['modalHistoria', 'modal', 'modalSegmento', 'modalMinorista',
+                    'modalCheckout', 'modalSacar', 'modalPase', 'lupa'];
+  const abierto = '#modalHistoria.on,#modal.on,#modalSegmento.on,#modalMinorista.on,' +
+                  '#modalCheckout.on,#modalSacar.on,#modalPase.on,#lupa:not([hidden])';
+  try {
+    const st = document.createElement('style');
+    st.textContent = 'html.hab-popup-espera #home-modal,' +
+      'html.hab-popup-espera .js-modal-overlay-private[data-modal-url="home-modal"]' +
+      '{display:none !important}';
+    document.head.appendChild(st);
+    const sincronizar = () => document.documentElement.classList.toggle(
+      'hab-popup-espera', !!document.querySelector(abierto));
+    if (typeof MutationObserver === 'undefined') return;
+    const mirador = new MutationObserver(sincronizar);
+    nuestros.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) mirador.observe(el, {attributes: true, attributeFilter: ['class', 'hidden']});
+    });
+    sincronizar();
+  } catch (e) { /* sin esto el popup del theme sale como siempre */ }
+})();
+
 /* ══════════ PASO A LA TIENDA ══════════
    Al finalizar, los productos se cargan en el carrito real de Tiendanube y el
    cliente cae DIRECTO en /comprar/ -- la pagina de carrito de verdad, donde se
@@ -7034,35 +7276,86 @@ function agregarEnLaTienda(form){
 }
 
 /* Manda una lista de {prod, cant} al carrito de la tienda y lleva a
-   /comprar/. Lo usan las dos puertas de salida: "Finalizar compra", que manda
-   todo el carrito, y "Compra rapida", que manda un solo producto. */
+   /comprar/. Es la puerta de "Finalizar compra" y la UNICA que arranca un pase:
+   el candado, el popup y lo que pasa si algo falla viven aca y en
+   pasarAlaTienda(), que es la que habla con la tienda.
+
+   Si el pase salio bien se muestra «Productos agregados correctamente» un
+   momento y recien entonces se navega: despues de esperar esos segundos, el clic
+   no puede quedar sin respuesta. */
 async function mandarALaTienda(items, boton, textoOriginal){
   if (!items.length) return;
+  /* UN PASE A LA VEZ. Un segundo clic, o el repintado de un boton, no arranca
+     otro: las lineas que todavia no salieron de la landing se mandarian dos
+     veces. Ver el bloque de mas arriba. */
+  if (paseActivo()){
+    track('pase_repetido', {segment: segmento});
+    marcarSesion('pase', 'repetido');
+    return;
+  }
+  paseEnCurso = true;
+  paseInicio = Date.now();
+  let navegando = false;
+  try {
+    const resultado = await pasarAlaTienda(items, boton, textoOriginal);
+    // La medicion no puede tirar abajo el pase: ya se mando todo.
+    try {
+      track('pase_a_la_tienda', {ms: Date.now() - paseInicio, lineas: items.length,
+                                 resultado: resultado, segment: segmento});
+    } catch (e) {}
+    if (resultado === 'listo'){
+      paseListo();
+      await esperar(PASE_LISTO_MS);
+      navegando = true;
+      location.href = CARRITO_TIENDA;
+    }
+  } catch (err) {
+    /* Algo se rompio por dentro: el boton vuelve a andar. Lo que ya entro a la
+       tienda salio de la landing, y lo que no, sigue ahi. */
+    if (window.console) console.error('[pase a la tienda]', err);
+    track('pase_error', {segment: segmento});
+    boton.disabled = false;
+    boton.textContent = textoOriginal;
+  } finally {
+    /* Si se va a /comprar/ el candado se queda puesto: la pagina se va. Si el
+       cliente vuelve con «atras», pageshow lo suelta. */
+    if (!navegando){
+      paseEnCurso = false;
+      paseOcultar();
+    }
+  }
+}
+
+/* El pase en si: manda las lineas a la tienda y devuelve como termino --
+   'listo' (entro todo), 'con_faltantes' (algo no entro: el aviso ya esta
+   puesto) o 'prototipo' (sin tienda, solo se muestra que haria). */
+async function pasarAlaTienda(items, boton, textoOriginal){
   // Va a la tienda: lo que habia sacado antes ya no tiene a donde volver.
   vaciarPapelera();
 
   const enLaTienda = typeof LS !== 'undefined' && typeof LS.addToCartEnhanced === 'function';
   boton.disabled = true;
   boton.textContent = 'Redirigiendo...';
+  paseMostrar(items.length);
 
   if (!enLaTienda){
-    // En el prototipo no existe LS: se muestra que haria y no se navega.
-    setTimeout(() => {
-      boton.textContent = '\u2713 En la tienda ya estarías en ' + CARRITO_TIENDA;
-      setTimeout(() => {
-        boton.textContent = textoOriginal;
-        boton.disabled = false;
-      }, 2400);
-    }, 900);
-    return;
+    // En el prototipo no existe LS: se muestra que haria --popup incluido-- y no se navega.
+    await esperar(1500);
+    paseListo();
+    boton.textContent = '✓ En la tienda ya estarías en ' + CARRITO_TIENDA;
+    await esperar(1800);
+    boton.textContent = textoOriginal;
+    boton.disabled = false;
+    return 'prototipo';
   }
 
   const fallaron = [];
   let hechos = 0;
   const avisarProgreso = () => {
     boton.textContent = items.length > 1
-      ? 'Cargando ' + hechos + ' de ' + items.length + '\u2026'
-      : 'Redirigiendo\u2026';
+      ? 'Cargando ' + hechos + ' de ' + items.length + '…'
+      : 'Redirigiendo…';
+    paseProgreso(hechos, items.length);
   };
   avisarProgreso();
 
@@ -7121,7 +7414,8 @@ async function mandarALaTienda(items, boton, textoOriginal){
   }
   for (const it of cruces) await pasarUno(it);
 
-  if (!fallaron.length){ location.href = CARRITO_TIENDA; return; }
+  /* Entro todo: mandarALaTienda muestra «Productos agregados correctamente» y navega. */
+  if (!fallaron.length) return 'listo';
 
   /* ── Algo no entro ──
      La tienda rechaza la linea ENTERA cuando le piden mas unidades de las que
@@ -7133,6 +7427,8 @@ async function mandarALaTienda(items, boton, textoOriginal){
      lo que hay -- y se le dice al cliente con el numero en la mano. Antes se
      marcaba el producto "sin stock", que es mentira cuando quedan tres. */
   boton.textContent = 'Revisando stock\u2026';
+  paseTexto('Revisando el stock…', 'Un producto no entró. Estamos viendo cuánto queda.');
+  paseProgreso(items.length, items.length);
   if (typeof catalogoVivo !== 'undefined' && catalogoVivo && catalogoVivo.refrescarFicha){
     try {
       await Promise.all(fallaron.map(it =>
@@ -7187,6 +7483,10 @@ async function mandarALaTienda(items, boton, textoOriginal){
   } else {
     boton.textContent = textoOriginal;
   }
+  /* El aviso queda a la vista: en un carrito largo estaba mas abajo de lo que se ve. */
+  try { if (aviso && !aviso.hidden && aviso.scrollIntoView) aviso.scrollIntoView({block: 'nearest'}); }
+  catch (e) {}
+  return 'con_faltantes';
 }
 
 /* ══════════ EL CARRITO SOBREVIVE A LA RECARGA ══════════
@@ -7355,6 +7655,9 @@ addEventListener('storage', ev => {
 });
 
 addEventListener('pageshow', ev => {
+  /* Volvio con "atras" desde /comprar/: la pagina quedo congelada con el popup
+     del pase puesto y el candado cerrado. Se sueltan los dos antes que nada. */
+  if (ev.persisted){ paseEnCurso = false; paseOcultar(); }
   if (!ev.persisted || !carritoListo) return;
   /* Volvio con "atras" desde /comprar/ y la pagina quedo congelada como
      estaba al irse: el boton en "Redirigiendo..." y el carrito de la tienda
@@ -7481,6 +7784,13 @@ window.pruebaDeCarrito = function(){
 };
 
 $('#checkoutIr').onclick = e => {
+  /* Con un pase en curso no se hace nada, ni se mide otro begin_checkout: un
+     segundo clic mandaria las mismas lineas dos veces. */
+  if (paseActivo()){
+    track('pase_repetido', {segment: segmento, via: 'boton'});
+    marcarSesion('pase', 'repetido');
+    return;
+  }
   /* Segundo clic despues de un pase a medias: el cliente ya vio que quedo
      afuera y eligio ir igual. */
   if (e.currentTarget.dataset.irIgual){ location.href = CARRITO_TIENDA; return; }
