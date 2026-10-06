@@ -8757,6 +8757,15 @@ function conexionCara(){
   return /2g|3g/.test(c.effectiveType || '');
 }
 
+/* Cuantas publicaciones se piden por pagina del listado de la tienda. Se pide
+   SIEMPRE, sin dejarlo librado al valor por defecto: el 06/10/2026, durante unos
+   minutos, la tienda devolvio el listado de a 9 sin que nadie lo pidiera (lo
+   normal son 60, y `?limit=60` lo fija: probado en los dos estados). Con 9 por
+   pagina el tope de 30 paginas llegaba a 270 de las 365 publicaciones, y la
+   landing se quedo con 34 combos y 191 productos en vez de 35 y 193, con precio
+   y stock sin leer para el resto. */
+const POR_PAGINA = 60;
+
 var catalogoVivo = (function () {
   const EN_TIENDA = /(^|\.)habitadnatural\.com$/i.test(location.hostname);
   const GUARDADO = 'habitad:catalogo-vivo:v1';
@@ -8801,8 +8810,8 @@ var catalogoVivo = (function () {
       const paginas = [];
       for (let k = desde; k < desde + DE_A && k <= TOPE_PAGINAS; k++) paginas.push(k);
       const textos = await Promise.all(paginas.map(k => bajar(k === 1
-        ? '/productos/?results_only=true'
-        : '/productos/page/' + k + '/?results_only=true')));
+        ? '/productos/?results_only=true&limit=' + POR_PAGINA
+        : '/productos/page/' + k + '/?results_only=true&limit=' + POR_PAGINA)));
       let vacia = 0;
       for (let t = 0; t < textos.length; t++){
         const leidas = VIVO.leerListado(textos[t]);
@@ -9249,10 +9258,13 @@ var categoriasVivas = (function () {
   /* Los ids de las publicaciones de una categoria, pagina por pagina. null si
      no existe o esta oculta. */
   async function leerCategoria(ruta){
-    const tam = catalogoVivo.tamPagina || 60;
+    /* Si la tienda ignorara el limit, la pagina real es la que midio el catalogo:
+       tomar el menor evita cortar una categoria en la primera pagina. */
+    const tam = Math.min(POR_PAGINA, catalogoVivo.tamPagina || POR_PAGINA);
     const encontrados = new Set();
     for (let k = 1; k <= TOPE_PAGINAS; k++){
-      const html = await bajar(ruta + (k === 1 ? '' : 'page/' + k + '/') + '?results_only=true');
+      const html = await bajar(ruta + (k === 1 ? '' : 'page/' + k + '/') +
+                               '?results_only=true&limit=' + POR_PAGINA);
       if (html == null || es404(html)) return k === 1 ? null : encontrados;
       const leidas = VIVO.leerListado(html);
       leidas.forEach(f => encontrados.add(f.id));
