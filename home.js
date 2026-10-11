@@ -27,7 +27,7 @@
   if (window.__habitadSeguro) return;
   var CLAVE = 'habitad:modo-seguro';
   var VIDA = 15 * 60 * 1000;          // cuanto recuerda la decision
-  var BUILD = 'v16.20261006-1143';
+  var BUILD = 'v17.20261010-2125';
 
   function recordar(motivo) {
     try { localStorage.setItem(CLAVE, JSON.stringify({t: new Date().getTime(), m: motivo})); } catch (e) {}
@@ -275,7 +275,7 @@
     vistos[clave] = 1;
     anotados++;
     window.__habitadAvisar('landing_error', {mensaje: String(mensaje).slice(0, 90),
-                                             donde: String(donde).slice(0, 40), build: 'v16.20261006-1143'});
+                                             donde: String(donde).slice(0, 40), build: 'v17.20261010-2125'});
   }
   window.addEventListener('error', function (e) {
     var archivo = String(e.filename || ''), pila = (e.error && e.error.stack) ? String(e.error.stack) : '';
