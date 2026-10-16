@@ -27,7 +27,7 @@
   if (window.__habitadSeguro) return;
   var CLAVE = 'habitad:modo-seguro';
   var VIDA = 15 * 60 * 1000;          // cuanto recuerda la decision
-  var BUILD = 'v17.20261016-1354-minimo';
+  var BUILD = 'v17.20261016-1355-minimo';
 
   function recordar(motivo) {
     try { localStorage.setItem(CLAVE, JSON.stringify({t: new Date().getTime(), m: motivo})); } catch (e) {}
@@ -124,6 +124,11 @@
   window.__habitadSeguroOlvidar = olvidar;
   window.__habitadAvisar = avisar;
 })();
+
+  /* Anuncio de Meta sobre una ficha: el cargador ya puso la direccion de la landing
+     (/?producto=...) y esperaba que aca se plantara sobre la ficha. Ahora la landing
+     es la portada nativa: se recarga esa direccion y la sirve el tema. */
+  if (window.__anclaHabitad) { location.replace(location.href); return; }
 
   if (window.__landingHabitad) return;
   // El cargador ya decidio que hoy no hay landing (modo seguro): no se planta.
